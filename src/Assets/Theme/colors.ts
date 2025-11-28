@@ -1,0 +1,28 @@
+export const COLORS = {
+  grDark: 'rgba(0,0,0,1)',
+  grDark2: 'rgba(0,0,0,0.9)',
+  grMedium: 'rgba(0,0,0,0.8)',
+  grLight: 'rgba(0,0,0,0.6)',
+  white: '#ffffff',
+  black: '#000000',
+  red: '#FF0000',
+  blue: '#00426d',
+  loader: '#66879C',
+  header: '#0B0B0B',
+  cardGridBG: '#08111D',
+  searchBarBG: '#151515',
+
+  // PRIMARY COLORS
+  primary: '#1B7CFF',
+
+  // GRAY SHADES
+  lightGray: '#CCCCCC',
+  subText: '#A9A9A9',
+  gray: '#9CA3AF',
+  outlineGrey: '#808080',
+  pageDots: 'rgba(255,255,255,0.3)',
+  placeholder: '#B4BDC4',
+  ctgColor: '#4B4B4B',
+  border: '#333333',
+  cardBG: '#1A1A1A',
+};
