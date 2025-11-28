@@ -11,6 +11,7 @@ export const COLORS = {
   header: '#0B0B0B',
   cardGridBG: '#08111D',
   searchBarBG: '#151515',
+  green: '#00c853',
 
   // PRIMARY COLORS
   primary: '#1B7CFF',
@@ -25,4 +26,5 @@ export const COLORS = {
   ctgColor: '#4B4B4B',
   border: '#333333',
   cardBG: '#1A1A1A',
+  termsColor: '#B3B3B3',
 };
