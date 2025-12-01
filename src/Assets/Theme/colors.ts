@@ -12,6 +12,7 @@ export const COLORS = {
   cardGridBG: '#08111D',
   searchBarBG: '#151515',
   green: '#00c853',
+  modalBackdropColor: 'rgba(0, 0, 0, 0.5)',
 
   // PRIMARY COLORS
   primary: '#1B7CFF',
@@ -27,4 +28,5 @@ export const COLORS = {
   border: '#333333',
   cardBG: '#1A1A1A',
   termsColor: '#B3B3B3',
+  modalBG: '#2D2D2D',
 };

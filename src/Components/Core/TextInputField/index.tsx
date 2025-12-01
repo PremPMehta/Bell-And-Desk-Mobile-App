@@ -5,7 +5,20 @@ import { COLORS } from '@/Assets/Theme/colors';
 import { ms, sc } from '@/Assets/Theme/fontStyle';
 import { THEME } from '@/Assets/Theme';
 
-const TextInputField = ({
+interface TextInputFieldProps {
+  label?: string;
+  leftIcon?: string;
+  rightIcon?: string;
+  secure?: boolean;
+  error?: string;
+  touched?: boolean;
+  onChangeText?: (text: string) => void;
+  value?: string;
+  [key: string]: any;
+  mediaHelpText?: string;
+}
+
+const TextInputField: React.FC<TextInputFieldProps> = ({
   label,
   leftIcon,
   rightIcon,
@@ -14,6 +27,7 @@ const TextInputField = ({
   touched,
   onChangeText,
   value,
+  mediaHelpText,
   ...props
 }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -58,9 +72,18 @@ const TextInputField = ({
       />
 
       {/* ERROR MESSAGE */}
+      {/* {touched && error ? (
+        <Text style={styles.errorTxtStyle}>{error}</Text>
+      ) : null} */}
       {touched && error ? (
         <Text style={styles.errorTxtStyle}>{error}</Text>
       ) : null}
+
+      {mediaHelpText && (
+        <Text style={styles.mediaHelpText}>
+          e.g., https://instagram.com/yourcommunity
+        </Text>
+      )}
     </View>
   );
 };
@@ -77,6 +100,11 @@ const styles = StyleSheet.create({
   errorTxtStyle: {
     ...THEME.fontStyle.h5Regular,
     color: COLORS.red,
+    marginTop: ms(5),
+  },
+  mediaHelpText: {
+    ...THEME.fontStyle.h6Regular,
+    color: COLORS.outlineGrey,
     marginTop: ms(5),
   },
 });

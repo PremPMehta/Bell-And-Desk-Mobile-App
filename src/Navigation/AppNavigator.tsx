@@ -13,6 +13,8 @@ import PrivacyPolicy from '@/Screens/PrivacyPolicy';
 import Support from '@/Screens/Support';
 import CookiePolicy from '@/Screens/CookiePolicy';
 import ChoosePlan from '@/Screens/ChoosePlan';
+import ModalLayout from '@/Components/Generic/Layout/ModalLayout';
+import CreateCommunity from '@/Screens/CreateCommunity';
 
 export type StackNavigationProp<T> = any;
 export type RootStackParamList = {
@@ -33,11 +35,17 @@ const getDefaultStackHeaderOptions = () => ({
 
 const AppNavigator = () => {
   return (
-    <MainStack.Navigator screenOptions={{ headerShown: false }}>
-      {/* <MainStack.Screen name="SignIn" component={SignIn} />
+    <>
+      <MainStack.Navigator screenOptions={{ headerShown: false }}>
+        <MainStack.Screen
+          name="CreateCommunity"
+          component={CreateCommunity}
+          options={{ headerShown: false }}
+        />
+        {/* <MainStack.Screen name="SignIn" component={SignIn} />
       <MainStack.Screen name="SignUp" component={SignUp} />
       <MainStack.Screen name="ForgotPassword" component={ForgotPassword} /> */}
-      {/* <MainStack.Screen
+        {/* <MainStack.Screen
         name="Home"
         component={Home}
         options={{
@@ -46,7 +54,7 @@ const AppNavigator = () => {
           title: 'Home',
         }}
       /> */}
-      {/* <MainStack.Screen
+        {/* <MainStack.Screen
         name="CategoryDetails"
         component={CategoryDetails}
         options={{
@@ -55,7 +63,7 @@ const AppNavigator = () => {
           title: 'Category Details',
           }}
           /> */}
-      {/* <MainStack.Screen
+        {/* <MainStack.Screen
         name="FAQ"
         component={FAQ}
         options={{
@@ -64,7 +72,7 @@ const AppNavigator = () => {
           title: 'FAQ', // Frequently Asked Questions
         }}
       /> */}
-      {/* <MainStack.Screen
+        {/* <MainStack.Screen
         name="TermsAndConditions"
         component={TermsAndConditions}
         options={{
@@ -73,7 +81,7 @@ const AppNavigator = () => {
           title: 'Terms and Conditions',
         }}
       /> */}
-      {/* <MainStack.Screen
+        {/* <MainStack.Screen
         name="PrivacyPolicy"
         component={PrivacyPolicy}
         options={{
@@ -82,7 +90,7 @@ const AppNavigator = () => {
           title: 'Privacy Policy',
         }}
       /> */}
-      {/* <MainStack.Screen
+        {/* <MainStack.Screen
         name="Support"
         component={Support}
         options={{
@@ -91,7 +99,7 @@ const AppNavigator = () => {
           title: 'Support',
         }}
       /> */}
-      {/* <MainStack.Screen
+        {/* <MainStack.Screen
         name="CookiePolicy"
         component={CookiePolicy}
         options={{
@@ -100,16 +108,18 @@ const AppNavigator = () => {
           title: 'Cookie Policy',
         }}
       /> */}
-      <MainStack.Screen
-        name="ChoosePlan"
-        component={ChoosePlan}
-        options={{
-          ...getDefaultStackHeaderOptions(),
-          headerShown: true,
-          title: 'Choose Your Plan',
-        }}
-      />
-    </MainStack.Navigator>
+        {/* <MainStack.Screen
+          name="ChoosePlan"
+          component={ChoosePlan}
+          options={{
+            ...getDefaultStackHeaderOptions(),
+            headerShown: true,
+            title: 'Choose Your Plan',
+          }}
+        /> */}
+      </MainStack.Navigator>
+      <ModalLayout />
+    </>
   );
 };
 
