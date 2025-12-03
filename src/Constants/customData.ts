@@ -184,3 +184,94 @@ export const categoryList = [
     value: 'Test 10',
   },
 ];
+
+// Mock Data
+export const MOCK_COMMUNITIES = [
+  {
+    id: '1',
+    name: 'CryptoManji Academy',
+    description:
+      'Comunidad de criptomonedas diseñada para aquellos que buscan aprender, crecer y prosperar en el emocionante mundo de inversiones en activos digitales.',
+    bannerImage: { uri: 'https://picsum.photos/seed/1/350/150' },
+    logoImage: { uri: 'https://picsum.photos/seed/1/100/100' },
+    tags: ['General', 'Owner'],
+  },
+  {
+    id: '2',
+    name: 'CryptoManji Academy',
+    description:
+      'Comunidad de criptomonedas diseñada para aquellos que buscan aprender, crecer y prosperar en el emocionante mundo de inversiones en activos digitales.',
+    bannerImage: { uri: 'https://picsum.photos/seed/2/350/150' },
+    logoImage: { uri: 'https://picsum.photos/seed/2/100/100' },
+    tags: ['General', 'Owner'],
+  },
+  {
+    id: '3',
+    name: 'CryptoManji Academy',
+    description:
+      'Comunidad de criptomonedas diseñada para aquellos que buscan aprender, crecer y prosperar en el emocionante mundo de inversiones en activos digitales.',
+    bannerImage: { uri: 'https://picsum.photos/seed/3/350/150' },
+    logoImage: { uri: 'https://picsum.photos/seed/3/100/100' },
+    tags: ['General', 'Owner'],
+  },
+  {
+    id: '4',
+    name: 'CryptoManji Academy',
+    description:
+      'Comunidad de criptomonedas diseñada para aquellos que buscan aprender, crecer y prosperar en el emocionante mundo de inversiones en activos digitales.',
+    bannerImage: { uri: 'https://picsum.photos/seed/4/350/150' },
+    logoImage: { uri: 'https://picsum.photos/seed/4/100/100' },
+    tags: ['General', 'Owner'],
+  },
+];
+
+export const COMMUNITY_MENU_TABS = [
+  { id: 'mycommunities', title: 'My Communities' },
+  { id: 'courses', title: 'Courses' },
+  { id: 'livestream', title: 'Live Stream' },
+  { id: 'board', title: 'Board' },
+  { id: 'members', title: 'Members' },
+  { id: 'about', title: 'About' },
+  { id: 'settings', title: 'Settings' },
+];
+
+export const sliderData = [
+  'https://picsum.photos/200/300/?blur',
+  'https://picsum.photos/200/300/?blur',
+  'https://picsum.photos/200/300/?blur',
+];
+
+export const categories = [
+  'All',
+  'Design',
+  'Development',
+  'Marketing',
+  'Sales',
+];
+
+export const cardData = [
+  {
+    id: 1,
+    title: 'Bell n Desk',
+    category: 'Technology',
+    image: 'https://picsum.photos/600/400?random=1',
+  },
+  {
+    id: 2,
+    title: 'Bell n Desk',
+    category: 'Technology',
+    image: 'https://picsum.photos/600/400?random=2',
+  },
+  {
+    id: 3,
+    title: 'Bell n Desk',
+    category: 'Technology',
+    image: 'https://picsum.photos/600/400?random=3',
+  },
+  {
+    id: 4,
+    title: 'Bell n Desk',
+    category: 'Technology',
+    image: 'https://picsum.photos/600/400?random=4',
+  },
+];

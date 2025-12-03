@@ -7,41 +7,7 @@ import ImageCarousel from '@/Components/Core/ImageCarousel';
 import styles from './style';
 import { COLORS } from '@/Assets/Theme/colors';
 import HomeCardGrid from '@/Components/Core/HomeCardGrid';
-
-const sliderData = [
-  'https://picsum.photos/200/300/?blur',
-  'https://picsum.photos/200/300/?blur',
-  'https://picsum.photos/200/300/?blur',
-];
-
-const categories = ['All', 'Design', 'Development', 'Marketing', 'Sales'];
-
-export const cardData = [
-  {
-    id: 1,
-    title: 'Bell n Desk',
-    category: 'Technology',
-    image: 'https://picsum.photos/600/400?random=1',
-  },
-  {
-    id: 2,
-    title: 'Bell n Desk',
-    category: 'Technology',
-    image: 'https://picsum.photos/600/400?random=2',
-  },
-  {
-    id: 3,
-    title: 'Bell n Desk',
-    category: 'Technology',
-    image: 'https://picsum.photos/600/400?random=3',
-  },
-  {
-    id: 4,
-    title: 'Bell n Desk',
-    category: 'Technology',
-    image: 'https://picsum.photos/600/400?random=4',
-  },
-];
+import { cardData, categories, sliderData } from '@/Constants/customData';
 
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState('');

@@ -21,6 +21,33 @@ const styles = StyleSheet.create({
     ...THEME.fontStyle.h3Bold,
     color: COLORS.white,
   },
+
+  searchContainer: {
+    paddingHorizontal: ms(16),
+  },
+
+  /* --- Category Tabs --- */
+  categoryScroll: {
+    marginBottom: ms(10),
+  },
+  categoryContentContainer: {
+    paddingRight: ms(12),
+  },
+  categoryBtn: {
+    // alignItems: 'center',
+    marginRight: ms(10),
+    borderRadius: ms(20),
+    borderWidth: 1,
+    borderColor: COLORS.ctgColor,
+    paddingVertical: ms(4),
+    paddingHorizontal: ms(12),
+    left: ms(16),
+  },
+  categoryBtnText: {
+    ...THEME.fontStyle.h5Medium,
+    color: COLORS.ctgColor,
+  },
+
   tabsWrapper: {
     position: 'relative',
   },

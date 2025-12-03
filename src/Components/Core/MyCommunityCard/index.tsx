@@ -12,17 +12,15 @@ interface CommunityCardProps {
   name: string;
   description: string;
   bannerImage: ImageSourcePropType;
-  logoImage: ImageSourcePropType;
   tags: string[];
   onViewPress: () => void;
   onSettingsPress: () => void;
 }
 
-const CommunityCard: React.FC<CommunityCardProps> = ({
+const MyCommunityCard: React.FC<CommunityCardProps> = ({
   name,
   description,
   bannerImage,
-  logoImage,
   tags,
   onViewPress,
   onSettingsPress,
@@ -31,11 +29,6 @@ const CommunityCard: React.FC<CommunityCardProps> = ({
     <View style={styles.cardContainer}>
       {/* Banner */}
       <Image source={bannerImage} style={styles.bannerImage} />
-
-      {/* Logo */}
-      <View style={styles.logoContainer}>
-        <Image source={logoImage} style={styles.logoImage} />
-      </View>
 
       {/* Tags (positioned absolutely to match design) */}
       <View style={styles.tagsContainer}>
@@ -70,4 +63,4 @@ const CommunityCard: React.FC<CommunityCardProps> = ({
   );
 };
 
-export default CommunityCard;
+export default MyCommunityCard;
