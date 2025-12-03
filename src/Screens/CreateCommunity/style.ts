@@ -60,8 +60,9 @@ const styles = StyleSheet.create({
   createBtnStyle: {
     backgroundColor: COLORS.primary, // Assuming blue is primary, or use specific hex
     borderRadius: ms(30),
-    height: ms(50),
-    justifyContent: 'center',
+    paddingHorizontal: ms(24),
+    paddingVertical: ms(6),
+    alignSelf: 'center',
     alignItems: 'center',
     marginTop: ms(20),
   },
@@ -76,7 +77,19 @@ const styles = StyleSheet.create({
     marginBottom: ms(8),
   },
   inputStyle: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: COLORS.cardBG,
+  },
+  descriptionStyle: {
+    height: 100,
+  },
+  errorText: {
+    ...THEME.fontStyle.h5Regular,
+    color: COLORS.red,
+    marginTop: ms(5),
+  },
+  disabledButton: {
+    backgroundColor: COLORS.outlineGrey,
+    opacity: 0.5,
   },
 });
 

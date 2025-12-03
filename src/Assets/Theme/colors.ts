@@ -29,4 +29,6 @@ export const COLORS = {
   cardBG: '#1A1A1A',
   termsColor: '#B3B3B3',
   modalBG: '#2D2D2D',
+  newModalBG: '#1C1C1C',
+  uploadBG: '#303030',
 };

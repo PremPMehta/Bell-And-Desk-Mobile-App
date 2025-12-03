@@ -29,8 +29,8 @@ export const activeThemeAtom = atom(async get => {
       ? darkTheme
       : lightTheme
     : preference === 'dark'
-    ? darkTheme
-    : lightTheme;
+      ? darkTheme
+      : lightTheme;
 });
 
 // User Atom
@@ -42,3 +42,5 @@ export const userTokenAtom = atomWithStorage(AtomKeys.authToken, '', storage);
 export const userRoleAtom = atomWithStorage(AtomKeys.userRole, '', storage);
 
 export const logoutVisibleAtom = atom(false);
+export const addMediaVisibleAtom = atom(false);
+export const onMediaAddedAtom = atom<((media: any) => void) | null>(null);

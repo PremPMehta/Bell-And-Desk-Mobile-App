@@ -72,16 +72,14 @@ const TextInputField: React.FC<TextInputFieldProps> = ({
       />
 
       {/* ERROR MESSAGE */}
-      {/* {touched && error ? (
-        <Text style={styles.errorTxtStyle}>{error}</Text>
-      ) : null} */}
       {touched && error ? (
         <Text style={styles.errorTxtStyle}>{error}</Text>
       ) : null}
 
       {mediaHelpText && (
         <Text style={styles.mediaHelpText}>
-          e.g., https://instagram.com/yourcommunity
+          {mediaHelpText}
+          {/* {mediaHelpText} e.g., https://instagram.com/yourcommunity */}
         </Text>
       )}
     </View>

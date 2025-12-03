@@ -15,6 +15,7 @@ import CookiePolicy from '@/Screens/CookiePolicy';
 import ChoosePlan from '@/Screens/ChoosePlan';
 import ModalLayout from '@/Components/Generic/Layout/ModalLayout';
 import CreateCommunity from '@/Screens/CreateCommunity';
+import MyCommunities from '@/Screens/MyCommunities';
 
 export type StackNavigationProp<T> = any;
 export type RootStackParamList = {
@@ -37,9 +38,14 @@ const AppNavigator = () => {
   return (
     <>
       <MainStack.Navigator screenOptions={{ headerShown: false }}>
-        <MainStack.Screen
+        {/* <MainStack.Screen
           name="CreateCommunity"
           component={CreateCommunity}
+          options={{ headerShown: false }}
+        /> */}
+        <MainStack.Screen
+          name="MyCommunities"
+          component={MyCommunities}
           options={{ headerShown: false }}
         />
         {/* <MainStack.Screen name="SignIn" component={SignIn} />
