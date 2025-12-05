@@ -27,64 +27,35 @@ const styles = StyleSheet.create({
   },
 
   /* --- Category Tabs --- */
-  categoryScroll: {
-    marginBottom: ms(10),
+  scrollContainer: {
+    marginBottom: ms(16),
   },
+
   categoryContentContainer: {
-    paddingRight: ms(12),
+    paddingHorizontal: ms(16),
+    alignItems: 'center',
   },
+
   categoryBtn: {
-    // alignItems: 'center',
     marginRight: ms(10),
     borderRadius: ms(20),
     borderWidth: 1,
     borderColor: COLORS.ctgColor,
-    paddingVertical: ms(4),
-    paddingHorizontal: ms(12),
-    left: ms(16),
+    paddingVertical: ms(6),
+    paddingHorizontal: ms(14),
   },
+
   categoryBtnText: {
     ...THEME.fontStyle.h5Medium,
     color: COLORS.ctgColor,
   },
 
-  tabsWrapper: {
-    position: 'relative',
-  },
-  gradient: {
-    position: 'absolute',
-    right: 0,
-    top: 2,
-    bottom: 2,
-    width: ms(40),
-    zIndex: 1,
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#333',
-    paddingHorizontal: ms(16),
-    paddingRight: ms(40), // Add padding to avoid content being hidden by gradient
-  },
-  tabItem: {
-    paddingVertical: ms(12),
-    marginRight: ms(24),
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  activeTabItem: {
-    borderBottomColor: COLORS.white,
-  },
-  tabText: {
-    ...THEME.fontStyle.h5Regular,
-    color: COLORS.outlineGrey,
-  },
-  activeTabText: {
-    ...THEME.fontStyle.h5Bold,
+  communitiesContainer: {
+    marginTop: ms(12),
   },
   contentContainer: {
-    padding: ms(16),
-    paddingBottom: ms(40),
+    paddingHorizontal: ms(16),
+    paddingBottom: ms(20),
   },
 });
 

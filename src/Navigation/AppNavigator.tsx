@@ -17,6 +17,7 @@ import ModalLayout from '@/Components/Generic/Layout/ModalLayout';
 import CreateCommunity from '@/Screens/CreateCommunity';
 import MyCommunities from '@/Screens/MyCommunities';
 import CommunityLayout from '@/Screens/CommunityLayout';
+import CreateCourses from '@/Screens/CommunityTabs/Courses/CreateCourses';
 
 export type StackNavigationProp<T> = any;
 export type RootStackParamList = {
@@ -44,7 +45,7 @@ const AppNavigator = () => {
           component={CreateCommunity}
           options={{ headerShown: false }}
         /> */}
-        <MainStack.Screen
+        {/* <MainStack.Screen
           name="MyCommunities"
           component={MyCommunities}
           options={{ headerShown: false }}
@@ -52,6 +53,11 @@ const AppNavigator = () => {
         <MainStack.Screen
           name="CommunityLayout"
           component={CommunityLayout}
+          options={{ headerShown: false }}
+        /> */}
+        <MainStack.Screen
+          name="CreateCourses"
+          component={CreateCourses}
           options={{ headerShown: false }}
         />
         {/* <MainStack.Screen name="SignIn" component={SignIn} />

@@ -14,6 +14,8 @@ export const COLORS = {
   green: '#00c853',
   modalBackdropColor: 'rgba(0, 0, 0, 0.5)',
   whiteLight: 'rgba(255, 255, 255, 0.15)',
+  loom: '#625df5',
+  vimeo: '#1ab7ea',
 
   // PRIMARY COLORS
   primary: '#1B7CFF',

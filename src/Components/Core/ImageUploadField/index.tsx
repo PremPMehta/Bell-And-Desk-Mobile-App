@@ -9,6 +9,7 @@ interface ImageUploadFieldProps {
   type?: string;
   label?: string;
   onPress?: () => void;
+  onRemoveImgPress?: () => void;
   error?: string;
   touched?: boolean;
   iconName?: string;
@@ -20,6 +21,7 @@ const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   type,
   label,
   onPress,
+  onRemoveImgPress,
   error,
   touched,
   iconName = 'Upload', // Default icon
@@ -40,7 +42,15 @@ const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
         activeOpacity={0.7}
       >
         {imageUri ? (
-          <Image source={{ uri: imageUri }} style={styles.imagePreview} />
+          <>
+            <Image source={{ uri: imageUri }} style={styles.imagePreview} />
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={onRemoveImgPress}
+            >
+              <Icon name="X" size={16} color={COLORS.white} />
+            </TouchableOpacity>
+          </>
         ) : (
           <View style={styles.content}>
             <Icon name={iconName} size={24} color={COLORS.white} />
@@ -114,5 +124,13 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: ms(8),
     resizeMode: 'cover',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: ms(10),
+    right: ms(10),
+    backgroundColor: COLORS.primary,
+    borderRadius: ms(20),
+    padding: ms(5),
   },
 });

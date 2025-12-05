@@ -19,8 +19,6 @@ const MyCommunities = () => {
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const onChangeSearch = query => setSearchQuery(query);
-
   const renderItem = ({ item }: { item: any }) => (
     <MyCommunityCard
       name={item.name}
@@ -49,25 +47,27 @@ const MyCommunities = () => {
       <View style={styles.searchContainer}>
         <SearchBar
           value={searchQuery}
-          onChangeText={onChangeSearch}
+          onChangeText={setSearchQuery}
           placeholder="Search communities..."
         />
       </View>
 
       {/* CATEGORY TABS */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.categoryScroll}
-        contentContainerStyle={styles.categoryContentContainer}
-      >
-        {categories.map((item, index) => (
-          <TouchableOpacity key={index} style={styles.categoryBtn}>
-            <Text style={styles.categoryBtnText}>{item}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      <View style={styles.scrollContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryContentContainer}
+        >
+          {categories.map((item, index) => (
+            <TouchableOpacity key={index} style={styles.categoryBtn}>
+              <Text style={styles.categoryBtnText}>{item}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
 
+      {/* COMMUNITIES LIST */}
       <FlatList
         data={MOCK_COMMUNITIES}
         renderItem={renderItem}

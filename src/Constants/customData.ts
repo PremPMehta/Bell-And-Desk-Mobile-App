@@ -275,3 +275,9 @@ export const cardData = [
     image: 'https://picsum.photos/600/400?random=4',
   },
 ];
+
+export const STEPS = [
+  { id: 1, title: 'Basic Information' },
+  { id: 2, title: 'Content Structure' },
+  { id: 3, title: 'Review & Publish' },
+];

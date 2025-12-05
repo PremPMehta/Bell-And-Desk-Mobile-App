@@ -1,6 +1,6 @@
 import CommunityAbout from '@/Screens/CommunityTabs/CommunityAbout';
 import CommunityBoard from '@/Screens/CommunityTabs/CommunityBoard';
-import CommunityCourses from '@/Screens/CommunityTabs/CommunityCourses';
+import CommunityCourses from '@/Screens/CommunityTabs/Courses/CommunityCourses';
 import CommunityLiveStream from '@/Screens/CommunityTabs/CommunityLiveStream';
 import CommunityMembers from '@/Screens/CommunityTabs/CommunityMembers';
 import CommunitySettings from '@/Screens/CommunityTabs/CommunitySettings';
@@ -22,7 +22,11 @@ interface Props {
   scrollEventThrottle?: number;
 }
 
-const CommunityMenuTabsContent = ({ selectedTab, onScroll, scrollEventThrottle }: Props) => {
+const CommunityMenuTabsContent = ({
+  selectedTab,
+  onScroll,
+  scrollEventThrottle,
+}: Props) => {
   const scrollProps = {
     onScroll,
     scrollEventThrottle,
