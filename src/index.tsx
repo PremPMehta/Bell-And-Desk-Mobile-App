@@ -3,6 +3,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import AppNavigator from './Navigation/AppNavigator';
+import Toast from 'react-native-toast-message';
 
 const AppWrapper = () => {
   return (
@@ -17,6 +18,7 @@ const App = () => {
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <AppWrapper />
+        <Toast />
       </GestureHandlerRootView>
     </SafeAreaProvider>
   );

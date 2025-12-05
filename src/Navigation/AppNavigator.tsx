@@ -45,7 +45,9 @@ const AppNavigator = () => {
           component={CreateCommunity}
           options={{ headerShown: false }}
         /> */}
-        {/* <MainStack.Screen
+
+        {/* Combined screens */}
+        <MainStack.Screen
           name="MyCommunities"
           component={MyCommunities}
           options={{ headerShown: false }}
@@ -54,12 +56,13 @@ const AppNavigator = () => {
           name="CommunityLayout"
           component={CommunityLayout}
           options={{ headerShown: false }}
-        /> */}
-        <MainStack.Screen
+        />
+
+        {/* <MainStack.Screen
           name="CreateCourses"
           component={CreateCourses}
           options={{ headerShown: false }}
-        />
+        /> */}
         {/* <MainStack.Screen name="SignIn" component={SignIn} />
       <MainStack.Screen name="SignUp" component={SignUp} />
       <MainStack.Screen name="ForgotPassword" component={ForgotPassword} /> */}

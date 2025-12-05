@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import React from 'react';
 import Modal from 'react-native-modal';
 import { COLORS } from '@/Assets/Theme/colors';
@@ -18,6 +18,7 @@ interface Props {
   onChapterDescriptionChange: (text: string) => void;
   chapterDescriptionError: string;
   onAddChapter: () => void;
+  buttonLabel?: string;
 }
 
 const AddChapterModal: React.FC<Props> = ({
@@ -32,7 +33,8 @@ const AddChapterModal: React.FC<Props> = ({
   onChapterDescriptionChange,
   chapterDescriptionError,
 
-  onAddChapter = () => {},
+  onAddChapter = () => { },
+  buttonLabel = 'Add Chapter',
 }) => {
   return (
     // <View>
@@ -51,6 +53,7 @@ const AddChapterModal: React.FC<Props> = ({
       backdropTransitionInTiming={1000}
       backdropTransitionOutTiming={1000}
       style={styles.modalContainer}
+      avoidKeyboard={true}
     >
       <View style={styles.mainModalView}>
         {/* <View style={styles.modalPanDownToClose} /> */}
@@ -61,46 +64,48 @@ const AddChapterModal: React.FC<Props> = ({
           </TouchableOpacity>
         </View>
 
-        <TextInputField
-          label="Chapter title"
-          placeholder="Enter chapter title"
-          value={chapterTitle}
-          onChangeText={onChapterTitleChange}
-          error={chapterError}
-          touched={!!chapterError}
-          style={styles.inputStyle}
-          theme={{
-            colors: {
-              background: COLORS.cardBG,
-              text: COLORS.white,
-              placeholder: COLORS.outlineGrey,
-            },
-          }}
-          textColor={COLORS.white}
-          outlineColor={COLORS.outlineGrey}
-          activeOutlineColor={COLORS.white}
-        />
-        <TextInputField
-          label="Chapter Description"
-          placeholder="Enter chapter description"
-          value={chapterDescription}
-          onChangeText={onChapterDescriptionChange}
-          multiline
-          numberOfLines={4}
-          error={chapterDescriptionError}
-          touched={!!chapterDescriptionError}
-          style={[styles.inputStyle, styles.descriptionStyle]}
-          theme={{
-            colors: {
-              background: COLORS.cardBG,
-              text: COLORS.white,
-              placeholder: COLORS.outlineGrey,
-            },
-          }}
-          textColor={COLORS.white}
-          outlineColor={COLORS.outlineGrey}
-          activeOutlineColor={COLORS.white}
-        />
+        <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+          <TextInputField
+            label="Chapter title"
+            placeholder="Enter chapter title"
+            value={chapterTitle}
+            onChangeText={onChapterTitleChange}
+            error={chapterError}
+            touched={!!chapterError}
+            style={styles.inputStyle}
+            theme={{
+              colors: {
+                background: COLORS.cardBG,
+                text: COLORS.white,
+                placeholder: COLORS.outlineGrey,
+              },
+            }}
+            textColor={COLORS.white}
+            outlineColor={COLORS.outlineGrey}
+            activeOutlineColor={COLORS.white}
+          />
+          <TextInputField
+            label="Chapter Description"
+            placeholder="Enter chapter description"
+            value={chapterDescription}
+            onChangeText={onChapterDescriptionChange}
+            multiline
+            numberOfLines={4}
+            error={chapterDescriptionError}
+            touched={!!chapterDescriptionError}
+            style={[styles.inputStyle, styles.descriptionStyle]}
+            theme={{
+              colors: {
+                background: COLORS.cardBG,
+                text: COLORS.white,
+                placeholder: COLORS.outlineGrey,
+              },
+            }}
+            textColor={COLORS.white}
+            outlineColor={COLORS.outlineGrey}
+            activeOutlineColor={COLORS.white}
+          />
+        </ScrollView>
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity
@@ -113,7 +118,7 @@ const AddChapterModal: React.FC<Props> = ({
             style={styles.addChapterButton}
             onPress={onAddChapter}
           >
-            <Text style={styles.addChapterButtonText}>Add Chapter</Text>
+            <Text style={styles.addChapterButtonText}>{buttonLabel}</Text>
           </TouchableOpacity>
         </View>
       </View>

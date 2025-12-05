@@ -281,3 +281,20 @@ export const STEPS = [
   { id: 2, title: 'Content Structure' },
   { id: 3, title: 'Review & Publish' },
 ];
+
+export const TARGET_AUDIENCE_DATA = [
+  { id: '1', value: 'Beginner' },
+  { id: '2', value: 'Intermediate' },
+  { id: '3', value: 'Advanced' },
+];
+
+export const CATEGORY_DATA = [
+  { id: '1', value: 'Technology' },
+  { id: '2', value: 'Business' },
+  { id: '3', value: 'Art' },
+];
+
+export const COURSE_TYPE_DATA = [
+  { id: '1', value: 'Free' },
+  { id: '2', value: 'Paid' },
+];

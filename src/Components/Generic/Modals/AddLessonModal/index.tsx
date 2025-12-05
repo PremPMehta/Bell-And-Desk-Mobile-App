@@ -30,6 +30,7 @@ interface Props {
   onVideoLinkChange: (text: string) => void;
 
   onAddLesson: () => void;
+  buttonLabel?: string;
 }
 
 const AddLessonModal: React.FC<Props> = ({
@@ -52,7 +53,8 @@ const AddLessonModal: React.FC<Props> = ({
   videoLink,
   onVideoLinkChange,
 
-  onAddLesson = () => { },
+  onAddLesson = () => {},
+  buttonLabel = 'Add Lesson',
 }) => {
   const renderVideoSourceCard = (
     source: VideoSource,
@@ -100,6 +102,7 @@ const AddLessonModal: React.FC<Props> = ({
       backdropTransitionInTiming={1000}
       backdropTransitionOutTiming={1000}
       style={styles.modalContainer}
+      avoidKeyboard={true}
     >
       <View style={styles.mainModalView}>
         {/* <View style={styles.modalPanDownToClose} /> */}
@@ -115,8 +118,8 @@ const AddLessonModal: React.FC<Props> = ({
           contentContainerStyle={{ paddingBottom: 20 }}
         >
           <TextInputField
-            label="Chapter title"
-            placeholder="Enter chapter title"
+            label="Lesson title"
+            placeholder="Enter Lesson title"
             value={lessonTitle}
             onChangeText={onLessonTitleChange}
             error={lessonError}
@@ -134,8 +137,8 @@ const AddLessonModal: React.FC<Props> = ({
             activeOutlineColor={COLORS.white}
           />
           <TextInputField
-            label="Chapter Description"
-            placeholder="Enter chapter description"
+            label="Lesson Description"
+            placeholder="Enter Lesson description"
             value={lessonDescription}
             onChangeText={onLessonDescriptionChange}
             multiline
@@ -204,8 +207,9 @@ const AddLessonModal: React.FC<Props> = ({
           {videoSource !== 'none' && (
             <View style={{ marginTop: 16 }}>
               <TextInputField
-                label={`${videoSource.charAt(0).toUpperCase() + videoSource.slice(1)
-                  } Video URL`}
+                label={`${
+                  videoSource.charAt(0).toUpperCase() + videoSource.slice(1)
+                } Video URL`}
                 placeholder={`Paste your ${videoSource} video URL here`}
                 value={videoLink}
                 onChangeText={onVideoLinkChange}
@@ -221,7 +225,7 @@ const AddLessonModal: React.FC<Props> = ({
                 textColor={COLORS.white}
                 outlineColor={COLORS.outlineGrey}
                 activeOutlineColor={COLORS.white}
-              // Add footer text if needed like "Examples: https://..."
+                // Add footer text if needed like "Examples: https://..."
               />
             </View>
           )}
@@ -238,7 +242,7 @@ const AddLessonModal: React.FC<Props> = ({
             style={styles.addChapterButton}
             onPress={onAddLesson}
           >
-            <Text style={styles.addChapterButtonText}>Add Lesson</Text>
+            <Text style={styles.addChapterButtonText}>{buttonLabel}</Text>
           </TouchableOpacity>
         </View>
       </View>

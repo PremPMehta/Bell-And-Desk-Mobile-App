@@ -120,6 +120,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
+  // Review & Publish Container
+  publishContainer: {},
+  publishText: {
+    ...THEME.fontStyle.h3Bold,
+  },
+
   inputStyle: {
     backgroundColor: COLORS.cardBG,
   },
@@ -165,6 +171,19 @@ const styles = StyleSheet.create({
   nextButtonText: {
     ...THEME.fontStyle.h4Regular,
     marginRight: ms(8),
+  },
+  publishButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: ms(8),
+    paddingHorizontal: ms(24),
+    paddingVertical: ms(10),
+    borderRadius: ms(24),
+    borderWidth: 1,
+    borderColor: COLORS.white,
+  },
+  publishButtonText: {
+    ...THEME.fontStyle.h4Regular,
   },
 
   // Chapter Card Styles
@@ -252,6 +271,81 @@ const styles = StyleSheet.create({
   videoSubtitle: {
     ...THEME.fontStyle.h6Regular,
     color: '#666',
+  },
+
+  // Review & Publish Styles
+  reviewContainer: {
+    gap: ms(20),
+    marginBottom: ms(20),
+  },
+  reviewCard: {
+    backgroundColor: COLORS.cardBG,
+    borderRadius: ms(12),
+    padding: ms(20),
+  },
+  reviewCardTitle: {
+    ...THEME.fontStyle.h3Bold,
+    color: COLORS.white,
+    marginBottom: ms(16),
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#333',
+    marginBottom: ms(16),
+  },
+  reviewSection: {
+    marginBottom: ms(16),
+  },
+  reviewLabel: {
+    ...THEME.fontStyle.h5Regular,
+    color: COLORS.outlineGrey,
+    marginBottom: ms(8),
+  },
+  reviewValueTitle: {
+    ...THEME.fontStyle.h4Bold,
+    color: COLORS.white,
+  },
+  reviewValueDescription: {
+    ...THEME.fontStyle.h6Regular,
+    color: COLORS.white,
+    lineHeight: ms(22),
+  },
+  reviewRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: ms(10),
+  },
+  reviewColumn: {
+    flex: 1,
+  },
+  reviewChip: {
+    borderWidth: 1,
+    borderColor: COLORS.outlineGrey,
+    borderRadius: ms(20),
+    paddingVertical: ms(6),
+    paddingHorizontal: ms(12),
+    alignSelf: 'flex-start',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reviewChipText: {
+    ...THEME.fontStyle.h6Regular,
+    color: COLORS.white,
+    fontSize: ms(10),
+  },
+  structureRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: ms(16),
+  },
+  structureLabel: {
+    ...THEME.fontStyle.h5Regular,
+    color: COLORS.outlineGrey,
+  },
+  structureValue: {
+    ...THEME.fontStyle.h4Bold,
+    color: COLORS.white,
   },
 });
 

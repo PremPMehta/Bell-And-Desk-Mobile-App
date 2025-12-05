@@ -8,27 +8,20 @@ import { useNavigation } from '@/Hooks/Utils/use-navigation';
 import TextInputField from '@/Components/Core/TextInputField';
 import ImageUploadField from '@/Components/Core/ImageUploadField';
 import CommonListModal from '@/Components/Generic/Modals/CommonListModal';
-import { STEPS } from '@/Constants/customData';
+import {
+  CATEGORY_DATA,
+  COURSE_TYPE_DATA,
+  STEPS,
+  TARGET_AUDIENCE_DATA,
+} from '@/Constants/customData';
 import { launchImageLibrary } from 'react-native-image-picker';
 import AddChapterModal from '@/Components/Generic/Modals/AddChapterModal';
-import AddLessonModal, { VideoSource } from '@/Components/Generic/Modals/AddLessonModal';
-
-const TARGET_AUDIENCE_DATA = [
-  { id: '1', value: 'Beginner' },
-  { id: '2', value: 'Intermediate' },
-  { id: '3', value: 'Advanced' },
-];
-
-const CATEGORY_DATA = [
-  { id: '1', value: 'Technology' },
-  { id: '2', value: 'Business' },
-  { id: '3', value: 'Art' },
-];
-
-const COURSE_TYPE_DATA = [
-  { id: '1', value: 'Free' },
-  { id: '2', value: 'Paid' },
-];
+import AddLessonModal, {
+  VideoSource,
+} from '@/Components/Generic/Modals/AddLessonModal';
+import ReviewAndPublish from './ReviewAndPublish';
+import ToastModule from '@/Components/Core/Toast';
+import CreateCoursesStepper from '@/Components/Core/CreateCoursesStepper';
 
 const CreateCourses = () => {
   const navigation = useNavigation();
@@ -55,10 +48,22 @@ const CreateCourses = () => {
   const [modalChapterError, setModalChapterError] = useState('');
   const [modalChapterDescriptionError, setModalChapterDescriptionError] =
     useState('');
+  const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
 
   // Lesson State
-  const [modalLessonVideoSource, setModalLessonVideoSource] = useState<VideoSource>('none');
+  const [selectedChapterId, setSelectedChapterId] = useState<string | null>(
+    null,
+  );
+  const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
+  const [modalLessonTitle, setModalLessonTitle] = useState('');
+  const [modalLessonDescription, setModalLessonDescription] = useState('');
+  const [modalLessonError, setModalLessonError] = useState('');
+  const [modalLessonDescriptionError, setModalLessonDescriptionError] =
+    useState('');
+  const [modalLessonVideoSource, setModalLessonVideoSource] =
+    useState<VideoSource>('none');
   const [modalLessonVideoLink, setModalLessonVideoLink] = useState('');
+  const [modalLessonContent, setModalLessonContent] = useState('');
 
   const validateStep1 = () => {
     const newErrors: { [key: string]: string } = {};
@@ -78,6 +83,12 @@ const CreateCourses = () => {
       if (validateStep1()) {
         setCurrentStep(currentStep + 1);
       }
+    } else if (currentStep === 2) {
+      if (chapters.length === 0) {
+        ToastModule.successTop({ msg: 'At least one chapter is required' });
+        return;
+      }
+      setCurrentStep(currentStep + 1);
     } else if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     }
@@ -89,6 +100,14 @@ const CreateCourses = () => {
     } else {
       navigation.goBack();
     }
+  };
+
+  const handlePublishCourse = () => {
+    // Handle publishing the course
+    console.log('Publishing course...');
+    ToastModule.successTop({
+      msg: 'Course published successfully',
+    });
   };
 
   const handleImageUpload = async () => {
@@ -164,16 +183,22 @@ const CreateCourses = () => {
     setModalChapterDescription('');
     setModalChapterError('');
     setModalChapterDescriptionError('');
+    setEditingChapterId(null);
   };
 
   const handleAddLessonCancel = () => {
     setIsAddLessonModalVisible(false);
-    setModalChapterTitle('');
-    setModalChapterDescription('');
-    setModalChapterError('');
-    setModalChapterDescriptionError('');
+    setModalLessonTitle('');
+    setModalLessonDescription('');
+    setModalLessonError('');
+    setModalLessonDescriptionError('');
     setModalLessonVideoSource('none');
     setModalLessonVideoLink('');
+    setModalLessonContent('');
+    setModalLessonVideoLink('');
+    setModalLessonContent('');
+    setSelectedChapterId(null);
+    setEditingLessonId(null);
   };
 
   const handleAddChapterSubmit = () => {
@@ -188,23 +213,133 @@ const CreateCourses = () => {
     }
 
     if (isValid) {
-      const newChapter = {
-        id: Date.now().toString(),
-        title: modalChapterTitle,
-        description: modalChapterDescription,
-        videos: [], // Placeholder for videos
-      };
-      setChapters([...chapters, newChapter]);
+      if (editingChapterId) {
+        setChapters(prevChapters =>
+          prevChapters.map(chapter =>
+            chapter.id === editingChapterId
+              ? {
+                  ...chapter,
+                  title: modalChapterTitle,
+                  description: modalChapterDescription,
+                }
+              : chapter,
+          ),
+        );
+      } else {
+        const newChapter = {
+          id: Date.now().toString(),
+          title: modalChapterTitle,
+          description: modalChapterDescription,
+          videos: [], // Placeholder for videos
+        };
+        setChapters([...chapters, newChapter]);
+      }
       handleAddChapterCancel();
     }
   };
 
-  const handleAddLesson = () => {
+  const handleAddLesson = (chapterId: string) => {
+    setSelectedChapterId(chapterId);
     setIsAddLessonModalVisible(true);
+  };
+
+  const handleAddLessonSubmit = () => {
+    let isValid = true;
+    if (!modalLessonTitle.trim()) {
+      setModalLessonError('Lesson title is required');
+      isValid = false;
+    }
+    if (!modalLessonDescription.trim()) {
+      setModalLessonDescriptionError('Lesson description is required');
+      isValid = false;
+    }
+
+    if (isValid && selectedChapterId) {
+      if (editingLessonId) {
+        setChapters(prevChapters =>
+          prevChapters.map(chapter => {
+            if (chapter.id === selectedChapterId) {
+              return {
+                ...chapter,
+                videos: chapter.videos.map((video: any) =>
+                  video.id === editingLessonId
+                    ? {
+                        ...video,
+                        title: modalLessonTitle,
+                        description: modalLessonDescription,
+                        content: modalLessonContent,
+                        videoSource: modalLessonVideoSource,
+                        videoLink: modalLessonVideoLink,
+                      }
+                    : video,
+                ),
+              };
+            }
+            return chapter;
+          }),
+        );
+      } else {
+        const newLesson = {
+          id: Date.now().toString(),
+          title: modalLessonTitle,
+          description: modalLessonDescription,
+          content: modalLessonContent,
+          videoSource: modalLessonVideoSource,
+          videoLink: modalLessonVideoLink,
+        };
+
+        setChapters(prevChapters =>
+          prevChapters.map(chapter => {
+            if (chapter.id === selectedChapterId) {
+              return {
+                ...chapter,
+                videos: [...chapter.videos, newLesson],
+              };
+            }
+            return chapter;
+          }),
+        );
+      }
+      handleAddLessonCancel();
+    }
   };
 
   const handleDeleteChapter = (id: string) => {
     setChapters(chapters.filter(chapter => chapter.id !== id));
+  };
+
+  const handleDeleteLesson = (chapterId: string, lessonId: string) => {
+    setChapters(prevChapters =>
+      prevChapters.map(chapter => {
+        if (chapter.id === chapterId) {
+          return {
+            ...chapter,
+            videos: chapter.videos.filter(
+              (video: any) => video.id !== lessonId,
+            ),
+          };
+        }
+        return chapter;
+      }),
+    );
+  };
+
+  const handleEditLesson = (chapterId: string, lesson: any) => {
+    setSelectedChapterId(chapterId);
+    setEditingLessonId(lesson.id);
+    setModalLessonTitle(lesson.title);
+    setModalLessonDescription(lesson.description);
+    setModalLessonContent(lesson.content);
+    setModalLessonVideoSource(lesson.videoSource);
+    setModalLessonVideoLink(lesson.videoLink);
+    setIsAddLessonModalVisible(true);
+  };
+
+  const handleEditChapter = (chapter: any) => {
+    setModalChapterTitle(chapter.title);
+    setModalChapterDescription(chapter.description);
+    setEditingChapterId(chapter.id);
+    setIsAddChapterModalVisible(true);
   };
 
   const renderChapterItem = (chapter: any, index: number) => {
@@ -213,7 +348,10 @@ const CreateCourses = () => {
         <View style={styles.chapterHeader}>
           <Text style={styles.chapterTitleText}>Chapter {index + 1}</Text>
           <View style={styles.chapterActionButtons}>
-            <TouchableOpacity style={styles.iconButton}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => handleEditChapter(chapter)}
+            >
               <Icon name="Pencil" size={16} color={COLORS.white} />
             </TouchableOpacity>
             <TouchableOpacity
@@ -233,43 +371,57 @@ const CreateCourses = () => {
             <Text style={styles.videoSectionTitle}>Video List</Text>
             <TouchableOpacity
               style={styles.addVideoButton}
-              onPress={handleAddLesson}
+              onPress={() => handleAddLesson(chapter.id)}
             >
               <Icon name="CirclePlus" size={14} color={COLORS.white} />
               <Text style={styles.addVideoText}>Add Lesson</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Placeholder for video list - currently empty as per requirement to just show structure */}
-          {/* You can add dummy videos here if needed to match the screenshot exactly */}
-          <View style={styles.videoItem}>
-            <View style={styles.videoInfo}>
-              <Text style={styles.videoTitle}>1. Corporis et quasi co</Text>
-              <Text style={styles.videoSubtitle}>youtube video</Text>
+          {chapter.videos.length === 0 ? (
+            <View style={{ paddingVertical: 10 }}>
+              <Text style={{ color: COLORS.outlineGrey, fontSize: 12 }}>
+                0 videos
+              </Text>
             </View>
-            <View style={styles.chapterActionButtons}>
-              <TouchableOpacity style={styles.iconButton}>
-                <Icon name="Pencil" size={16} color={COLORS.white} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.iconButton}>
-                <Icon name="Trash2" size={16} color={COLORS.white} />
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View style={[styles.videoItem, { borderBottomWidth: 0 }]}>
-            <View style={styles.videoInfo}>
-              <Text style={styles.videoTitle}>2. Corporis et quasi co</Text>
-              <Text style={styles.videoSubtitle}>youtube video</Text>
-            </View>
-            <View style={styles.chapterActionButtons}>
-              <TouchableOpacity style={styles.iconButton}>
-                <Icon name="Pencil" size={16} color={COLORS.white} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.iconButton}>
-                <Icon name="Trash2" size={16} color={COLORS.white} />
-              </TouchableOpacity>
-            </View>
-          </View>
+          ) : (
+            chapter.videos.map((video: any, vIndex: number) => (
+              <View
+                key={video.id}
+                style={[
+                  styles.videoItem,
+                  vIndex === chapter.videos.length - 1 && {
+                    borderBottomWidth: 0,
+                  },
+                ]}
+              >
+                <View style={styles.videoInfo}>
+                  <Text style={styles.videoTitle}>
+                    {vIndex + 1}. {video.title}
+                  </Text>
+                  <Text style={styles.videoSubtitle}>
+                    {video.videoSource !== 'none'
+                      ? `${video.videoSource} video`
+                      : 'No video'}
+                  </Text>
+                </View>
+                <View style={styles.chapterActionButtons}>
+                  <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={() => handleEditLesson(chapter.id, video)}
+                  >
+                    <Icon name="Pencil" size={16} color={COLORS.white} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={() => handleDeleteLesson(chapter.id, video.id)}
+                  >
+                    <Icon name="Trash2" size={16} color={COLORS.white} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))
+          )}
         </View>
       </View>
     );
@@ -286,7 +438,7 @@ const CreateCourses = () => {
           <View style={{ marginRight: 8 }}>
             <Icon name="ShieldCheck" size={24} color={COLORS.primary} />
           </View>
-          <View>
+          <View style={{ marginRight: 100 }}>
             <Text style={styles.headerTitle}>CryptoManji Academy</Text>
             <Text style={{ color: COLORS.outlineGrey, fontSize: 12 }}>
               Create Course
@@ -299,7 +451,8 @@ const CreateCourses = () => {
       </View>
 
       {/* Stepper */}
-      {renderStepper()}
+      <CreateCoursesStepper currentStep={currentStep} steps={STEPS} />
+      {/* {renderStepper()} */}
 
       {/* Content */}
       <ScrollView style={styles.contentContainer}>
@@ -447,7 +600,10 @@ const CreateCourses = () => {
 
             <AddChapterModal
               isModalVisible={isAddChapterModalVisible}
-              headerLabel="Add New Chapter"
+              headerLabel={
+                editingChapterId ? 'Edit Chapter' : 'Add New Chapter'
+              }
+              buttonLabel={editingChapterId ? 'Update Chapter' : 'Add Chapter'}
               onHandleCancel={handleAddChapterCancel}
               chapterTitle={modalChapterTitle}
               onChapterTitleChange={text => {
@@ -466,38 +622,41 @@ const CreateCourses = () => {
             />
             <AddLessonModal
               isModalVisible={isAddLessonModalVisible}
-              headerLabel="Add Lesson"
+              headerLabel={editingLessonId ? 'Edit Lesson' : 'Add Lesson'}
+              buttonLabel={editingLessonId ? 'Update Lesson' : 'Add Lesson'}
               onHandleCancel={handleAddLessonCancel}
-              lessonTitle={modalChapterTitle}
+              lessonTitle={modalLessonTitle}
               onLessonTitleChange={text => {
-                setModalChapterTitle(text);
-                if (modalChapterError) setModalChapterError('');
+                setModalLessonTitle(text);
+                if (modalLessonError) setModalLessonError('');
               }}
-              lessonError={modalChapterError}
-              lessonDescription={modalChapterDescription}
+              lessonError={modalLessonError}
+              lessonDescription={modalLessonDescription}
               onLessonDescriptionChange={text => {
-                setModalChapterDescription(text);
-                if (modalChapterDescriptionError)
-                  setModalChapterDescriptionError('');
+                setModalLessonDescription(text);
+                if (modalLessonDescriptionError)
+                  setModalLessonDescriptionError('');
               }}
-              lessonDescriptionError={modalChapterDescriptionError}
-
-              lessonContentValue="" // Placeholder
-              onLessonContentChange={() => { }} // Placeholder
-
+              lessonDescriptionError={modalLessonDescriptionError}
+              lessonContentValue={modalLessonContent}
+              onLessonContentChange={setModalLessonContent}
               videoSource={modalLessonVideoSource}
               onVideoSourceChange={setModalLessonVideoSource}
               videoLink={modalLessonVideoLink}
               onVideoLinkChange={setModalLessonVideoLink}
-
-              onAddLesson={handleAddChapterSubmit}
+              onAddLesson={handleAddLessonSubmit}
             />
           </>
         )}
         {currentStep === 3 && (
-          <View style={{ alignItems: 'center', marginTop: 50 }}>
-            <Text style={{ color: COLORS.white }}>Review & Publish Step</Text>
-          </View>
+          <ReviewAndPublish
+            title={title}
+            description={description}
+            category={category}
+            targetAudience={targetAudience}
+            courseType={courseType}
+            chapters={chapters}
+          />
         )}
       </ScrollView>
 
@@ -509,10 +668,24 @@ const CreateCourses = () => {
             <Text style={styles.backButtonText}>Back</Text>
           </TouchableOpacity>
         )}
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+        {currentStep !== 3 ? (
+          <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+            <Text style={styles.nextButtonText}>Next</Text>
+            <Icon name="ChevronRight" size={20} color={COLORS.white} />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.publishButton}
+            onPress={handlePublishCourse}
+          >
+            <Icon name="ArrowUpFromLine" size={20} color={COLORS.white} />
+            <Text style={styles.publishButtonText}>Publish Course</Text>
+          </TouchableOpacity>
+        )}
+        {/* <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
           <Text style={styles.nextButtonText}>Next</Text>
           <Icon name="ChevronRight" size={20} color={COLORS.white} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </SafeAreaView>
   );
