@@ -298,3 +298,65 @@ export const COURSE_TYPE_DATA = [
   { id: '1', value: 'Free' },
   { id: '2', value: 'Paid' },
 ];
+
+export const MEMBER_FILTER_TABS = [
+  'All',
+  'Active',
+  'Inactive',
+  'Banned',
+  'Subscribers',
+  'Pending Approval',
+];
+
+export const MOCK_MEMBERS = [
+  {
+    id: '1',
+    name: 'Todd Boyle',
+    email: 'qufuz@mailinator.com',
+    joinedDate: 'Nov 19, 2025, 05:47 PM',
+    status: 'Active',
+    role: 'Subscriber',
+    profileImage: '',
+    type: 'Free',
+  },
+  {
+    id: '2',
+    name: 'Todd Boyle',
+    email: 'qufuz@mailinator.com',
+    joinedDate: 'Nov 19, 2025, 05:47 PM',
+    status: 'Active',
+    role: 'Owner',
+    profileImage: '',
+    type: 'Free',
+  },
+  {
+    id: '3',
+    name: 'Jane Doe',
+    email: 'jane@example.com',
+    joinedDate: 'Dec 01, 2025, 10:00 AM',
+    status: 'Inactive',
+    role: 'Subscriber',
+    profileImage: '',
+    type: 'Free',
+  },
+  {
+    id: '4',
+    name: 'John Smith',
+    email: 'john@example.com',
+    joinedDate: 'Dec 05, 2025, 02:30 PM',
+    status: 'Banned',
+    role: 'Owner',
+    profileImage: '',
+    type: 'Free',
+  },
+  {
+    id: '5',
+    name: 'Alice Johnson',
+    email: 'alice@example.com',
+    joinedDate: 'Jan 15, 2026, 09:15 AM',
+    status: 'Active',
+    role: 'Subscriber',
+    profileImage: '',
+    type: 'Free',
+  },
+];
