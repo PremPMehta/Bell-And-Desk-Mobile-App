@@ -21,6 +21,7 @@ type ToastType = 'error' | 'success' | 'info' | 'warning';
 // Define the function signature for each toast function
 interface ToastOptions {
   msg: string;
+  ref?: any;
 }
 
 // Helper function to show toast with a specific type and position
@@ -32,8 +33,9 @@ const showToast = (
   color: string,
   topOffset: number,
   bottomOffset: number,
+  ref?: any,
 ) => {
-  Toast.show({
+  const toastParams = {
     type,
     position: position as ToastPosition,
     text1: title,
@@ -43,41 +45,47 @@ const showToast = (
     topOffset,
     bottomOffset,
     style: { backgroundColor: color },
-  } as any);
+  } as any;
+
+  if (ref && ref.current) {
+    ref.current.show(toastParams);
+  } else {
+    Toast.show(toastParams);
+  }
 };
 
 const ToastModule = {
-  errorTop: ({ msg }: ToastOptions): ReactNode => {
-    showToast('error', 'top', 'Error', msg, COLOR_ERROR, 30, 40);
+  errorTop: ({ msg, ref }: ToastOptions): ReactNode => {
+    showToast('error', 'top', 'Error', msg, COLOR_ERROR, Y_OFFSET_TOP, 40, ref);
     return <></>;
   },
 
-  errorBottom: ({ msg }: ToastOptions): ReactNode => {
-    showToast('error', 'bottom', 'Error', msg, COLOR_ERROR, 30, 40);
+  errorBottom: ({ msg, ref }: ToastOptions): ReactNode => {
+    showToast('error', 'bottom', 'Error', msg, COLOR_ERROR, 30, 40, ref);
     return <></>;
   },
 
-  error: ({ msg }: ToastOptions): ReactNode => {
-    showToast('error', 'bottom', 'Error', msg, COLOR_ERROR, 30, 40);
+  error: ({ msg, ref }: ToastOptions): ReactNode => {
+    showToast('error', 'bottom', 'Error', msg, COLOR_ERROR, 30, 40, ref);
     return <></>;
   },
 
-  showTop: ({ msg }: ToastOptions): ReactNode => {
-    showToast('info', 'top', 'Info', msg, COLOR_INFO, Y_OFFSET_TOP, 40);
+  showTop: ({ msg, ref }: ToastOptions): ReactNode => {
+    showToast('info', 'top', 'Info', msg, COLOR_INFO, Y_OFFSET_TOP, 40, ref);
     return <></>;
   },
 
-  showBottom: ({ msg }: ToastOptions): ReactNode => {
-    showToast('info', 'bottom', 'Info', msg, COLOR_INFO, 30, 40);
+  showBottom: ({ msg, ref }: ToastOptions): ReactNode => {
+    showToast('info', 'bottom', 'Info', msg, COLOR_INFO, 30, 40, ref);
     return <></>;
   },
 
-  show: ({ msg }: ToastOptions): ReactNode => {
-    showToast('info', 'center', 'Info', msg, COLOR_INFO, 30, 40);
+  show: ({ msg, ref }: ToastOptions): ReactNode => {
+    showToast('info', 'center', 'Info', msg, COLOR_INFO, 30, 40, ref);
     return <></>;
   },
 
-  successTop: ({ msg }: ToastOptions): ReactNode => {
+  successTop: ({ msg, ref }: ToastOptions): ReactNode => {
     showToast(
       'success',
       'top',
@@ -86,21 +94,22 @@ const ToastModule = {
       COLOR_SUCCESS,
       Y_OFFSET_TOP,
       40,
+      ref,
     );
     return <></>;
   },
 
-  successBottom: ({ msg }: ToastOptions): ReactNode => {
-    showToast('success', 'bottom', 'Success', msg, COLOR_SUCCESS, 30, 40);
+  successBottom: ({ msg, ref }: ToastOptions): ReactNode => {
+    showToast('success', 'bottom', 'Success', msg, COLOR_SUCCESS, 30, 40, ref);
     return <></>;
   },
 
-  success: ({ msg }: ToastOptions): ReactNode => {
-    showToast('success', 'center', 'Success', msg, COLOR_SUCCESS, 30, 40);
+  success: ({ msg, ref }: ToastOptions): ReactNode => {
+    showToast('success', 'center', 'Success', msg, COLOR_SUCCESS, 30, 40, ref);
     return <></>;
   },
 
-  warnTop: ({ msg }: ToastOptions): ReactNode => {
+  warnTop: ({ msg, ref }: ToastOptions): ReactNode => {
     showToast(
       'warning',
       'top',
@@ -109,22 +118,23 @@ const ToastModule = {
       COLOR_WARNING,
       Y_OFFSET_TOP,
       40,
+      ref,
     );
     return <></>;
   },
 
-  warnBottom: ({ msg }: ToastOptions): ReactNode => {
-    showToast('warning', 'bottom', 'Warning', msg, COLOR_WARNING, 30, 40);
+  warnBottom: ({ msg, ref }: ToastOptions): ReactNode => {
+    showToast('warning', 'bottom', 'Warning', msg, COLOR_WARNING, 30, 40, ref);
     return <></>;
   },
 
-  warn: ({ msg }: ToastOptions): ReactNode => {
-    showToast('warning', 'center', 'Warning', msg, COLOR_WARNING, 30, 40);
+  warn: ({ msg, ref }: ToastOptions): ReactNode => {
+    showToast('warning', 'center', 'Warning', msg, COLOR_WARNING, 30, 40, ref);
     return <></>;
   },
 
-  exitApp: ({ msg }: ToastOptions): ReactNode => {
-    showToast('info', 'bottom', 'Exit App', msg, COLOR_INFO, 30, 40);
+  exitApp: ({ msg, ref }: ToastOptions): ReactNode => {
+    showToast('info', 'bottom', 'Exit App', msg, COLOR_INFO, 30, 40, ref);
     return <></>;
   },
 };

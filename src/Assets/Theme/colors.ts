@@ -34,4 +34,5 @@ export const COLORS = {
   modalBG: '#2D2D2D',
   newModalBG: '#1C1C1C',
   uploadBG: '#303030',
+  innerCardBG: '#2A2A2A',
 };

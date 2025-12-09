@@ -1,10 +1,13 @@
-import { View, Text, Animated, TouchableOpacity } from 'react-native';
+import { View, Text, Animated, Pressable } from 'react-native';
 import React from 'react';
 import Icon from '@/Components/Core/Icons';
 import { COLORS } from '@/Assets/Theme/colors';
-import { ms } from '@/Assets/Theme/fontStyle';
 import PrimaryButton from '@/Components/Core/PrimaryButton';
 import styles from './style';
+import { useAtom } from 'jotai';
+import { createPostVisibleAtom, postsAtom } from '@/Jotai/Atoms';
+import PostItem from '@/Components/Generic/PostItem';
+import MediaPreviewModal from '@/Components/Generic/Modals/MediaPreviewModal';
 
 interface Props {
   onScroll?: (...args: any[]) => void;
@@ -13,12 +16,17 @@ interface Props {
 
 const CommunityBoard = ({ onScroll, scrollEventThrottle }: Props) => {
   const [postText, setPostText] = React.useState('');
+  const [posts] = useAtom(postsAtom);
+  const [, setCreatePostVisible] = useAtom(createPostVisibleAtom);
 
   const renderActionBtn = (iconName: string, label: string) => (
-    <TouchableOpacity style={styles.actionBtn}>
+    <View
+      style={styles.actionBtn}
+    // onPress={() => setCreatePostVisible(true)}
+    >
       <Icon name={iconName} size={18} color={COLORS.white} />
       <Text style={styles.actionBtnText}>{label}</Text>
-    </TouchableOpacity>
+    </View>
   );
 
   return (
@@ -35,7 +43,10 @@ const CommunityBoard = ({ onScroll, scrollEventThrottle }: Props) => {
         </Text>
 
         {/* Create Post Section */}
-        <View style={styles.createPostCard}>
+        <Pressable
+          style={styles.createPostCard}
+          onPress={() => setCreatePostVisible(true)}
+        >
           <View style={styles.inputRow}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>S</Text>
@@ -50,23 +61,32 @@ const CommunityBoard = ({ onScroll, scrollEventThrottle }: Props) => {
             {renderActionBtn('FileText', 'Write article')}
             {renderActionBtn('ChartNoAxesColumn', 'Poll')}
           </View>
-        </View>
+        </Pressable>
+
+        {/* Posts List */}
+        {posts.map(post => (
+          <PostItem key={post.id} post={post} />
+        ))}
 
         {/* Empty State */}
-        <View style={styles.emptyStateCard}>
-          <Icon name="MessageSquareText" size={48} color={COLORS.white} />
-          <Text style={styles.emptyStateTitle}>Start the Conversation</Text>
-          <Text style={styles.emptyStateSubtitle}>
-            Be the first to share something amazing with your community!{'\n'}
-            Your voice matters and we can’t wait to hear from you.
-          </Text>
-          <PrimaryButton
-            title="+ Create Your First Post"
-            onPress={() => {}}
-            buttonStyle={styles.createPostButton}
-            textStyle={styles.createPostButtonText}
-          />
-        </View>
+        {posts.length === 0 && (
+          <View style={styles.emptyStateCard}>
+            <Icon name="MessageSquareText" size={48} color={COLORS.white} />
+            <Text style={styles.emptyStateTitle}>Start the Conversation</Text>
+            <Text style={styles.emptyStateSubtitle}>
+              Be the first to share something amazing with your community!{'\n'}
+              Your voice matters and we can’t wait to hear from you.
+            </Text>
+            <PrimaryButton
+              title="+ Create Your First Post"
+              onPress={() => setCreatePostVisible(true)}
+              buttonStyle={styles.createPostButton}
+              textStyle={styles.createPostButtonText}
+            />
+          </View>
+        )}
+        {/* Media Preview Modal */}
+        <MediaPreviewModal />
       </View>
     </Animated.ScrollView>
   );
