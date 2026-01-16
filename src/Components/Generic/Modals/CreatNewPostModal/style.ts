@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cardBG,
   },
   descriptionStyle: {
-    height: 100,
+    height: ms(100),
     // textAlignVertical: 'top',
   },
   mediaActionsRow: {

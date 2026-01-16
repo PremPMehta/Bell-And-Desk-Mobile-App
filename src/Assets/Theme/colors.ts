@@ -5,6 +5,7 @@ export const COLORS = {
   grLight: 'rgba(0,0,0,0.6)',
   white: '#ffffff',
   black: '#000000',
+  blackGray: '#191919',
   red: '#FF0000',
   blue: '#00426d',
   loader: '#66879C',
@@ -35,4 +36,5 @@ export const COLORS = {
   newModalBG: '#1C1C1C',
   uploadBG: '#303030',
   innerCardBG: '#2A2A2A',
+  newInnerCardBG: '#555758',
 };

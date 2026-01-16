@@ -360,3 +360,13 @@ export const MOCK_MEMBERS = [
     type: 'Free',
   },
 ];
+
+export const SETTINGS_MENU_TABS = [
+  'Payout',
+  'Member Transactions',
+  'Access Requests',
+  'Subscription',
+  'Coupons',
+  'Billings',
+  'Referrals',
+];
