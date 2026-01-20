@@ -369,4 +369,120 @@ export const SETTINGS_MENU_TABS = [
   'Coupons',
   'Billings',
   'Referrals',
+  'Moderators',
+];
+
+export const MOCK_MODERATORS_DATA = [
+  {
+    id: '1',
+    name: 'Doris Yau',
+    initial: 'D',
+    email: 'dorisyau16@gmail.com',
+    role: 'Moderator',
+    permissions: 'Courses, LiveStream, Videos, Board, Settings',
+    isActive: true,
+    statusLabel: 'active',
+  },
+  // Add more mock data if needed for testing
+];
+
+export const ADD_MODERATOR_USERS = [
+  {
+    id: '1',
+    name: 'Aaron Rodriguez',
+    email: 'emailsaaronjosue98@gmail.com',
+    initial: 'A',
+  },
+  {
+    id: '2',
+    name: 'Abraham Campos',
+    email: 'campos.salas.abraham@gmail.com',
+    initial: 'A',
+  },
+  {
+    id: '3',
+    name: 'Adriana Brenes',
+    email: 'adriana.brenes.carballo@gmail.com',
+    initial: 'A',
+  },
+  {
+    id: '4',
+    name: 'Agustin Medina',
+    email: 'laplazadeltrader@gmail.com',
+    initial: 'Am',
+  },
+  {
+    id: '5',
+    name: 'Agustin Medina',
+    email: 'serviceshakeandrink@gmail.com',
+    initial: 'A',
+  },
+  {
+    id: '6',
+    name: 'Agustin Rodriguez',
+    email: 'agusrodriguezp07@gmail.com',
+    initial: 'A',
+  },
+];
+
+export const MODERATOR_PERMISSIONS = [
+  {
+    title: 'Courses',
+    id: 'courses',
+    children: [
+      { id: 'course_add', label: 'Add Course' },
+      { id: 'course_edit', label: 'Edit Course' },
+      { id: 'course_update', label: 'Update Course' },
+      { id: 'course_delete', label: 'Delete Course' },
+      { id: 'course_view_settings', label: 'View Course Settings' },
+    ],
+  },
+  {
+    title: 'Live Stream',
+    id: 'live_stream',
+    children: [
+      { id: 'stream_create', label: 'Create Stream' },
+      { id: 'stream_edit', label: 'Edit Stream' },
+      { id: 'stream_delete', label: 'Delete Stream' },
+      { id: 'stream_schedule', label: 'Schedule Stream' },
+      { id: 'stream_view_settings', label: 'View Stream Settings' },
+    ],
+  },
+  {
+    title: 'Videos',
+    id: 'videos',
+    children: [
+      { id: 'video_add', label: 'Add Video' },
+      { id: 'video_update', label: 'Update Video' },
+      { id: 'video_delete', label: 'Delete Video' },
+    ],
+  },
+  {
+    title: 'Board (Feed)',
+    id: 'board',
+    children: [
+      { id: 'post_create', label: 'Create Post' },
+      { id: 'post_comment', label: 'Comment' },
+      { id: 'post_edit', label: 'Edit Post' },
+      { id: 'post_update', label: 'Update Post' },
+      { id: 'post_delete', label: 'Delete Post' },
+    ],
+  },
+  {
+    title: 'Chat',
+    id: 'chat',
+    children: [
+      { id: 'channel_add', label: 'Add Channel' },
+      { id: 'channel_member_add', label: 'Add Member to Channel' },
+      { id: 'channel_member_remove', label: 'Remove Member from Channel' },
+      { id: 'channel_edit', label: 'Edit Channel' },
+      { id: 'channel_update', label: 'Update Channel' },
+      { id: 'channel_delete', label: 'Delete Channel' },
+    ],
+  },
+  {
+    title: 'Settings (View-Only)',
+    id: 'settings',
+    children: [{ id: 'settings_view', label: 'View Settings Only' }],
+  },
 ];

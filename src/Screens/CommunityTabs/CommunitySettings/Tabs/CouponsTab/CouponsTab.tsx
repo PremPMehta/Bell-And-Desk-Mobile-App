@@ -8,8 +8,6 @@ import AddCouponModal, {
   CouponData,
 } from '@/Components/Generic/Modals/AddCouponModal';
 
-
-
 const CouponsTab = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [couponsData, setCouponsData] = useState([
@@ -81,7 +79,6 @@ const CouponsTab = () => {
     console.log('New coupon created:', newCoupon);
   };
 
-
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
@@ -111,7 +108,6 @@ const CouponsTab = () => {
         <Text style={styles.addButtonText}>Add Coupons</Text>
       </TouchableOpacity>
 
-
       <View style={styles.tableContainer}>
         {couponsData.map(coupon => (
           <View key={coupon.id} style={styles.couponContainer}>
@@ -132,10 +128,10 @@ const CouponsTab = () => {
               </View>
               <View style={styles.editDeleteContainer}>
                 <TouchableOpacity style={styles.commonButton}>
-                  <Icon name="Pencil" size={ms(14)} color={COLORS.white} />
+                  <Icon name="Pencil" size={ms(14)} color={COLORS.lightGray} />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.commonButton}>
-                  <Icon name="Trash2" size={ms(14)} color={COLORS.white} />
+                  <Icon name="Trash2" size={ms(14)} color={COLORS.red} />
                 </TouchableOpacity>
               </View>
             </View>

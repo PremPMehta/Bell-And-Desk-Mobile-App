@@ -10,6 +10,7 @@ import SubscriptionTab from './Tabs/SubscriptionTab/SubscriptionTab';
 import CouponsTab from './Tabs/CouponsTab/CouponsTab';
 import BillingsTab from './Tabs/BillingsTab/BillingsTab';
 import ReferralTab from './Tabs/ReferralTab/ReferralTab';
+import ModeratorsTab from './Tabs/ModeratorsTab/ModeratorsTab';
 
 interface Props {
   onScroll?: (...args: any[]) => void;
@@ -39,6 +40,7 @@ const CommunitySettings = ({ onScroll, scrollEventThrottle }: Props) => {
         {activeTab === 'Coupons' && <CouponsTab />}
         {activeTab === 'Billings' && <BillingsTab />}
         {activeTab === 'Referrals' && <ReferralTab />}
+        {activeTab === 'Moderators' && <ModeratorsTab />}
       </View>
     </Animated.ScrollView>
   );
