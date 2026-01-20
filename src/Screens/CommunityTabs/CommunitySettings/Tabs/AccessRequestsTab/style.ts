@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   optionContent: {
-    width: sc(245),
+    width: sc(225),
   },
   optionTitle: {
     ...THEME.fontStyle.h5Bold,

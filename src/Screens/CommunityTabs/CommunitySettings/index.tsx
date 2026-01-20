@@ -8,6 +8,8 @@ import MemberTransactionsTab from './Tabs/MemberTransactionsTab/MemberTransactio
 import AccessRequestsTab from './Tabs/AccessRequestsTab/AccessRequestsTab';
 import SubscriptionTab from './Tabs/SubscriptionTab/SubscriptionTab';
 import CouponsTab from './Tabs/CouponsTab/CouponsTab';
+import BillingsTab from './Tabs/BillingsTab/BillingsTab';
+import ReferralTab from './Tabs/ReferralTab/ReferralTab';
 
 interface Props {
   onScroll?: (...args: any[]) => void;
@@ -35,6 +37,8 @@ const CommunitySettings = ({ onScroll, scrollEventThrottle }: Props) => {
         {activeTab === 'Access Requests' && <AccessRequestsTab />}
         {activeTab === 'Subscription' && <SubscriptionTab />}
         {activeTab === 'Coupons' && <CouponsTab />}
+        {activeTab === 'Billings' && <BillingsTab />}
+        {activeTab === 'Referrals' && <ReferralTab />}
       </View>
     </Animated.ScrollView>
   );

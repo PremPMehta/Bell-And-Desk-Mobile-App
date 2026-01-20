@@ -37,4 +37,5 @@ export const COLORS = {
   uploadBG: '#303030',
   innerCardBG: '#2A2A2A',
   newInnerCardBG: '#555758',
+  dashedBorder: '#414141',
 };

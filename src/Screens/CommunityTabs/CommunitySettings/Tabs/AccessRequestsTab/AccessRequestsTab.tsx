@@ -29,7 +29,8 @@ const AccessRequestsTab = () => {
             </Text>
           </View>
           <Switch
-            trackColor={{ false: COLORS.gray, true: COLORS.primary }}
+            ios_backgroundColor={COLORS.outlineGrey}
+            trackColor={{ false: COLORS.outlineGrey, true: COLORS.primary }}
             thumbColor={COLORS.white}
             onValueChange={setAccessRequestAcceptance}
             value={accessRequestAcceptance}
