@@ -41,7 +41,7 @@ const AppNavigator = () => {
     <>
       <MainStack.Navigator screenOptions={{ headerShown: false }}>
         {/* <MainStack.Screen
-          name="CreateCommunity"
+          name="CreateCommunity"  // Edit community screen from the about edit
           component={CreateCommunity}
           options={{ headerShown: false }}
         /> */}
@@ -67,14 +67,14 @@ const AppNavigator = () => {
       <MainStack.Screen name="SignUp" component={SignUp} />
       <MainStack.Screen name="ForgotPassword" component={ForgotPassword} /> */}
         {/* <MainStack.Screen
-        name="Home"
-        component={Home}
-        options={{
-          ...getDefaultStackHeaderOptions(),
-          headerShown: true,
-          title: 'Home',
-        }}
-      /> */}
+          name="Home"
+          component={Home}
+          options={{
+            ...getDefaultStackHeaderOptions(),
+            headerShown: true,
+            title: 'Home',
+          }}
+        /> */}
         {/* <MainStack.Screen
         name="CategoryDetails"
         component={CategoryDetails}
