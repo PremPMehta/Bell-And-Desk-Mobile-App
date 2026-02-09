@@ -486,3 +486,52 @@ export const MODERATOR_PERMISSIONS = [
     children: [{ id: 'settings_view', label: 'View Settings Only' }],
   },
 ];
+
+export const COMMUNITY_REFERRALS = [
+  {
+    id: '1',
+    name: 'CryptoManji Academy',
+    link: 'https://www.bellndesk.com/cryptomanji?ref=cryptomanji',
+    commission: '15%',
+    initial: 'C',
+    logo: null,
+    program: null,
+  },
+  {
+    id: '2',
+    name: 'La Plaza del Trader',
+    link: 'https://www.bellndesk.com/laplazadeltrader?ref=cryptomanji',
+    commission: '10%',
+    initial: 'L',
+    logo: 'https://picsum.photos/seed/plaza/100/100',
+    program: null,
+  },
+  {
+    id: '3',
+    name: 'Next by Soren Azorian',
+    link: 'https://www.bellndesk.com/sorenazorian?ref=cryptomanji',
+    commission: '10%',
+    initial: 'N',
+    logo: 'https://picsum.photos/seed/next/100/100',
+    program: null,
+  },
+];
+
+export const BELLNDESK_REFERRALS = [
+  {
+    id: '1',
+    name: 'Bell n Desk Premium',
+    link: 'https://www.bellndesk.com/premium?ref=cryptomanji',
+    commission: '20%',
+    initial: 'B',
+    program: null,
+  },
+  {
+    id: '2',
+    name: 'Grow with Bell n Desk',
+    link: 'https://www.bellndesk.com/premium?ref=cryptomanji',
+    commission: '20%',
+    initial: 'B',
+    program: 'Partner Program',
+  },
+];

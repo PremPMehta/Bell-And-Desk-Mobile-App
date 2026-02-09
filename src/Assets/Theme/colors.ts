@@ -13,13 +13,16 @@ export const COLORS = {
   cardGridBG: '#08111D',
   searchBarBG: '#151515',
   green: '#00c853',
+  greenLight: 'rgba(0, 200, 83, 0.15)',
   modalBackdropColor: 'rgba(0, 0, 0, 0.5)',
   whiteLight: 'rgba(255, 255, 255, 0.15)',
   loom: '#625df5',
   vimeo: '#1ab7ea',
+  referral: '#181833',
 
   // PRIMARY COLORS
   primary: '#1B7CFF',
+  primaryLight: 'rgba(27, 124, 255, 0.15)',
 
   // GRAY SHADES
   lightGray: '#CCCCCC',
@@ -38,4 +41,5 @@ export const COLORS = {
   innerCardBG: '#2A2A2A',
   newInnerCardBG: '#555758',
   dashedBorder: '#414141',
+  updateBtn: '#4B5563',
 };

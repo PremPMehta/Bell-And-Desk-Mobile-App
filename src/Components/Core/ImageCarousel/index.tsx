@@ -11,6 +11,8 @@ import { useSharedValue } from 'react-native-reanimated';
 import styles from './style';
 import { sc, vs } from '@/Assets/Theme/fontStyle';
 import { COLORS } from '@/Assets/Theme/colors';
+import LinearGradient from 'react-native-linear-gradient';
+import { AppImages } from '@/Assets/Images';
 
 const { width } = Dimensions.get('window');
 
@@ -23,25 +25,55 @@ const ImageCarousel = ({
   const [activeIndex, setActiveIndex] = useState(0);
 
   const renderCarouselItem = ({ item }) => (
-    <View style={styles.carouselContainer}>
-      <ImageBackground source={{ uri: item }} style={styles.carouselImg}>
-        <View style={styles.middleMainContainer}>
-          <Text style={styles.title}>Ready to Engage Your Community?</Text>
+    <LinearGradient
+      colors={['#000000', '#00426D']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={styles.gradientBorder}
+    >
+      <View style={styles.carouselContainer}>
+        <ImageBackground
+          source={AppImages.homeBanner} // Replace with your image - { uri: item }
+          style={styles.carouselImg}
+        >
+          {/* LEFT → RIGHT BLACK GRADIENT */}
+          <LinearGradient
+            colors={[
+              'rgba(0,0,0,0.85)', // Left (strong)
+              'rgba(0,0,0,0.55)',
+              'rgba(0,0,0,0.25)',
+              'rgba(0,0,0,0.05)', // Right (light)
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.gradientOverlay}
+          />
 
-          <Text style={styles.subtitle}>
-            Jump back into your courses, connect with students & continue
-            building.
-          </Text>
+          <View style={styles.middleMainContainer}>
+            <Text style={styles.title}>Ready to Engage Your Community?</Text>
 
-          {/* SHOW BUTTON ONLY IF onPressButton is passed */}
-          {onPressButton && (
-            <TouchableOpacity style={styles.button} onPress={onPressButton}>
-              <Text style={styles.buttonText}>{buttonText}</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </ImageBackground>
-    </View>
+            <Text style={styles.subtitle}>
+              Jump back into your courses, connect with students & continue
+              building.
+            </Text>
+
+            {/* SHOW BUTTON ONLY IF onPressButton is passed */}
+            {onPressButton && (
+              <TouchableOpacity style={styles.button} onPress={onPressButton}>
+                <LinearGradient
+                  colors={['#041A37', '#0A4DFF']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.gradientButton}
+                >
+                  <Text style={styles.buttonText}>{buttonText}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
+          </View>
+        </ImageBackground>
+      </View>
+    </LinearGradient>
   );
 
   return (

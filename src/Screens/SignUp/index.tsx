@@ -37,6 +37,27 @@ const SignUp = () => {
       .required('Confirm password is required'),
   });
 
+  // -----------------------------------
+  // HANDLE SIGN IN
+  // -----------------------------------
+  const handleSignIn = () => {
+    navigation.goBack();
+  };
+
+  // -----------------------------------
+  // HANDLE TERMS OF USE
+  // -----------------------------------
+  const handleTerms = () => {
+    navigation.navigate('TermsAndConditions');
+  };
+
+  // -----------------------------------
+  // HANDLE PRIVACY POLICY
+  // -----------------------------------
+  const handlePrivacy = () => {
+    navigation.navigate('PrivacyPolicy');
+  };
+
   return (
     <ImageBackground
       source={AppImages.authBG}
@@ -178,7 +199,7 @@ const SignUp = () => {
                 By clicking "Create Account", you agree to our{' '}
               </Text>
 
-              <TouchableOpacity>
+              <TouchableOpacity onPress={handleTerms}>
                 <Text style={styles.termsClickTxtStyle}>
                   Terms and Conditions
                 </Text>
@@ -186,7 +207,7 @@ const SignUp = () => {
 
               <Text style={styles.termsTxtStyle}> and </Text>
 
-              <TouchableOpacity>
+              <TouchableOpacity onPress={handlePrivacy}>
                 <Text style={styles.termsClickTxtStyle}>Privacy Policy</Text>
               </TouchableOpacity>
             </View>
@@ -197,7 +218,7 @@ const SignUp = () => {
                 Already have an account?{' '}
               </Text>
 
-              <TouchableOpacity onPress={() => navigation.goBack()}>
+              <TouchableOpacity onPress={handleSignIn}>
                 <Text style={styles.termsClickTxtStyle}>Sign In</Text>
               </TouchableOpacity>
             </View>

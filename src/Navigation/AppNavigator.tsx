@@ -18,6 +18,8 @@ import CreateCommunity from '@/Screens/CreateCommunity';
 import MyCommunities from '@/Screens/MyCommunities';
 import CommunityLayout from '@/Screens/CommunityLayout';
 import CreateCourses from '@/Screens/CommunityTabs/Courses/CreateCourses';
+import MyReferral from '@/Screens/MyReferral';
+import Profile from '@/Screens/Profile';
 
 export type StackNavigationProp<T> = any;
 export type RootStackParamList = {
@@ -47,7 +49,7 @@ const AppNavigator = () => {
         /> */}
 
         {/* Combined screens */}
-        <MainStack.Screen
+        {/* <MainStack.Screen
           name="MyCommunities"
           component={MyCommunities}
           options={{ headerShown: false }}
@@ -56,7 +58,7 @@ const AppNavigator = () => {
           name="CommunityLayout"
           component={CommunityLayout}
           options={{ headerShown: false }}
-        />
+        /> */}
 
         {/* <MainStack.Screen
           name="CreateCourses"
@@ -64,9 +66,9 @@ const AppNavigator = () => {
           options={{ headerShown: false }}
         /> */}
         {/* <MainStack.Screen name="SignIn" component={SignIn} />
-      <MainStack.Screen name="SignUp" component={SignUp} />
-      <MainStack.Screen name="ForgotPassword" component={ForgotPassword} /> */}
-        {/* <MainStack.Screen
+        <MainStack.Screen name="SignUp" component={SignUp} />
+        <MainStack.Screen name="ForgotPassword" component={ForgotPassword} /> */}
+        <MainStack.Screen
           name="Home"
           component={Home}
           options={{
@@ -74,7 +76,7 @@ const AppNavigator = () => {
             headerShown: true,
             title: 'Home',
           }}
-        /> */}
+        />
         {/* <MainStack.Screen
         name="CategoryDetails"
         component={CategoryDetails}
@@ -94,23 +96,23 @@ const AppNavigator = () => {
         }}
       /> */}
         {/* <MainStack.Screen
-        name="TermsAndConditions"
-        component={TermsAndConditions}
-        options={{
-          ...getDefaultStackHeaderOptions(),
-          headerShown: true,
-          title: 'Terms and Conditions',
-        }}
-      /> */}
+          name="TermsAndConditions"
+          component={TermsAndConditions}
+          options={{
+            ...getDefaultStackHeaderOptions(),
+            headerShown: true,
+            title: 'Terms and Conditions',
+          }}
+        /> */}
         {/* <MainStack.Screen
-        name="PrivacyPolicy"
-        component={PrivacyPolicy}
-        options={{
-          ...getDefaultStackHeaderOptions(),
-          headerShown: true,
-          title: 'Privacy Policy',
-        }}
-      /> */}
+          name="PrivacyPolicy"
+          component={PrivacyPolicy}
+          options={{
+            ...getDefaultStackHeaderOptions(),
+            headerShown: true,
+            title: 'Privacy Policy',
+          }}
+        /> */}
         {/* <MainStack.Screen
         name="Support"
         component={Support}
@@ -136,6 +138,24 @@ const AppNavigator = () => {
             ...getDefaultStackHeaderOptions(),
             headerShown: true,
             title: 'Choose Your Plan',
+          }}
+        /> */}
+        {/* <MainStack.Screen
+          name="MyReferral"
+          component={MyReferral}
+          options={{
+            ...getDefaultStackHeaderOptions(),
+            headerShown: true,
+            title: 'My Referral Links',
+          }}
+        /> */}
+        {/* <MainStack.Screen
+          name="Profile"
+          component={Profile}
+          options={{
+            ...getDefaultStackHeaderOptions(),
+            headerShown: true,
+            title: 'Profile',
           }}
         /> */}
       </MainStack.Navigator>

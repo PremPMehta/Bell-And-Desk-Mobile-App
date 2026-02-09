@@ -3,4 +3,5 @@ export const AppImages = {
   authBG: require('./auth_bg.jpeg'),
   queMark: require('./question.png'),
   communityLogo: require('./communityLogo.png'),
+  homeBanner: require('./home_banner.png'),
 };
