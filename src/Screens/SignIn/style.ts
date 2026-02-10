@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
   },
   commonContainer: {
     marginTop: ms(20),
-    alignItems: 'center',
+    alignSelf: 'center',
   },
   frgtTxtStyle: {
     ...THEME.fontStyle.h4Regular,

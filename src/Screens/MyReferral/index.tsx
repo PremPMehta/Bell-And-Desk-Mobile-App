@@ -9,6 +9,7 @@ import {
   BELLNDESK_REFERRALS,
   COMMUNITY_REFERRALS,
 } from '@/Constants/customData';
+import AppHeader from '@/Components/Navigation/AppHeader';
 
 const MyReferral = () => {
   const [activeTab, setActiveTab] = useState<'community' | 'bellndesk'>(
@@ -68,11 +69,7 @@ const MyReferral = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Icon name="Share2" size={20} color={COLORS.white} />
-        <Text style={styles.headerTitle}>My Referral Links</Text>
-      </View>
+      {/* <AppHeader /> */}
 
       {activeTab !== 'community' && (
         <View style={styles.balanceContainer}>

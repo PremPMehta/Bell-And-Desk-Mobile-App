@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
 
   /* --- Category Tabs --- */
   scrollContainer: {
-    marginBottom: ms(16),
+    overflow: 'hidden',
   },
 
   categoryContentContainer: {

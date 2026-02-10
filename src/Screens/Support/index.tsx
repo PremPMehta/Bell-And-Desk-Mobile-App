@@ -4,6 +4,7 @@ import { AppImages } from '@/Assets/Images';
 import styles from './style';
 import Icon from '@/Components/Core/Icons';
 import { COLORS } from '@/Assets/Theme/colors';
+import AppHeader from '@/Components/Navigation/AppHeader';
 
 const Support = () => {
   const handleSendEmail = () => {
@@ -22,16 +23,19 @@ const Support = () => {
 
   return (
     <View style={styles.container}>
-      <Image source={AppImages.queMark} style={styles.image} />
-      <Text style={styles.title}>Welcome to Bell n Desk Support</Text>
-      <Text style={styles.subtitle}>
-        We're here to help you with any questions or issues. Contact us directly
-        via email or click the button below.
-      </Text>
-      <Pressable style={styles.button} onPress={handleSendEmail}>
-        <Icon name="Mail" color={COLORS.white} size={18} />
-        <Text style={styles.buttonText}>Send Email</Text>
-      </Pressable>
+      {/* <AppHeader /> */}
+      <View style={styles.content}>
+        <Image source={AppImages.queMark} style={styles.image} />
+        <Text style={styles.title}>Welcome to Bell n Desk Support</Text>
+        <Text style={styles.subtitle}>
+          We're here to help you with any questions or issues. Contact us
+          directly via email or click the button below.
+        </Text>
+        <Pressable style={styles.button} onPress={handleSendEmail}>
+          <Icon name="Mail" color={COLORS.white} size={18} />
+          <Text style={styles.buttonText}>Send Email</Text>
+        </Pressable>
+      </View>
     </View>
   );
 };

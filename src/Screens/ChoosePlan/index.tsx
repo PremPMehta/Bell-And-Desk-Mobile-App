@@ -3,6 +3,7 @@ import { View, Text, ScrollView } from 'react-native';
 import styles from './style';
 import { PLANS } from '@/Constants/customData';
 import PlanCard from '@/Components/Core/PlanCard';
+import AppHeader from '@/Components/Navigation/AppHeader';
 
 const ChoosePlan = () => {
   const handleStartNow = plan => {
@@ -12,11 +13,12 @@ const ChoosePlan = () => {
 
   return (
     <View style={styles.container}>
+      {/* <AppHeader /> */}
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.mainText}>Choose Your Perfect Plan</Text>
+        {/* <Text style={styles.mainText}>Choose Your Perfect Plan</Text> */}
         <Text style={styles.subText}>
           Select The Perfect Plan For Your Community. You Can Upgrade Or
           Downgrade At Any Time.

@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@/Hooks/Utils/use-navigation';
 import Icon from '@/Components/Core/Icons';
 import { COLORS } from '@/Assets/Theme/colors';
@@ -8,6 +7,7 @@ import styles from './style';
 import { COMMUNITY_MENU_TABS, MOCK_COMMUNITIES } from '@/Constants/customData';
 import CommunityMenuTabs from '@/Components/Core/CommunityMenuTabs';
 import CommunityMenuTabsContent from '@/Components/Generic/CommunityMenuTabsContent';
+import AppHeader from '@/Components/Navigation/AppHeader';
 
 const TAB_HEIGHT = 50; // Height of the tab bar
 
@@ -85,17 +85,8 @@ const CommunityLayout = () => {
   };
 
   return (
-    <SafeAreaView style={styles.mainContainer}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="Menu" size={24} color={COLORS.white} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>CryptoManji Academy</Text>
-        <TouchableOpacity>
-          <Icon name="CircleUserRound" size={24} color={COLORS.white} />
-        </TouchableOpacity>
-      </View>
+    <View style={styles.mainContainer}>
+      <AppHeader />
 
       {/* Container for tabs and content */}
       <View style={styles.middleContainer}>
@@ -122,8 +113,9 @@ const CommunityLayout = () => {
           />
         </Animated.View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
+
 
 export default CommunityLayout;

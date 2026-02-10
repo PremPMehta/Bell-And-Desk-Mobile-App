@@ -7,9 +7,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.black,
-    paddingHorizontal: ms(20),
   },
   scrollContent: {
+    paddingHorizontal: ms(20),
     paddingBottom: ms(40),
   },
   mainText: {
