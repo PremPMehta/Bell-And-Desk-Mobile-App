@@ -6,7 +6,9 @@ export const COLORS = {
   white: '#ffffff',
   black: '#000000',
   blackGray: '#191919',
+  newBlack: '#041A37',
   red: '#FF0000',
+  redLight: 'rgba(255, 69, 58, 0.1)',
   blue: '#00426d',
   loader: '#66879C',
   header: '#0B0B0B',
@@ -23,6 +25,7 @@ export const COLORS = {
   // PRIMARY COLORS
   primary: '#1B7CFF',
   primaryLight: 'rgba(27, 124, 255, 0.15)',
+  accentBlue: '#0A4DFF',
 
   // GRAY SHADES
   lightGray: '#CCCCCC',
@@ -42,4 +45,5 @@ export const COLORS = {
   newInnerCardBG: '#555758',
   dashedBorder: '#414141',
   updateBtn: '#4B5563',
+  arrow: '#38383A',
 };

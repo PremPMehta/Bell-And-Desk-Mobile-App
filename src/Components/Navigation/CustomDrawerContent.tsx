@@ -5,15 +5,23 @@ import {
   DrawerItemList,
   DrawerContentComponentProps,
 } from '@react-navigation/drawer';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '@/Assets/Theme/colors';
 import { AppImages } from '@/Assets/Images';
 import { ms, sc, vs } from '@/Assets/Theme/fontStyle';
 
 const CustomDrawerContent = (props: DrawerContentComponentProps) => {
+  const insets = useSafeAreaInsets();
+
   return (
     <View style={styles.container}>
       {/* Company Logo */}
-      <View style={styles.logoContainer}>
+      <View
+        style={[
+          styles.logoContainer,
+          { paddingTop: Math.max(insets.top, vs(15)) },
+        ]}
+      >
         <Image
           source={AppImages.companyLogo}
           style={styles.logo}
@@ -38,7 +46,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.black,
   },
   logoContainer: {
-    paddingVertical: vs(15),
+    paddingBottom: vs(15),
     paddingHorizontal: ms(16),
     alignItems: 'center',
     justifyContent: 'center',

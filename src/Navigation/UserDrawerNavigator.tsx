@@ -1,31 +1,32 @@
 import React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
 import CustomDrawerContent from '@/Components/Navigation/CustomDrawerContent';
 import { COLORS } from '@/Assets/Theme/colors';
 import Icon from '@/Components/Core/Icons';
+
 import Home from '@/Screens/Home';
 import MyCommunities from '@/Screens/MyCommunities';
-import MyReferral from '@/Screens/MyReferral';
 import CommunityLayout from '@/Screens/CommunityLayout';
 import Settings from '@/Screens/Settings';
-import Support from '@/Screens/Support';
-import ChoosePlan from '@/Screens/ChoosePlan';
-import FAQ from '@/Screens/FAQ';
-import TermsAndConditions from '@/Screens/TermsAndConditions';
-import PrivacyPolicy from '@/Screens/PrivacyPolicy';
-import CookiePolicy from '@/Screens/CookiePolicy';
 import Profile from '@/Screens/Profile';
+import { THEME } from '@/Assets/Theme';
 
-const UserDrawer = createDrawerNavigator();
-const Stack = createStackNavigator();
+const Drawer = createDrawerNavigator();
+const Stack = createNativeStackNavigator();
 
+/* ================================
+   My Communities Stack
+================================ */
 const MyCommunitiesStack = () => {
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        cardStyle: { backgroundColor: COLORS.black },
+        contentStyle: { backgroundColor: COLORS.black },
+        animation: 'fade',
+        freezeOnBlur: true,
       }}
     >
       <Stack.Screen name="MyCommunitiesMain" component={MyCommunities} />
@@ -34,33 +35,48 @@ const MyCommunitiesStack = () => {
   );
 };
 
+/* ================================
+   Settings Stack (FIXED)
+================================ */
 // const SettingsStack = () => {
 //   return (
 //     <Stack.Navigator
 //       screenOptions={{
 //         headerShown: false,
-//         cardStyle: { backgroundColor: COLORS.black },
+//         contentStyle: { backgroundColor: COLORS.black },
+
+//         // 🔥 THIS IS THE KEY FIX
+//         animation: 'slide_from_right',
+//         presentation: 'card',
+
+//         // prevents re-render flicker
+//         freezeOnBlur: true,
 //       }}
 //     >
-//       <Stack.Screen name="SettingsMain" component={Settings} />
-//       <Stack.Screen name="Profile" component={Profile} />
-//       <Stack.Screen name="MyReferral" component={MyReferral} />
-//       <Stack.Screen name="FAQ" component={FAQ} />
-//       <Stack.Screen name="Support" component={Support} />
-//       <Stack.Screen name="ChoosePlan" component={ChoosePlan} />
-//       <Stack.Screen name="TermsAndConditions" component={TermsAndConditions} />
-//       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
-//       <Stack.Screen name="CookiePolicy" component={CookiePolicy} />
+//       <Stack.Screen name="Settings" component={Settings} />
+//       <Stack.Screen
+//         name="Profile"
+//         component={Profile}
+//         options={{
+//           ...getDefaultStackHeaderOptions(),
+//           headerShown: true,
+//           title: 'Profile',
+//         }}
+//       />
 //     </Stack.Navigator>
 //   );
 // };
 
+/* ================================
+   Drawer Navigator
+================================ */
 const UserDrawerNavigator = () => {
   return (
-    <UserDrawer.Navigator
+    <Drawer.Navigator
       drawerContent={props => <CustomDrawerContent {...props} />}
       screenOptions={{
         headerShown: false,
+        drawerType: 'front',
         drawerStyle: {
           backgroundColor: COLORS.black,
           width: 280,
@@ -73,37 +89,39 @@ const UserDrawerNavigator = () => {
         },
       }}
     >
-      <UserDrawer.Screen
+      <Drawer.Screen
         name="Home"
         component={Home}
         options={{
           drawerLabel: 'Home',
-          drawerIcon: ({ color, size }) => (
+          drawerIcon: ({ color }) => (
             <Icon name="House" size={22} color={color} />
           ),
         }}
       />
-      <UserDrawer.Screen
+
+      <Drawer.Screen
         name="MyCommunities"
         component={MyCommunitiesStack}
         options={{
           drawerLabel: 'My Communities',
-          drawerIcon: ({ color, size }) => (
+          drawerIcon: ({ color }) => (
             <Icon name="Users" size={22} color={color} />
           ),
         }}
       />
-      <UserDrawer.Screen
+
+      <Drawer.Screen
         name="Settings"
         component={Settings}
         options={{
           drawerLabel: 'Settings',
-          drawerIcon: ({ color, size }) => (
+          drawerIcon: ({ color }) => (
             <Icon name="Settings" size={22} color={color} />
           ),
         }}
       />
-    </UserDrawer.Navigator>
+    </Drawer.Navigator>
   );
 };
 

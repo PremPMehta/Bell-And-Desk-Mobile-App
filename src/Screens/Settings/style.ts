@@ -10,7 +10,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: ms(20),
-    paddingBottom: ms(100), // More padding for bottom logout button if needed
+    paddingBottom: ms(100),
   },
   section: {
     marginTop: ms(24),
@@ -18,14 +18,14 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...THEME.fontStyle.h5Bold,
-    color: '#8E8E93', // Grayish color for headers
+    color: COLORS.outlineGrey,
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: ms(12),
     marginLeft: ms(4),
   },
   itemsCard: {
-    backgroundColor: '#1C1C1E', // Slightly lighter than black for depth
+    backgroundColor: COLORS.newModalBG,
     borderRadius: ms(12),
     overflow: 'hidden',
   },
@@ -54,8 +54,8 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#38383A',
-    marginLeft: ms(60), // Align with text
+    backgroundColor: COLORS.arrow,
+    marginLeft: ms(60),
   },
   logoutButton: {
     flexDirection: 'row',
@@ -63,15 +63,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: ms(40),
     paddingVertical: ms(16),
-    backgroundColor: 'rgba(255, 69, 58, 0.1)', // Light red background
+    backgroundColor: COLORS.redLight,
     borderRadius: ms(12),
     borderWidth: 1,
-    borderColor: '#FF453A',
+    borderColor: COLORS.red,
     gap: ms(10),
   },
   logoutText: {
     ...THEME.fontStyle.h4Bold,
-    color: '#FF453A',
+    color: COLORS.red,
   },
 });
 

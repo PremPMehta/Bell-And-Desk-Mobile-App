@@ -26,14 +26,14 @@ const ImageCarousel = ({
 
   const renderCarouselItem = ({ item }) => (
     <LinearGradient
-      colors={['#000000', '#00426D']}
+      colors={[COLORS.black, COLORS.blue]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 0 }}
       style={styles.gradientBorder}
     >
       <View style={styles.carouselContainer}>
         <ImageBackground
-          source={AppImages.homeBanner} // Replace with your image - { uri: item }
+          source={AppImages.homeBanner}
           style={styles.carouselImg}
         >
           {/* LEFT → RIGHT BLACK GRADIENT */}
@@ -59,12 +59,16 @@ const ImageCarousel = ({
 
             {/* SHOW BUTTON ONLY IF onPressButton is passed */}
             {onPressButton && (
-              <TouchableOpacity style={styles.button} onPress={onPressButton}>
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={onPressButton}
+                style={styles.buttonShadow}
+              >
                 <LinearGradient
-                  colors={['#041A37', '#0A4DFF']}
+                  colors={[COLORS.newBlack, COLORS.accentBlue]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={styles.gradientButton}
+                  style={styles.communityButton}
                 >
                   <Text style={styles.buttonText}>{buttonText}</Text>
                 </LinearGradient>

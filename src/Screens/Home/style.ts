@@ -43,6 +43,13 @@ const styles = StyleSheet.create({
     ...THEME.fontStyle.h5Medium,
     color: COLORS.ctgColor,
   },
+  activeCategoryBtn: {
+    backgroundColor: COLORS.blue,
+    borderColor: COLORS.whiteLight,
+  },
+  activeCategoryBtnText: {
+    color: COLORS.white,
+  },
 
   /* --- Cards Grid --- */
   gradientBorder: {

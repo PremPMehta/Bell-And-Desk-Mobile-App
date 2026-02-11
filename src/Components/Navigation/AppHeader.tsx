@@ -5,9 +5,10 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
-  StatusBar,
+  Platform,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DrawerActions } from '@react-navigation/native';
 import { COLORS } from '@/Assets/Theme/colors';
 import { THEME } from '@/Assets/Theme';
@@ -16,6 +17,7 @@ import { ms, sc, vs } from '@/Assets/Theme/fontStyle';
 import { AppImages } from '@/Assets/Images';
 
 const AppHeader = () => {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
 
@@ -57,7 +59,7 @@ const AppHeader = () => {
   const isHome = route.name === 'Home' || !title;
 
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
       <TouchableOpacity
         onPress={handleMenuPress}
         style={styles.menuButton}
@@ -91,8 +93,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: ms(12),
-    paddingVertical: ms(12),
-    paddingTop: (StatusBar.currentHeight || 0) + 12,
+    paddingBottom: ms(12),
     backgroundColor: COLORS.header,
     // borderBottomWidth: 1,
     // borderBottomColor: COLORS.border,
@@ -100,6 +101,7 @@ const styles = StyleSheet.create({
   menuButton: {},
   logoContainer: {
     justifyContent: 'center',
+    marginLeft: ms(16),
   },
   headerTitle: {
     ...THEME.fontStyle.h4SemiBold,
@@ -107,14 +109,15 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   logo: {
-    width: sc(98),
+    width: sc(100),
     height: vs(16),
+    resizeMode: 'contain',
   },
   loginButton: {},
   loginText: {
     ...THEME.fontStyle.h5SemiBold,
     color: COLORS.white,
-    letterSpacing: 0.5,
+    // letterSpacing: 0.5,
   },
 });
 

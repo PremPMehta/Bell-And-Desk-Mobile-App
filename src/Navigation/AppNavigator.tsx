@@ -1,5 +1,5 @@
 import React from 'react';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SignIn from '@/Screens/SignIn';
 import SignUp from '@/Screens/SignUp';
 import ForgotPassword from '@/Screens/ForgotPassword';
@@ -21,7 +21,7 @@ export type RootStackParamList = {
   [key: string]: undefined | { [key: string]: any };
 };
 
-const MainStack = createStackNavigator();
+const MainStack = createNativeStackNavigator();
 
 const getDefaultStackHeaderOptions = () => ({
   headerStyle: { backgroundColor: COLORS.header },
@@ -31,6 +31,7 @@ const getDefaultStackHeaderOptions = () => ({
     color: COLORS.white,
   },
   headerTintColor: COLORS.white,
+  headerBackButtonDisplayMode: 'minimal' as const,
 });
 
 const AppNavigator = () => {
@@ -39,7 +40,9 @@ const AppNavigator = () => {
       <MainStack.Navigator
         screenOptions={{
           headerShown: false,
-          cardStyle: { backgroundColor: COLORS.black },
+          animation: 'slide_from_right',
+          presentation: 'card',
+          freezeOnBlur: true,
         }}
       >
         <MainStack.Screen

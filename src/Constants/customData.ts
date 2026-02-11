@@ -236,9 +236,9 @@ export const COMMUNITY_MENU_TABS = [
 ];
 
 export const sliderData = [
-  'https://picsum.photos/200/300/?blur',
-  'https://picsum.photos/200/300/?blur',
-  'https://picsum.photos/200/300/?blur',
+  'https://picsum.photos/600/300?random=10',
+  'https://picsum.photos/600/300?random=11',
+  'https://picsum.photos/600/300?random=12',
 ];
 
 export const categories = [
@@ -533,5 +533,70 @@ export const BELLNDESK_REFERRALS = [
     commission: '20%',
     initial: 'B',
     program: 'Partner Program',
+  },
+];
+
+export const ACCOUNT_SETTINGS = [
+  {
+    icon: 'User',
+    label: 'Edit Profile',
+    bgColor: '#007AFF',
+    routeName: 'Profile',
+  },
+  { icon: 'Bell', label: 'Notifications', bgColor: '#FF9500' },
+  { icon: 'Shield', label: 'Security & Privacy', bgColor: '#4CD964' },
+  { icon: 'CreditCard', label: 'Payments', bgColor: '#5856D6' },
+];
+
+export const COMMUNITY_SETTINGS = [
+  {
+    icon: 'Link',
+    label: 'My Referral',
+    bgColor: '#FF2D55',
+    routeName: 'MyReferral',
+  },
+  { icon: 'Users', label: 'Community Management', bgColor: '#AF52DE' },
+];
+
+export const SUPPORT_SETTINGS = [
+  {
+    icon: 'MessageCircleQuestionMark',
+    label: 'FAQ',
+    bgColor: '#8E8E93',
+    routeName: 'FAQ',
+  },
+  {
+    icon: 'LifeBuoy',
+    label: 'Support',
+    bgColor: '#007AFF',
+    routeName: 'Support',
+  },
+  {
+    icon: 'DollarSign',
+    label: 'Pricing',
+    bgColor: '#34C759',
+    routeName: 'ChoosePlan',
+  },
+  { icon: 'Info', label: 'About Us', bgColor: '#5AC8FA' },
+];
+
+export const LEGAL_SETTINGS = [
+  {
+    icon: 'FileText',
+    label: 'Terms and Conditions',
+    bgColor: '#34C759',
+    routeName: 'TermsAndConditions',
+  },
+  {
+    icon: 'Lock',
+    label: 'Privacy Policy',
+    bgColor: '#FF3B30',
+    routeName: 'PrivacyPolicy',
+  },
+  {
+    icon: 'Cookie',
+    label: 'Cookie Policy',
+    bgColor: '#FF9500',
+    routeName: 'CookiePolicy',
   },
 ];

@@ -12,6 +12,7 @@ import { cardData, categories, sliderData } from '@/Constants/customData';
 
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
   const onChangeSearch = query => setSearchQuery(query);
 
@@ -46,10 +47,10 @@ const Home = () => {
         {/* HEADER */}
         <View style={styles.headerRow}>
           <Text style={styles.headerText}>Categories</Text>
-          <TouchableOpacity style={styles.seeAll}>
+          {/* <TouchableOpacity style={styles.seeAll}>
             <Text style={styles.seeAllText}>See All</Text>
             <Icon name="ChevronRight" size={18} color={COLORS.white} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         {/* CATEGORY TABS */}
@@ -59,19 +60,35 @@ const Home = () => {
           style={styles.categoryScroll}
           contentContainerStyle={styles.categoryContentContainer}
         >
-          {categories.map((item, index) => (
-            <TouchableOpacity key={index} style={styles.categoryBtn}>
-              <Text style={styles.categoryBtnText}>{item}</Text>
-            </TouchableOpacity>
-          ))}
+          {categories.map((item, index) => {
+            const isActive = selectedCategory === item;
+            return (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.categoryBtn,
+                  isActive && styles.activeCategoryBtn,
+                ]}
+                onPress={() => setSelectedCategory(item)}
+              >
+                <Text
+                  style={[
+                    styles.categoryBtnText,
+                    isActive && styles.activeCategoryBtnText,
+                  ]}
+                >
+                  {item}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
 
         {/* CARDS GRID */}
-        <HomeCardGrid data={cardData} onPressCard={() => { }} />
+        <HomeCardGrid data={cardData} onPressCard={() => {}} />
       </ScrollView>
     </View>
   );
 };
 
 export default Home;
-

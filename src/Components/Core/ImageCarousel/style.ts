@@ -43,19 +43,28 @@ const styles = StyleSheet.create({
     marginTop: ms(6),
     width: '90%',
   },
-  button: {
-    borderWidth: 0.5,
-    borderColor: COLORS.white,
-    borderRadius: ms(20),
+
+  /* BUTTON STYLES */
+  buttonShadow: {
     marginTop: ms(14),
     alignSelf: 'flex-start',
+    shadowColor: COLORS.accentBlue,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
   },
-  gradientButton: {
-    paddingVertical: ms(6),
-    paddingHorizontal: ms(10),
-    borderRadius: ms(20),
-    alignSelf: 'flex-start',
+
+  communityButton: {
+    height: vs(20),
+    width: sc(110),
+    borderRadius: sc(20),
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 0.6,
+    borderColor: COLORS.pageDots,
   },
+
   buttonText: {
     ...THEME.fontStyle.h7Regular,
   },
