@@ -546,6 +546,12 @@ export const ACCOUNT_SETTINGS = [
   { icon: 'Bell', label: 'Notifications', bgColor: '#FF9500' },
   { icon: 'Shield', label: 'Security & Privacy', bgColor: '#4CD964' },
   { icon: 'CreditCard', label: 'Payments', bgColor: '#5856D6' },
+  {
+    icon: 'Globe',
+    label: 'Language',
+    bgColor: '#FF2D55',
+    routeName: 'LanguageSelection',
+  },
 ];
 
 export const COMMUNITY_SETTINGS = [
@@ -599,4 +605,9 @@ export const LEGAL_SETTINGS = [
     bgColor: '#FF9500',
     routeName: 'CookiePolicy',
   },
+];
+
+export const LANGUAGES = [
+  { code: 'en', name: 'English', nativeName: 'English' },
+  { code: 'es', name: 'Spanish', nativeName: 'Español' },
 ];

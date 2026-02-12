@@ -15,6 +15,7 @@ import Support from '@/Screens/Support';
 import PrivacyPolicy from '@/Screens/PrivacyPolicy';
 import TermsAndConditions from '@/Screens/TermsAndConditions';
 import FAQ from '@/Screens/FAQ';
+import LanguageSelection from '@/Screens/LanguageSelection';
 
 export type StackNavigationProp<T> = any;
 export type RootStackParamList = {
@@ -150,6 +151,15 @@ const AppNavigator = () => {
             ...getDefaultStackHeaderOptions(),
             headerShown: true,
             title: 'My Referral Links',
+          }}
+        />
+        <MainStack.Screen
+          name="LanguageSelection"
+          component={LanguageSelection}
+          options={{
+            ...getDefaultStackHeaderOptions(),
+            headerShown: true,
+            title: 'Language',
           }}
         />
         <MainStack.Screen

@@ -18,6 +18,13 @@ export const themeAtom = atomWithStorage(
   storage,
 );
 
+// Language Atom
+export const languageAtom = atomWithStorage(
+  AtomKeys.appLanguage,
+  'en', // by default language is English
+  storage,
+);
+
 // Auth Atom
 export const authStudentSigninAtom = atom(false);
 

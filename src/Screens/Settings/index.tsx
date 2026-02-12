@@ -13,6 +13,7 @@ import {
 import { COLORS } from '@/Assets/Theme/colors';
 import { useAtom } from 'jotai';
 import { logoutVisibleAtom } from '@/Jotai/Atoms';
+import { useTranslation } from 'react-i18next';
 
 interface SettingItemProps {
   icon: string;
@@ -48,8 +49,10 @@ const SettingItem = ({
 );
 
 const Settings = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const [, setIsLogoutModalVisible] = useAtom(logoutVisibleAtom);
+
   const handleNavigation = (routeName?: string) => {
     if (routeName) {
       navigation.navigate(routeName as any);
@@ -60,6 +63,27 @@ const Settings = () => {
     setIsLogoutModalVisible(true);
   };
 
+  // Translate menu items
+  const getTranslatedLabel = (label: string): string => {
+    const labelMap: { [key: string]: string } = {
+      'Edit Profile': t('settings.editProfile'),
+      'Notifications': t('settings.notifications'),
+      'Security & Privacy': t('settings.securityPrivacy'),
+      'Payments': t('settings.payments'),
+      'Language': t('settings.language'),
+      'My Referral': t('settings.myReferral'),
+      'Community Management': t('settings.communityManagement'),
+      'FAQ': t('settings.faq'),
+      'Support': t('settings.support'),
+      'Pricing': t('settings.pricing'),
+      'About Us': t('settings.aboutUs'),
+      'Terms and Conditions': t('settings.termsAndConditions'),
+      'Privacy Policy': t('settings.privacyPolicy'),
+      'Cookie Policy': t('settings.cookiePolicy'),
+    };
+    return labelMap[label] || label;
+  };
+
   return (
     <View style={styles.container}>
       <AppHeader />
@@ -68,13 +92,13 @@ const Settings = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
+          <Text style={styles.sectionTitle}>{t('settings.account')}</Text>
           <View style={styles.itemsCard}>
             {ACCOUNT_SETTINGS.map((item, index) => (
               <SettingItem
                 key={item.label}
                 icon={item.icon}
-                label={item.label}
+                label={getTranslatedLabel(item.label)}
                 iconBgColor={item.bgColor}
                 isLast={index === ACCOUNT_SETTINGS.length - 1}
                 onPress={() => handleNavigation(item.routeName)}
@@ -84,13 +108,13 @@ const Settings = () => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Community</Text>
+          <Text style={styles.sectionTitle}>{t('settings.community')}</Text>
           <View style={styles.itemsCard}>
             {COMMUNITY_SETTINGS.map((item, index) => (
               <SettingItem
                 key={item.label}
                 icon={item.icon}
-                label={item.label}
+                label={getTranslatedLabel(item.label)}
                 iconBgColor={item.bgColor}
                 isLast={index === COMMUNITY_SETTINGS.length - 1}
                 onPress={() => handleNavigation(item.routeName)}
@@ -100,13 +124,13 @@ const Settings = () => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Support & Info</Text>
+          <Text style={styles.sectionTitle}>{t('settings.supportInfo')}</Text>
           <View style={styles.itemsCard}>
             {SUPPORT_SETTINGS.map((item, index) => (
               <SettingItem
                 key={item.label}
                 icon={item.icon}
-                label={item.label}
+                label={getTranslatedLabel(item.label)}
                 iconBgColor={item.bgColor}
                 isLast={index === SUPPORT_SETTINGS.length - 1}
                 onPress={() => handleNavigation(item.routeName)}
@@ -116,13 +140,13 @@ const Settings = () => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Legal</Text>
+          <Text style={styles.sectionTitle}>{t('settings.legal')}</Text>
           <View style={styles.itemsCard}>
             {LEGAL_SETTINGS.map((item, index) => (
               <SettingItem
                 key={item.label}
                 icon={item.icon}
-                label={item.label}
+                label={getTranslatedLabel(item.label)}
                 iconBgColor={item.bgColor}
                 isLast={index === LEGAL_SETTINGS.length - 1}
                 onPress={() => handleNavigation(item.routeName)}
@@ -137,7 +161,7 @@ const Settings = () => {
           onPress={handleLogout}
         >
           <Icon name="LogOut" size={20} color={COLORS.red} />
-          <Text style={styles.logoutText}>Log Out</Text>
+          <Text style={styles.logoutText}>{t('settings.logOut')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

@@ -1,0 +1,45 @@
+{
+    "settings": {
+        "title": "Settings",
+        "account": "Account",
+        "community": "Community",
+        "supportInfo": "Support & Info",
+        "legal": "Legal",
+        "logOut": "Log Out",
+        "editProfile": "Edit Profile",
+        "notifications": "Notifications",
+        "securityPrivacy": "Security & Privacy",
+        "payments": "Payments",
+        "myReferral": "My Referral",
+        "communityManagement": "Community Management",
+        "faq": "FAQ",
+        "support": "Support",
+        "pricing": "Pricing",
+        "aboutUs": "About Us",
+        "termsAndConditions": "Terms and Conditions",
+        "privacyPolicy": "Privacy Policy",
+        "cookiePolicy": "Cookie Policy",
+        "language": "Language"
+    },
+    "language": {
+        "title": "Language",
+        "selectLanguage": "Select Language",
+        "english": "English",
+        "spanish": "Spanish",
+        "changeLanguage": "Change Language"
+    },
+    "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "done": "Done",
+        "back": "Back",
+        "next": "Next",
+        "submit": "Submit",
+        "delete": "Delete",
+        "edit": "Edit",
+        "close": "Close",
+        "confirm": "Confirm",
+        "yes": "Yes",
+        "no": "No"
+    }
+}
