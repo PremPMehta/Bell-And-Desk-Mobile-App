@@ -20,6 +20,7 @@ type ToastType = 'error' | 'success' | 'info' | 'warning';
 
 // Define the function signature for each toast function
 interface ToastOptions {
+  title?: string;
   msg: string;
   ref?: any;
 }
@@ -28,7 +29,7 @@ interface ToastOptions {
 const showToast = (
   type: ToastType,
   position: 'top' | 'bottom' | 'center',
-  title: string,
+  title: any,
   msg: string,
   color: string,
   topOffset: number,
@@ -55,6 +56,20 @@ const showToast = (
 };
 
 const ToastModule = {
+  welcomeTop: ({ title, msg, ref }: ToastOptions): ReactNode => {
+    showToast(
+      'success',
+      'top',
+      title,
+      msg,
+      COLOR_SUCCESS,
+      Y_OFFSET_TOP,
+      40,
+      ref,
+    );
+    return <></>;
+  },
+
   errorTop: ({ msg, ref }: ToastOptions): ReactNode => {
     showToast('error', 'top', 'Error', msg, COLOR_ERROR, Y_OFFSET_TOP, 40, ref);
     return <></>;

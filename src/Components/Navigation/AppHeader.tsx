@@ -1,13 +1,7 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  Platform,
-} from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { useRoute } from '@react-navigation/native';
+import { useNavigation } from '@/Hooks/Utils/use-navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DrawerActions } from '@react-navigation/native';
 import { COLORS } from '@/Assets/Theme/colors';
@@ -16,19 +10,40 @@ import Icon from '../Core/Icons';
 import { ms, sc, vs } from '@/Assets/Theme/fontStyle';
 import { AppImages } from '@/Assets/Images';
 
+import { useAtomValue } from 'jotai';
+import { userTokenAtom, userAtom } from '@/Jotai/Atoms';
+import { useRequireAuth } from '@/Hooks/Utils/use-require-auth';
+
 const AppHeader = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
 
+  const token = useAtomValue(userTokenAtom);
+  const user: any = useAtomValue(userAtom);
+  const profileImage = user?.profilePicture?.url;
+
+  const { requireAuth } = useRequireAuth();
+
   const handleMenuPress = () => {
     navigation.dispatch(DrawerActions.toggleDrawer());
   };
 
+  // const handleLoginPress = () => {
+  //   // Navigate to login screen or handle login action
+  //   console.log('Login pressed');
+  //   navigation.navigate('SignIn');
+  // };
   const handleLoginPress = () => {
-    // Navigate to login screen or handle login action
-    console.log('Login pressed');
-    (navigation as any).navigate('SignIn');
+    // Open SignIn and redirect back to current screen after login
+    navigation.navigate('SignIn', {
+      redirectTo: route.name,
+      redirectParams: route.params,
+    });
+  };
+
+  const handleProfilePress = () => {
+    requireAuth('Profile');
   };
 
   const getHeaderTitle = () => {
@@ -59,7 +74,7 @@ const AppHeader = () => {
   const isHome = route.name === 'Home' || !title;
 
   return (
-    <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
+    <View style={[styles.header, { paddingTop: Math.max(insets.top, 30) }]}>
       <TouchableOpacity
         onPress={handleMenuPress}
         style={styles.menuButton}
@@ -76,13 +91,27 @@ const AppHeader = () => {
         )}
       </View>
 
-      <TouchableOpacity
-        onPress={handleLoginPress}
-        style={styles.loginButton}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-      >
-        <Text style={styles.loginText}>LOGIN</Text>
-      </TouchableOpacity>
+      {token ? (
+        <TouchableOpacity
+          onPress={handleProfilePress}
+          style={styles.loginButton}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          {profileImage ? (
+            <Image source={{ uri: profileImage }} style={styles.profileImg} />
+          ) : (
+            <Icon name="CircleUser" size={28} color={COLORS.white} />
+          )}
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          onPress={handleLoginPress}
+          style={styles.loginButton}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Text style={styles.loginText}>Sign In</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -101,7 +130,7 @@ const styles = StyleSheet.create({
   menuButton: {},
   logoContainer: {
     justifyContent: 'center',
-    marginLeft: ms(16),
+    marginLeft: ms(30),
   },
   headerTitle: {
     ...THEME.fontStyle.h4SemiBold,
@@ -113,11 +142,18 @@ const styles = StyleSheet.create({
     height: vs(16),
     resizeMode: 'contain',
   },
+  profileImg: {
+    width: sc(24),
+    height: sc(24),
+    borderRadius: sc(16),
+    // backgroundColor: COLORS.gray,
+  },
   loginButton: {},
   loginText: {
     ...THEME.fontStyle.h5SemiBold,
     color: COLORS.white,
-    // letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });
 

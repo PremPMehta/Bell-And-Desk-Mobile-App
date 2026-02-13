@@ -39,6 +39,7 @@ const AppNavigator = () => {
   return (
     <>
       <MainStack.Navigator
+        initialRouteName="UserDrawer"
         screenOptions={{
           headerShown: false,
           animation: 'slide_from_right',
@@ -46,6 +47,7 @@ const AppNavigator = () => {
           freezeOnBlur: true,
         }}
       >
+        {/* ROOT - Always mounted */}
         <MainStack.Screen
           name="UserDrawer"
           component={UserDrawerNavigator}
@@ -53,8 +55,23 @@ const AppNavigator = () => {
             headerShown: false,
           }}
         />
-        <MainStack.Screen name="SignIn" component={SignIn} />
-        <MainStack.Screen name="SignUp" component={SignUp} />
+
+        {/* AUTH SCREENS */}
+        <MainStack.Screen
+          name="SignIn"
+          component={SignIn}
+          options={{
+            presentation: 'modal', // 👈 Important improvement
+            animation: 'slide_from_bottom',
+          }}
+        />
+        <MainStack.Screen
+          name="SignUp"
+          component={SignUp}
+          options={{
+            presentation: 'card',
+          }}
+        />
         <MainStack.Screen name="ForgotPassword" component={ForgotPassword} />
 
         {/* <MainStack.Screen
@@ -90,6 +107,8 @@ const AppNavigator = () => {
           title: 'Category Details',
           }}
           /> */}
+
+        {/* PUBLIC / INFO SCREENS */}
         <MainStack.Screen
           name="FAQ"
           component={FAQ}

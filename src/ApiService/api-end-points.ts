@@ -1,4 +1,4 @@
 export const ApiEndPoints = {
   // Auth
-  signIn: 'signin',
+  unifiedLogin: 'auth/unified-login',
 };

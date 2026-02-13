@@ -7,10 +7,12 @@ import styles from './style';
 import { logoutVisibleAtom } from '@/Jotai/Atoms';
 import Icon from '@/Components/Core/Icons';
 import { COLORS } from '@/Assets/Theme/colors';
+import { useLogout } from '@/Hooks/Utils/use-logout';
 
 const LogoutModal = () => {
   const [isLogoutModalVisible, setIsLogoutModalVisible] =
     useAtom(logoutVisibleAtom);
+  const { logout } = useLogout();
 
   const handleCancel = () => {
     setIsLogoutModalVisible(false);
@@ -49,7 +51,10 @@ const LogoutModal = () => {
             >
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.logoutWrapperStyle}>
+            <TouchableOpacity
+              style={styles.logoutWrapperStyle}
+              onPress={logout}
+            >
               <Text style={styles.logoutText}>Logout</Text>
             </TouchableOpacity>
           </View>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,19 +6,30 @@ import {
   ImageBackground,
   Image,
 } from 'react-native';
+import { useNavigation } from '@/Hooks/Utils/use-navigation';
+import { useRoute } from '@react-navigation/native';
+import { useAtomValue } from 'jotai';
+import { userTokenAtom } from '@/Jotai/Atoms';
 import LinearGradient from 'react-native-linear-gradient';
 import { AppImages } from '@/Assets/Images';
-import { useNavigation } from '@/Hooks/Utils/use-navigation';
+import TextInputField from '@/Components/Core/TextInputField';
+import PrimaryButton from '@/Components/Core/PrimaryButton';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import TextInputField from '@/Components/Core/TextInputField';
-import PrimaryButton from '@/Components/Core/PrimaryButton';
 import styles from './style';
 import { COLORS } from '@/Assets/Theme/colors';
+import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 
 const SignIn = () => {
   const navigation = useNavigation();
+  const route = useRoute<any>();
+  const { getUserUnifiedLogin, apiUnifiedLoginLoading } = useUserApi();
+  const userToken = useAtomValue(userTokenAtom);
+
+  // Redirect params (if coming from requireAuth)
+  const redirectTo = route.params?.redirectTo;
+  const redirectParams = route.params?.redirectParams;
 
   // FORM VALIDATION SCHEMA
   const SignInSchema = Yup.object().shape({
@@ -27,6 +38,44 @@ const SignIn = () => {
       .required('Email is required'),
     password: Yup.string().required('Password is required'),
   });
+
+  // ✅ Handle redirect after successful login
+  useEffect(() => {
+    if (!userToken) return;
+
+    // If user was redirected from a protected screen
+    if (redirectTo) {
+      navigation.reset({
+        index: 0,
+        routes: [
+          {
+            name: 'UserDrawer',
+            state: {
+              routes: [
+                {
+                  name: redirectTo,
+                  params: redirectParams,
+                },
+              ],
+            },
+          },
+        ],
+      });
+    } else {
+      // Default after login → go to Home
+      navigation.reset({
+        index: 0,
+        routes: [
+          {
+            name: 'UserDrawer',
+            state: {
+              routes: [{ name: 'Home' }],
+            },
+          },
+        ],
+      });
+    }
+  }, [userToken]);
 
   return (
     <ImageBackground
@@ -62,11 +111,15 @@ const SignIn = () => {
 
             {/* FORM */}
             <Formik
-              initialValues={{ email: '', password: '' }}
+              initialValues={{
+                email: 'admin@cryptomanji.com',
+                password: 'Password@123',
+              }}
               validationSchema={SignInSchema}
-              onSubmit={values => {
+              onSubmit={async values => {
                 console.log('SIGN IN DATA:', values);
-                // <-- Here call login API
+                const response = await getUserUnifiedLogin(values);
+                console.log('🚀 ~ SignIn ~ response:', response);
               }}
             >
               {({
@@ -107,7 +160,7 @@ const SignIn = () => {
                   <PrimaryButton
                     title="Sign In"
                     onPress={handleSubmit}
-                    loading={false}
+                    loading={apiUnifiedLoginLoading}
                     buttonStyle={styles.signInBtnStyle}
                     textStyle={styles.signInTxtStyle}
                   />

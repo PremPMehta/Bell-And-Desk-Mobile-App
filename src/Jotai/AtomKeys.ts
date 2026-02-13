@@ -6,4 +6,8 @@ export const AtomKeys = {
   authToken: 'auth-token',
   userRole: 'user-role',
   appLanguage: 'app-language',
+
+  // Auth
+  apiUnifiedLoginLoading: 'apiUnifiedLoginLoading',
+  apiUnifiedLogin: 'apiUnifiedLogin',
 };
