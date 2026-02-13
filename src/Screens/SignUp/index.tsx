@@ -18,9 +18,21 @@ import { useNavigation } from '@/Hooks/Utils/use-navigation';
 import styles from './style';
 import { COLORS } from '@/Assets/Theme/colors';
 import PrimaryButton from '@/Components/Core/PrimaryButton';
+import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
+
+import { useRoute } from '@react-navigation/native';
+import { useAtomValue } from 'jotai';
+import { userTokenAtom } from '@/Jotai/Atoms';
 
 const SignUp = () => {
   const navigation = useNavigation();
+  const route = useRoute<any>();
+  const { getUserUnifiedSignup, apiUnifiedSignupLoading } = useUserApi();
+  const userToken = useAtomValue(userTokenAtom);
+
+  // Redirect params (if coming from requireAuth)
+  const redirectTo = route.params?.redirectTo;
+  const redirectParams = route.params?.redirectParams;
 
   // -----------------------------------
   // VALIDATION SCHEMA
@@ -28,6 +40,14 @@ const SignUp = () => {
   const SignUpSchema = Yup.object().shape({
     firstName: Yup.string().required('First name is required'),
     lastName: Yup.string().required('Last name is required'),
+    username: Yup.string()
+      .min(3, 'Username must be at least 3 characters')
+      .max(30, 'Username must be at most 30 characters')
+      .matches(
+        /^[a-z0-9_-]+$/,
+        'Only lowercase letters, numbers, hyphens, and underscores.',
+      )
+      .required('Username is required'),
     email: Yup.string().email('Invalid email').required('Email is required'),
     password: Yup.string()
       .min(6, 'Password must be at least 6 characters')
@@ -36,6 +56,44 @@ const SignUp = () => {
       .oneOf([Yup.ref('password')], 'Passwords do not match')
       .required('Confirm password is required'),
   });
+
+  // ✅ Handle redirect after successful login
+  React.useEffect(() => {
+    if (!userToken) return;
+
+    // If user was redirected from a protected screen
+    if (redirectTo) {
+      navigation.reset({
+        index: 0,
+        routes: [
+          {
+            name: 'UserDrawer',
+            state: {
+              routes: [
+                {
+                  name: redirectTo,
+                  params: redirectParams,
+                },
+              ],
+            },
+          },
+        ],
+      });
+    } else {
+      // Default after login → go to Home
+      navigation.reset({
+        index: 0,
+        routes: [
+          {
+            name: 'UserDrawer',
+            state: {
+              routes: [{ name: 'Home' }],
+            },
+          },
+        ],
+      });
+    }
+  }, [userToken]);
 
   // -----------------------------------
   // HANDLE SIGN IN
@@ -93,13 +151,16 @@ const SignUp = () => {
               initialValues={{
                 firstName: '',
                 lastName: '',
+                username: '',
                 email: '',
                 password: '',
                 confirmPassword: '',
               }}
               validationSchema={SignUpSchema}
-              onSubmit={values => {
+              onSubmit={async values => {
                 console.log('FORM =>', values);
+                const response = await getUserUnifiedSignup(values);
+                console.log('🚀 ~ SignUp ~ response:', response);
               }}
             >
               {({
@@ -149,6 +210,18 @@ const SignUp = () => {
                     rightIcon={undefined}
                   />
 
+                  {/* USERNAME */}
+                  <TextInputField
+                    label="Username"
+                    leftIcon="account"
+                    value={values.username}
+                    onChangeText={handleChange('username')}
+                    onBlur={() => setFieldTouched('username')}
+                    touched={touched.username}
+                    error={errors.username}
+                    rightIcon={undefined}
+                  />
+
                   {/* PASSWORD */}
                   <TextInputField
                     label="Password"
@@ -185,7 +258,7 @@ const SignUp = () => {
                   <PrimaryButton
                     title="Create Account"
                     onPress={handleSubmit}
-                    loading={false}
+                    loading={apiUnifiedSignupLoading}
                     buttonStyle={styles.accBtnStyle}
                     textStyle={styles.accTxtStyle}
                   />

@@ -13,6 +13,7 @@ import styles from './style';
 
 const Profile = () => {
   const [user, setUser]: [any, any] = useAtom(userAtom);
+  console.log('🚀 ~ Profile ~ user:', user);
   const [isEdit, setIsEdit] = useState(false);
 
   // Fallback data for demonstration
@@ -20,14 +21,14 @@ const Profile = () => {
     firstName: user?.firstName || user?.name?.split(' ')[0] || 'Crypto',
     lastName: user?.lastName || user?.name?.split(' ')[1] || 'Manji',
     email: user?.email || 'admin@cryptomanji.com',
-    userName: user?.userName || 'cryptomanji',
+    username: user?.username || 'cryptomanji',
     avatar: user?.avatar || null,
   };
 
   const ProfileSchema = Yup.object().shape({
     firstName: Yup.string().required('First name is required'),
     lastName: Yup.string().required('Last name is required'),
-    userName: Yup.string()
+    username: Yup.string()
       .min(3, 'Username too short')
       .max(30, 'Username too long')
       .matches(/^[a-z0-p_\-]+$/, 'Invalid characters')
@@ -182,11 +183,11 @@ const Profile = () => {
                   <TextInputField
                     label="Username"
                     leftIcon="account"
-                    value={values.userName}
-                    onChangeText={handleChange('userName')}
-                    onBlur={handleBlur('userName')}
-                    error={errors.userName as string}
-                    touched={touched.userName as boolean}
+                    value={values.username}
+                    onChangeText={handleChange('username')}
+                    onBlur={handleBlur('username')}
+                    error={errors.username as string}
+                    touched={touched.username as boolean}
                     mediaHelpText="Username can only contain lowercase letters, numbers, hyphens, and underscores (3-30 characters)"
                   />
                 </>
@@ -212,7 +213,7 @@ const Profile = () => {
                   <TextInputField
                     label="Username"
                     leftIcon="account"
-                    value={values.userName}
+                    value={values.username}
                     editable={false}
                   />
                 </>

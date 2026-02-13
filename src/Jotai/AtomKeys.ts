@@ -10,4 +10,7 @@ export const AtomKeys = {
   // Auth
   apiUnifiedLoginLoading: 'apiUnifiedLoginLoading',
   apiUnifiedLogin: 'apiUnifiedLogin',
+
+  apiUnifiedSignupLoading: 'apiUnifiedSignupLoading',
+  apiUnifiedSignup: 'apiUnifiedSignup',
 };
