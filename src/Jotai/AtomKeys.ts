@@ -13,4 +13,7 @@ export const AtomKeys = {
 
   apiUnifiedSignupLoading: 'apiUnifiedSignupLoading',
   apiUnifiedSignup: 'apiUnifiedSignup',
+
+  apiUpdateUserProfileLoading: 'apiUpdateUserProfileLoading',
+  apiUpdateUserProfile: 'apiUpdateUserProfile',
 };

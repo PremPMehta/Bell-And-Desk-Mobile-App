@@ -65,6 +65,15 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: ms(50),
   },
+  withoutAvatar: {
+    backgroundColor: COLORS.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  withoutAvatarText: {
+    ...fontStyle.h3Bold,
+    color: COLORS.white,
+  },
   cameraOverlay: {
     position: 'absolute',
     bottom: -5,

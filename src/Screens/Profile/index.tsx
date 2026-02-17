@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  Platform,
+} from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useAtom } from 'jotai';
 import { Formik } from 'formik';
@@ -10,11 +17,13 @@ import Icon from '@/Components/Core/Icons';
 import TextInputField from '@/Components/Core/TextInputField';
 import { COLORS } from '@/Assets/Theme/colors';
 import styles from './style';
+import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 
 const Profile = () => {
+  const { updateUserProfile, apiUpdateUserProfileLoading } = useUserApi();
   const [user, setUser]: [any, any] = useAtom(userAtom);
-  console.log('🚀 ~ Profile ~ user:', user);
   const [isEdit, setIsEdit] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<any>(null);
 
   // Fallback data for demonstration
   const initialValues = {
@@ -22,7 +31,7 @@ const Profile = () => {
     lastName: user?.lastName || user?.name?.split(' ')[1] || 'Manji',
     email: user?.email || 'admin@cryptomanji.com',
     username: user?.username || 'cryptomanji',
-    avatar: user?.avatar || null,
+    profilePicture: user?.profilePicture || null,
   };
 
   const ProfileSchema = Yup.object().shape({
@@ -35,9 +44,28 @@ const Profile = () => {
       .required('Username is required'),
   });
 
-  const handleUpdate = (values: any) => {
-    setUser({ ...user, ...values });
-    setIsEdit(false);
+  const handleUpdate = async (values: any) => {
+    const formData = new FormData();
+    formData.append('firstName', values.firstName);
+    formData.append('lastName', values.lastName);
+    formData.append('username', values.username);
+
+    if (selectedImage) {
+      formData.append('profilePicture', {
+        uri:
+          Platform.OS === 'android'
+            ? selectedImage.uri
+            : selectedImage.uri.replace('file://', ''),
+        type: selectedImage.type || 'image/jpeg',
+        name: selectedImage.fileName || 'profile.jpg',
+      });
+    }
+
+    const response = await updateUserProfile(formData);
+    if (response) {
+      setUser({ ...user, ...values, profilePicture: values.profilePicture });
+      setIsEdit(false);
+    }
   };
 
   const pickImage = (setFieldValue: any) => {
@@ -52,8 +80,9 @@ const Profile = () => {
         } else if (response.errorCode) {
           console.log('ImagePicker Error: ', response.errorMessage);
         } else if (response.assets && response.assets.length > 0) {
-          const source = response.assets[0].uri;
-          setFieldValue('avatar', source);
+          const source = response.assets[0];
+          setSelectedImage(source);
+          setFieldValue('profilePicture', source.uri);
         }
       },
     );
@@ -117,23 +146,18 @@ const Profile = () => {
               {/* Avatar and Name */}
               <View style={styles.avatarContainer}>
                 <View style={styles.avatarWrapper}>
-                  {values.avatar ? (
+                  {values.profilePicture ? (
                     <Image
-                      source={{ uri: values.avatar }}
+                      source={{ uri: values.profilePicture }}
                       style={styles.avatar}
                     />
                   ) : (
-                    <View
-                      style={[
-                        styles.avatar,
-                        {
-                          backgroundColor: '#FFD700',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                        },
-                      ]}
-                    >
-                      <Icon name="User" size={40} color={COLORS.black} />
+                    <View style={[styles.avatar, styles.withoutAvatar]}>
+                      <Text style={styles.withoutAvatarText}>
+                        {`${values.firstName?.charAt(0) || ''}${
+                          values.lastName?.charAt(0) || ''
+                        }`.toUpperCase()}
+                      </Text>
                     </View>
                   )}
                   {isEdit && (
@@ -225,9 +249,16 @@ const Profile = () => {
                   <TouchableOpacity
                     style={styles.updateButton}
                     onPress={() => handleSubmit()}
+                    disabled={apiUpdateUserProfileLoading}
                   >
-                    <Icon name="Save" size={18} color={COLORS.white} />
-                    <Text style={styles.buttonText}>Update</Text>
+                    {apiUpdateUserProfileLoading ? (
+                      <ActivityIndicator size="small" color={COLORS.white} />
+                    ) : (
+                      <Icon name="Save" size={18} color={COLORS.white} />
+                    )}
+                    <Text style={styles.buttonText}>
+                      {apiUpdateUserProfileLoading ? 'Updating' : 'Update'}
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.cancelButton}

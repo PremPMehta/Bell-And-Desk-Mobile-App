@@ -30,6 +30,14 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiUnifiedSignup),
   );
 
+  // Update User Profile Apis
+  const [apiUpdateUserProfileLoading, setApiUpdateUserProfileLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiUpdateUserProfileLoading),
+  );
+  const [apiUpdateUserProfile, setApiUpdateUserProfile] = useAtom(
+    objectAtomFamily(AtomKeys.apiUpdateUserProfile),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -93,6 +101,29 @@ const useUserApi = () => {
     }
   }
 
+  // Update User Profile
+  async function updateUserProfile(body: any) {
+    const header = { 'Content-Type': 'multipart/form-data' };
+    try {
+      setApiUpdateUserProfileLoading(true);
+      const updateUserProfileInfo: any = await api.put(
+        ApiEndPoints.updateUserProfile,
+        body,
+        header,
+      );
+      console.log('updateUserProfileInfo', updateUserProfileInfo);
+      ToastModule.successTop({
+        msg: updateUserProfileInfo?.message,
+      });
+      setApiUpdateUserProfile(updateUserProfileInfo);
+      setApiUpdateUserProfileLoading(false);
+      return updateUserProfileInfo;
+    } catch (error) {
+      console.error('Error fetching update user profile info:', error);
+      setApiUpdateUserProfileLoading(false);
+    }
+  }
+
   return {
     getUserUnifiedLogin,
     apiUnifiedLoginLoading,
@@ -101,6 +132,10 @@ const useUserApi = () => {
     getUserUnifiedSignup,
     apiUnifiedSignupLoading,
     apiUnifiedSignup,
+
+    updateUserProfile,
+    apiUpdateUserProfileLoading,
+    apiUpdateUserProfile,
   };
 };
 

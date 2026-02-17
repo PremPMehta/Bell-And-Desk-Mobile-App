@@ -243,10 +243,15 @@ export const sliderData = [
 
 export const categories = [
   'All',
-  'Design',
-  'Development',
-  'Marketing',
-  'Sales',
+  'Education',
+  'Finance',
+  'Self-Improvement',
+  'Technology',
+  'Health',
+  'Music',
+  'Food',
+  'Gaming',
+  'Sports',
 ];
 
 export const cardData = [

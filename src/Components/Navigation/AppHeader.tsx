@@ -21,7 +21,7 @@ const AppHeader = () => {
 
   const token = useAtomValue(userTokenAtom);
   const user: any = useAtomValue(userAtom);
-  const profileImage = user?.profilePicture?.url;
+  const profileImage = user?.profilePicture;
 
   const { requireAuth } = useRequireAuth();
 
