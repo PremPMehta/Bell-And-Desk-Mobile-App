@@ -61,7 +61,7 @@ const AppNavigator = () => {
           name="SignIn"
           component={SignIn}
           options={{
-            presentation: 'modal', // 👈 Important improvement
+            presentation: 'card', // 👈 Important improvement
             animation: 'slide_from_bottom',
           }}
         />

@@ -67,7 +67,8 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     color: COLORS.white,
-    height: ms(35),
+    paddingVertical: ms(10),
+    // height: ms(35),
   },
   iconContainerRight: {
     position: 'absolute',

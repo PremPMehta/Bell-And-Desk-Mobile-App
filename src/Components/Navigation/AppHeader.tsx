@@ -21,7 +21,7 @@ const AppHeader = () => {
 
   const token = useAtomValue(userTokenAtom);
   const user: any = useAtomValue(userAtom);
-  const profileImage = user?.profilePicture;
+  const profileImage = user?.profilePicture?.url;
 
   const { requireAuth } = useRequireAuth();
 
@@ -98,7 +98,12 @@ const AppHeader = () => {
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           {profileImage ? (
-            <Image source={{ uri: profileImage }} style={styles.profileImg} />
+            <Image
+              source={
+                profileImage ? { uri: profileImage } : AppImages.communityLogo
+              }
+              style={styles.profileImg}
+            />
           ) : (
             <Icon name="CircleUser" size={28} color={COLORS.white} />
           )}

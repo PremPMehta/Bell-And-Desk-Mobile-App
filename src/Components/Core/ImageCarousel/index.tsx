@@ -13,72 +13,126 @@ import { sc, vs } from '@/Assets/Theme/fontStyle';
 import { COLORS } from '@/Assets/Theme/colors';
 import LinearGradient from 'react-native-linear-gradient';
 import { AppImages } from '@/Assets/Images';
+import { useAtom } from 'jotai';
+import { userAtom } from '@/Jotai/Atoms';
+import Icon from '../Icons';
 
 const { width } = Dimensions.get('window');
 
 const ImageCarousel = ({
   data,
-  buttonText = 'Start Your Own Community',
+  primaryButtonText,
+  onPressPrimaryButton,
+  buttonText,
   onPressButton,
+  exploreButtonText,
+  onPressExploreButton,
 }) => {
+  const [user]: any = useAtom(userAtom);
+  const userName = user?.firstName + ' ' + user?.lastName;
   const scrollOffsetValue = useSharedValue(0);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const renderCarouselItem = ({ item }) => (
-    <LinearGradient
-      colors={[COLORS.black, COLORS.blue]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={styles.gradientBorder}
-    >
-      <View style={styles.carouselContainer}>
-        <ImageBackground
-          source={AppImages.homeBanner}
-          style={styles.carouselImg}
-        >
-          {/* LEFT → RIGHT BLACK GRADIENT */}
-          <LinearGradient
-            colors={[
-              'rgba(0,0,0,0.85)', // Left (strong)
-              'rgba(0,0,0,0.55)',
-              'rgba(0,0,0,0.25)',
-              'rgba(0,0,0,0.05)', // Right (light)
-            ]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.gradientOverlay}
-          />
+  const getImageSource = (source: any) => {
+    if (!source) return AppImages.homeBanner;
+    if (typeof source === 'number') return source; // Local require()
+    if (typeof source === 'string') {
+      if (source.trim().length === 0) return AppImages.homeBanner;
+      return { uri: source };
+    }
+    if (typeof source === 'object') {
+      if (source.uri && typeof source.uri === 'string') return source; // Already {uri: '...'}
+      // Handle cases where the object is passed but doesn't have a valid uri string
+      return AppImages.homeBanner;
+    }
+    return AppImages.homeBanner;
+  };
 
-          <View style={styles.middleMainContainer}>
-            <Text style={styles.title}>Ready to Engage Your Community?</Text>
+  const renderCarouselItem = ({ item }) => {
+    const bannerSource = getImageSource(item?.heroImage || item);
 
-            <Text style={styles.subtitle}>
-              Jump back into your courses, connect with students & continue
-              building.
-            </Text>
+    return (
+      <LinearGradient
+        colors={[COLORS.black, COLORS.blue]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.gradientBorder}
+      >
+        <View style={styles.carouselContainer}>
+          <ImageBackground source={bannerSource} style={styles.carouselImg}>
+            {/* LEFT → RIGHT BLACK GRADIENT */}
+            <LinearGradient
+              colors={[
+                'rgba(0,0,0,0.85)', // Left (strong)
+                'rgba(0,0,0,0.55)',
+                'rgba(0,0,0,0.25)',
+                'rgba(0,0,0,0.05)', // Right (light)
+              ]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.gradientOverlay}
+            />
 
-            {/* SHOW BUTTON ONLY IF onPressButton is passed */}
-            {onPressButton && (
-              <TouchableOpacity
-                activeOpacity={0.9}
-                onPress={onPressButton}
-                style={styles.buttonShadow}
-              >
-                <LinearGradient
-                  colors={[COLORS.newBlack, COLORS.accentBlue]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.communityButton}
-                >
-                  <Text style={styles.buttonText}>{buttonText}</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            )}
-          </View>
-        </ImageBackground>
-      </View>
-    </LinearGradient>
-  );
+            <View style={styles.middleMainContainer}>
+              <View style={styles.tagContainer}>
+                <Text style={styles.tag}>
+                  {item?.tag ? item?.tag : 'Welcome Back, ' + userName}
+                </Text>
+              </View>
+              {item?.headingTitle && (
+                <Text style={styles.title}>{item?.headingTitle}</Text>
+              )}
+
+              {item?.subHeaderTitle && (
+                <Text style={styles.subtitle}>{item?.subHeaderTitle}</Text>
+              )}
+
+              {onPressPrimaryButton && primaryButtonText && (
+                <View style={styles.primaryButtonContainer}>
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    onPress={onPressPrimaryButton}
+                    style={styles.primaryButton}
+                  >
+                    <Icon name="BellRing" size={14} color={COLORS.white} />
+                    <Text style={styles.buttonText}>{primaryButtonText}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    onPress={onPressExploreButton}
+                    style={styles.buttonShadow}
+                  >
+                    <Text style={styles.buttonText}>{exploreButtonText}</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {onPressButton && buttonText && (
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    onPress={onPressButton}
+                    style={styles.buttonShadow}
+                  >
+                    <Text style={styles.buttonText}>{buttonText}</Text>
+                  </TouchableOpacity>
+                  {onPressExploreButton && exploreButtonText && (
+                    <TouchableOpacity
+                      activeOpacity={0.9}
+                      onPress={onPressExploreButton}
+                      style={styles.buttonShadow}
+                    >
+                      <Text style={styles.buttonText}>{exploreButtonText}</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+            </View>
+          </ImageBackground>
+        </View>
+      </LinearGradient>
+    );
+  };
 
   return (
     <View style={styles.mainContainer}>
@@ -89,7 +143,7 @@ const ImageCarousel = ({
         height={vs(145)}
         pagingEnabled
         snapEnabled
-        data={data}
+        data={data || []}
         defaultScrollOffsetValue={scrollOffsetValue}
         onSnapToItem={setActiveIndex}
         renderItem={renderCarouselItem}
@@ -97,7 +151,7 @@ const ImageCarousel = ({
 
       {/* FIXED PAGINATION */}
       <View style={styles.paginationWrapper}>
-        {data.map((_, i) => (
+        {(data || []).map((_, i) => (
           <View
             key={i}
             style={[

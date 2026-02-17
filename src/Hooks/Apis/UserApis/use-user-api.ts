@@ -38,6 +38,14 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiUpdateUserProfile),
   );
 
+  // Get Site Settings Apis
+  const [apiGetSiteSettingsLoading, setApiGetSiteSettingsLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetSiteSettingsLoading),
+  );
+  const [apiGetSiteSettings, setApiGetSiteSettings] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetSiteSettings),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -124,7 +132,22 @@ const useUserApi = () => {
     }
   }
 
+  // Get Site-Settings for Home Screen
+  async function getSiteSettings() {
+    try {
+      setApiGetSiteSettingsLoading(true);
+      const siteSettingsInfo: any = await api.get(ApiEndPoints.siteSettings);
+      setApiGetSiteSettings(siteSettingsInfo);
+      setApiGetSiteSettingsLoading(false);
+      return siteSettingsInfo;
+    } catch (error) {
+      console.error('Error fetching site settings info:', error);
+      setApiGetSiteSettingsLoading(false);
+    }
+  }
+
   return {
+    // Auth Apis
     getUserUnifiedLogin,
     apiUnifiedLoginLoading,
     apiUnifiedLogin,
@@ -136,6 +159,14 @@ const useUserApi = () => {
     updateUserProfile,
     apiUpdateUserProfileLoading,
     apiUpdateUserProfile,
+
+    /* Home Screen */
+
+    // Site-Settings
+
+    getSiteSettings,
+    apiGetSiteSettingsLoading,
+    apiGetSiteSettings,
   };
 };
 

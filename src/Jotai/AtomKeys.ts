@@ -16,4 +16,10 @@ export const AtomKeys = {
 
   apiUpdateUserProfileLoading: 'apiUpdateUserProfileLoading',
   apiUpdateUserProfile: 'apiUpdateUserProfile',
+
+  /* Home Screen */
+
+  // Site-Settings
+  apiGetSiteSettingsLoading: 'apiGetSiteSettingsLoading',
+  apiGetSiteSettings: 'apiGetSiteSettings',
 };

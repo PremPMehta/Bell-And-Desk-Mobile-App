@@ -22,6 +22,7 @@ import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 const Profile = () => {
   const { updateUserProfile, apiUpdateUserProfileLoading } = useUserApi();
   const [user, setUser]: [any, any] = useAtom(userAtom);
+  console.log('🚀 ~ Profile ~ user:', user);
   const [isEdit, setIsEdit] = useState(false);
   const [selectedImage, setSelectedImage] = useState<any>(null);
 
@@ -105,176 +106,179 @@ const Profile = () => {
           touched,
           setFieldValue,
           resetForm,
-        }) => (
-          <KeyboardAwareScrollView
-            style={styles.container}
-            contentContainerStyle={styles.innerContainer}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.card}>
-              {/* Header Row */}
-              <View style={styles.headerRow}>
-                {!isEdit ? (
-                  <TouchableOpacity
-                    style={styles.editIconContainer}
-                    onPress={() => setIsEdit(true)}
-                  >
-                    <Icon name="Pencil" size={20} color={COLORS.white} />
-                  </TouchableOpacity>
-                ) : (
-                  <View style={styles.topActions}>
-                    {/* <TouchableOpacity
-                      style={styles.saveIconContainer}
-                      onPress={() => handleSubmit()}
-                    >
-                      <Icon name="Save" size={20} color={COLORS.white} />
-                    </TouchableOpacity> */}
+        }) => {
+          console.log('🚀 ~ Profile ~ values:', values);
+          return (
+            <KeyboardAwareScrollView
+              style={styles.container}
+              contentContainerStyle={styles.innerContainer}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.card}>
+                {/* Header Row */}
+                <View style={styles.headerRow}>
+                  {!isEdit ? (
                     <TouchableOpacity
-                      style={styles.closeIconContainer}
+                      style={styles.editIconContainer}
+                      onPress={() => setIsEdit(true)}
+                    >
+                      <Icon name="Pencil" size={20} color={COLORS.white} />
+                    </TouchableOpacity>
+                  ) : (
+                    <View style={styles.topActions}>
+                      {/* <TouchableOpacity
+                        style={styles.saveIconContainer}
+                        onPress={() => handleSubmit()}
+                      >
+                        <Icon name="Save" size={20} color={COLORS.white} />
+                      </TouchableOpacity> */}
+                      <TouchableOpacity
+                        style={styles.closeIconContainer}
+                        onPress={() => {
+                          setIsEdit(false);
+                          resetForm();
+                        }}
+                      >
+                        <Icon name="X" size={20} color={COLORS.white} />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+
+                {/* Avatar and Name */}
+                <View style={styles.avatarContainer}>
+                  <View style={styles.avatarWrapper}>
+                    {values.profilePicture?.url ? (
+                      <Image
+                        source={{ uri: values.profilePicture?.url }}
+                        style={styles.avatar}
+                      />
+                    ) : (
+                      <View style={[styles.avatar, styles.withoutAvatar]}>
+                        <Text style={styles.withoutAvatarText}>
+                          {`${values.firstName?.charAt(0) || ''}${
+                            values.lastName?.charAt(0) || ''
+                          }`.toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
+                    {isEdit && (
+                      <TouchableOpacity
+                        style={styles.cameraOverlay}
+                        onPress={() => pickImage(setFieldValue)}
+                      >
+                        <Icon name="Camera" size={16} color={COLORS.white} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  <Text style={styles.userName}>
+                    {isEdit
+                      ? `${values.firstName} ${values.lastName}`
+                      : initialValues.firstName + ' ' + initialValues.lastName}
+                  </Text>
+                </View>
+
+                {/* Fields */}
+                {isEdit ? (
+                  <>
+                    <TextInputField
+                      label="First Name"
+                      leftIcon="account"
+                      value={values.firstName}
+                      onChangeText={handleChange('firstName')}
+                      onBlur={handleBlur('firstName')}
+                      error={errors.firstName as string}
+                      touched={touched.firstName as boolean}
+                    />
+                    <TextInputField
+                      label="Last Name"
+                      leftIcon="account"
+                      value={values.lastName}
+                      onChangeText={handleChange('lastName')}
+                      onBlur={handleBlur('lastName')}
+                      error={errors.lastName as string}
+                      touched={touched.lastName as boolean}
+                    />
+                    <TextInputField
+                      label="Email"
+                      leftIcon="email"
+                      value={values.email}
+                      editable={false}
+                      mediaHelpText="Email cannot be changed"
+                    />
+                    <TextInputField
+                      label="Username"
+                      leftIcon="account"
+                      value={values.username}
+                      onChangeText={handleChange('username')}
+                      onBlur={handleBlur('username')}
+                      error={errors.username as string}
+                      touched={touched.username as boolean}
+                      mediaHelpText="Username can only contain lowercase letters, numbers, hyphens, and underscores (3-30 characters)"
+                    />
+                  </>
+                ) : (
+                  <>
+                    {/* View Mode Fields - Using TextInputField but simplified or styled customly if preferred */}
+                    {/* The user wants to use the SignIn screen's component, so I'll use TextInputField even in view mode but possibly disabled */}
+                    <TextInputField
+                      label="Email"
+                      leftIcon="email"
+                      value={values.email}
+                      editable={false}
+                    />
+                    <Text
+                      style={[
+                        styles.helpText,
+                        { marginTop: -10, marginBottom: 15 },
+                      ]}
+                    >
+                      Email cannot be changed
+                    </Text>
+
+                    <TextInputField
+                      label="Username"
+                      leftIcon="account"
+                      value={values.username}
+                      editable={false}
+                    />
+                  </>
+                )}
+
+                {/* Bottom Buttons in Edit Mode */}
+                {isEdit && (
+                  <View style={styles.bottomButtonsRow}>
+                    <TouchableOpacity
+                      style={styles.updateButton}
+                      onPress={() => handleSubmit()}
+                      disabled={apiUpdateUserProfileLoading}
+                    >
+                      {apiUpdateUserProfileLoading ? (
+                        <ActivityIndicator size="small" color={COLORS.white} />
+                      ) : (
+                        <Icon name="Save" size={18} color={COLORS.white} />
+                      )}
+                      <Text style={styles.buttonText}>
+                        {apiUpdateUserProfileLoading ? 'Updating' : 'Update'}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.cancelButton}
                       onPress={() => {
                         setIsEdit(false);
                         resetForm();
                       }}
                     >
-                      <Icon name="X" size={20} color={COLORS.white} />
+                      <Icon name="CircleX" size={18} color={COLORS.white} />
+                      <Text style={styles.buttonText}>Cancel</Text>
                     </TouchableOpacity>
                   </View>
                 )}
               </View>
-
-              {/* Avatar and Name */}
-              <View style={styles.avatarContainer}>
-                <View style={styles.avatarWrapper}>
-                  {values.profilePicture ? (
-                    <Image
-                      source={{ uri: values.profilePicture }}
-                      style={styles.avatar}
-                    />
-                  ) : (
-                    <View style={[styles.avatar, styles.withoutAvatar]}>
-                      <Text style={styles.withoutAvatarText}>
-                        {`${values.firstName?.charAt(0) || ''}${
-                          values.lastName?.charAt(0) || ''
-                        }`.toUpperCase()}
-                      </Text>
-                    </View>
-                  )}
-                  {isEdit && (
-                    <TouchableOpacity
-                      style={styles.cameraOverlay}
-                      onPress={() => pickImage(setFieldValue)}
-                    >
-                      <Icon name="Camera" size={16} color={COLORS.white} />
-                    </TouchableOpacity>
-                  )}
-                </View>
-                <Text style={styles.userName}>
-                  {isEdit
-                    ? `${values.firstName} ${values.lastName}`
-                    : initialValues.firstName + ' ' + initialValues.lastName}
-                </Text>
-              </View>
-
-              {/* Fields */}
-              {isEdit ? (
-                <>
-                  <TextInputField
-                    label="First Name"
-                    leftIcon="account"
-                    value={values.firstName}
-                    onChangeText={handleChange('firstName')}
-                    onBlur={handleBlur('firstName')}
-                    error={errors.firstName as string}
-                    touched={touched.firstName as boolean}
-                  />
-                  <TextInputField
-                    label="Last Name"
-                    leftIcon="account"
-                    value={values.lastName}
-                    onChangeText={handleChange('lastName')}
-                    onBlur={handleBlur('lastName')}
-                    error={errors.lastName as string}
-                    touched={touched.lastName as boolean}
-                  />
-                  <TextInputField
-                    label="Email"
-                    leftIcon="email"
-                    value={values.email}
-                    editable={false}
-                    mediaHelpText="Email cannot be changed"
-                  />
-                  <TextInputField
-                    label="Username"
-                    leftIcon="account"
-                    value={values.username}
-                    onChangeText={handleChange('username')}
-                    onBlur={handleBlur('username')}
-                    error={errors.username as string}
-                    touched={touched.username as boolean}
-                    mediaHelpText="Username can only contain lowercase letters, numbers, hyphens, and underscores (3-30 characters)"
-                  />
-                </>
-              ) : (
-                <>
-                  {/* View Mode Fields - Using TextInputField but simplified or styled customly if preferred */}
-                  {/* The user wants to use the SignIn screen's component, so I'll use TextInputField even in view mode but possibly disabled */}
-                  <TextInputField
-                    label="Email"
-                    leftIcon="email"
-                    value={values.email}
-                    editable={false}
-                  />
-                  <Text
-                    style={[
-                      styles.helpText,
-                      { marginTop: -10, marginBottom: 15 },
-                    ]}
-                  >
-                    Email cannot be changed
-                  </Text>
-
-                  <TextInputField
-                    label="Username"
-                    leftIcon="account"
-                    value={values.username}
-                    editable={false}
-                  />
-                </>
-              )}
-
-              {/* Bottom Buttons in Edit Mode */}
-              {isEdit && (
-                <View style={styles.bottomButtonsRow}>
-                  <TouchableOpacity
-                    style={styles.updateButton}
-                    onPress={() => handleSubmit()}
-                    disabled={apiUpdateUserProfileLoading}
-                  >
-                    {apiUpdateUserProfileLoading ? (
-                      <ActivityIndicator size="small" color={COLORS.white} />
-                    ) : (
-                      <Icon name="Save" size={18} color={COLORS.white} />
-                    )}
-                    <Text style={styles.buttonText}>
-                      {apiUpdateUserProfileLoading ? 'Updating' : 'Update'}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.cancelButton}
-                    onPress={() => {
-                      setIsEdit(false);
-                      resetForm();
-                    }}
-                  >
-                    <Icon name="CircleX" size={18} color={COLORS.white} />
-                    <Text style={styles.buttonText}>Cancel</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          </KeyboardAwareScrollView>
-        )}
+            </KeyboardAwareScrollView>
+          );
+        }}
       </Formik>
     </View>
   );

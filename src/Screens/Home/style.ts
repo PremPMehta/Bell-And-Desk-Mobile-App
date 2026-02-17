@@ -4,8 +4,42 @@ import { ms, width } from '@/Assets/Theme/fontStyle';
 import { StyleSheet } from 'react-native';
 
 const CARD_WIDTH = (width - 50) / 2;
+const BANNER_HEIGHT = ms(200);
 
 const styles = StyleSheet.create({
+  mainContainer: {
+    flex: 1,
+    backgroundColor: COLORS.black,
+  },
+
+  contentContainerStyle: {
+    paddingBottom: ms(40),
+  },
+
+  /* --- Video Banner --- */
+  videoContainer: {
+    position: 'relative',
+    height: BANNER_HEIGHT,
+    backgroundColor: 'red',
+  },
+  bottomShadow: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 30, // Adjust height of shadow
+  },
+  videoBanner: {
+    width: '100%',
+    height: ms(200),
+    // borderRadius: ms(10),
+    // marginVertical: ms(16),
+  },
+
+  container: {
+    paddingHorizontal: ms(16),
+  },
+
   /* --- Header --- */
   headerRow: {
     flexDirection: 'row',

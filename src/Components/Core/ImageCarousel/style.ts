@@ -20,7 +20,9 @@ const styles = StyleSheet.create({
   },
   carouselImg: {
     width: '100%',
-    height: '100%',
+    // height: '100%',
+    height: vs(145),
+    resizeMode: 'contain',
   },
   gradientOverlay: {
     position: 'absolute',
@@ -33,9 +35,21 @@ const styles = StyleSheet.create({
   middleMainContainer: {
     padding: ms(20),
   },
+  tagContainer: {
+    backgroundColor: COLORS.newPrimaryLight,
+    borderRadius: ms(20),
+    paddingVertical: ms(6),
+    paddingHorizontal: ms(10),
+    alignSelf: 'center',
+  },
+  tag: {
+    ...THEME.fontStyle.h6Regular,
+    color: COLORS.white,
+  },
   title: {
     ...THEME.fontStyle.h2Bold,
-    width: '85%',
+    width: '86%',
+    marginTop: ms(10),
   },
   subtitle: {
     ...THEME.fontStyle.h6Regular,
@@ -45,14 +59,42 @@ const styles = StyleSheet.create({
   },
 
   /* BUTTON STYLES */
+  primaryButtonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    marginTop: ms(20),
+    gap: ms(16),
+  },
+  primaryButton: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.primary,
+    borderRadius: sc(20),
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: vs(20),
+    width: sc(80),
+    gap: ms(8),
+  },
+
+  buttonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-evenly',
+    paddingHorizontal: ms(16),
+    paddingVertical: ms(12),
+    // marginTop: ms(80),
+  },
   buttonShadow: {
-    marginTop: ms(14),
-    alignSelf: 'flex-start',
-    shadowColor: COLORS.accentBlue,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 6,
+    alignSelf: 'center',
+    backgroundColor: COLORS.transparent,
+    borderRadius: sc(20),
+    borderWidth: 1,
+    borderColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: vs(20),
+    width: sc(90),
   },
 
   communityButton: {

@@ -2,6 +2,7 @@ export const COLORS = {
   grDark: 'rgba(0,0,0,1)',
   grDark2: 'rgba(0,0,0,0.9)',
   grMedium: 'rgba(0,0,0,0.8)',
+  grMedium2: 'rgba(0,0,0,0.7)',
   grLight: 'rgba(0,0,0,0.6)',
   white: '#ffffff',
   black: '#000000',
@@ -21,11 +22,14 @@ export const COLORS = {
   loom: '#625df5',
   vimeo: '#1ab7ea',
   referral: '#181833',
+  transparent: 'transparent',
 
   // PRIMARY COLORS
   primary: '#1B7CFF',
   primaryLight: 'rgba(27, 124, 255, 0.15)',
+  newPrimaryLight: 'rgba(27, 124, 255, 0.4)',
   accentBlue: '#0A4DFF',
+  accentBlueLight: 'rgba(10, 77, 255, 0.4)',
 
   // GRAY SHADES
   lightGray: '#CCCCCC',
