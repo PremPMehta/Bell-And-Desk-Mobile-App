@@ -22,4 +22,8 @@ export const AtomKeys = {
   // Site-Settings
   apiGetSiteSettingsLoading: 'apiGetSiteSettingsLoading',
   apiGetSiteSettings: 'apiGetSiteSettings',
+
+  // Communities
+  apiGetCommunitiesLoading: 'apiGetCommunitiesLoading',
+  apiGetCommunities: 'apiGetCommunities',
 };

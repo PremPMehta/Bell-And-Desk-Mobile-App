@@ -22,12 +22,14 @@ import VideoPlayer from '@/Components/Core/VideoPlayer';
 import styles from './style';
 import { COLORS } from '@/Assets/Theme/colors';
 import HomeCardGrid from '@/Components/Core/HomeCardGrid';
+import HomeSkeleton from '@/Components/Core/Skeleton/HomeSkeleton';
 import { cardData, categories, sliderData } from '@/Constants/customData';
 import { AppImages } from '@/Assets/Images';
 import LinearGradient from 'react-native-linear-gradient';
 import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 import { useAtomValue } from 'jotai';
 import { userTokenAtom } from '@/Jotai/Atoms';
+import { useRequireAuth } from '@/Hooks/Utils/use-require-auth';
 
 const BANNER_HEIGHT = 220;
 
@@ -51,11 +53,21 @@ const Home = () => {
   const [siteSettings, setSiteSettings] = useState<SiteSettingsData | null>(
     null,
   );
-  const { getSiteSettings, apiGetSiteSettingsLoading } = useUserApi();
+  const [communities, setCommunities] = useState<any[]>([]);
+  const {
+    getSiteSettings,
+    apiGetSiteSettingsLoading,
+    getCommunities,
+    apiGetCommunitiesLoading,
+  } = useUserApi();
+  const { requireAuth } = useRequireAuth();
+  const isLoading = apiGetSiteSettingsLoading || apiGetCommunitiesLoading;
   const userToken = useAtomValue(userTokenAtom);
   const isLoggedIn = !!userToken;
 
   const scrollY = useRef(0);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const categoriesY = useRef(0);
   const [videoVisible, setVideoVisible] = useState(true);
 
   const onChangeSearch = query => setSearchQuery(query);
@@ -65,7 +77,6 @@ const Home = () => {
     const fetchSiteSettings = async () => {
       try {
         const response = await getSiteSettings();
-        console.log('🚀 ~ fetchSiteSettings ~ response:', response);
 
         if (response?.success && response?.data) {
           setSiteSettings(response.data);
@@ -76,6 +87,19 @@ const Home = () => {
     };
 
     fetchSiteSettings();
+
+    const fetchCommunities = async () => {
+      try {
+        const response = await getCommunities();
+        if (response?.success && response?.communities) {
+          setCommunities(response.communities);
+        }
+      } catch (error) {
+        console.error('Error fetching communities:', error);
+      }
+    };
+
+    fetchCommunities();
   }, []); // Only fetch once on mount
 
   // Conditionally select carousel data based on login status
@@ -100,7 +124,34 @@ const Home = () => {
     // Fallback to default if no heroData is found
     return defaultData;
   }, [siteSettings, isLoggedIn]); // Recalculate when siteSettings or login state changes
-  console.log('🚀 ~ Home ~ carouselData:', carouselData);
+
+  const mappedCommunities = useMemo(() => {
+    const dataToFilter =
+      communities && communities.length > 0 ? communities : cardData;
+
+    return dataToFilter
+      .filter((item: any) => {
+        // Category filtering
+        const matchesCategory =
+          selectedCategory === 'All' ||
+          item.category?.toLowerCase() === selectedCategory.toLowerCase();
+
+        // Search filtering
+        const matchesSearch =
+          !searchQuery ||
+          (item.name || item.title)
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase());
+
+        return matchesCategory && matchesSearch;
+      })
+      .map((item: any) => ({
+        id: item.id || item._id,
+        title: item.name || item.title,
+        category: item.category,
+        image: item.banner || item.image,
+      }));
+  }, [communities, selectedCategory, searchQuery]);
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -120,104 +171,145 @@ const Home = () => {
     [],
   );
 
+  const handlePrimaryButtonPress = () => {
+    console.log('Primary Button Pressed');
+    requireAuth('MyCommunities');
+  };
+
+  const handleButtonPress = () => {
+    console.log('Button Pressed');
+    requireAuth('MyCommunities');
+  };
+
+  const handleExplorePress = () => {
+    console.log('Explore Communities Pressed');
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({
+        y: categoriesY.current,
+        animated: true,
+      });
+    }
+  };
+
   return (
     <View style={styles.mainContainer}>
       <AppHeader />
       <ScrollView
+        ref={scrollViewRef}
         // style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={handleScroll}
         contentContainerStyle={styles.contentContainerStyle}
       >
-        {/* VIDEO BANNER */}
-        <View style={styles.videoContainer}>
-          <VideoPlayer
-            source={AppImages.videoBanner}
-            autoPlay={videoVisible}
-            loop={true}
-            controls={false}
-            muted={true}
-            resizeMode="cover"
-            style={styles.videoBanner}
-          />
+        {isLoading ? (
+          <HomeSkeleton />
+        ) : (
+          <>
+            {/* VIDEO BANNER */}
+            <View style={styles.videoContainer}>
+              <VideoPlayer
+                source={AppImages.videoBanner}
+                autoPlay={videoVisible}
+                loop={true}
+                controls={false}
+                muted={true}
+                resizeMode="cover"
+                style={styles.videoBanner}
+              />
 
-          {/* Bottom Gradient Shadow */}
-          <LinearGradient
-            colors={[COLORS.transparent, COLORS.grMedium2, COLORS.grDark]}
-            style={styles.bottomShadow}
-            pointerEvents="none"
-          />
-        </View>
+              {/* Bottom Gradient Shadow */}
+              <LinearGradient
+                colors={[COLORS.transparent, COLORS.grMedium2, COLORS.grDark]}
+                style={styles.bottomShadow}
+                pointerEvents="none"
+              />
+            </View>
 
-        <View style={styles.container}>
-          {/* CAROUSEL CONTAINER */}
-          <ImageCarousel
-            data={carouselData}
-            primaryButtonText={isLoggedIn ? null : 'Ring the Bell'}
-            onPressPrimaryButton={() => { }}
-            buttonText={isLoggedIn ? 'My Communities' : null}
-            onPressButton={() => {
-              console.log('Carousel button clicked!');
-              // navigation.navigate('SomeScreen')
-            }}
-            exploreButtonText={'Explore Communities'}
-            onPressExploreButton={() => {
-              console.log('Explore button clicked!');
-              // navigation.navigate('SomeScreen')
-            }}
-          />
+            <View style={styles.container}>
+              {/* CAROUSEL CONTAINER */}
+              <ImageCarousel
+                data={carouselData}
+                primaryButtonText={isLoggedIn ? null : 'Ring the Bell'}
+                onPressPrimaryButton={handlePrimaryButtonPress}
+                buttonText={isLoggedIn ? 'My Communities' : null}
+                onPressButton={handleButtonPress}
+                exploreButtonText={'Explore Communities'}
+                onPressExploreButton={handleExplorePress}
+              />
 
-          {/* SEARCH */}
-          <SearchBar
-            value={searchQuery}
-            onChangeText={onChangeSearch}
-            placeholder="Search communities..."
-          />
+              {/* SEARCH */}
+              <SearchBar
+                value={searchQuery}
+                onChangeText={onChangeSearch}
+                placeholder="Search communities..."
+              />
 
-          {/* HEADER */}
-          <View style={styles.headerRow}>
-            <Text style={styles.headerText}>Categories</Text>
-            {/* <TouchableOpacity style={styles.seeAll}>
-            <Text style={styles.seeAllText}>See All</Text>
-            <Icon name="ChevronRight" size={18} color={COLORS.white} />
-          </TouchableOpacity> */}
-          </View>
+              {/* HEADER */}
+              <View
+                style={styles.headerRow}
+                onLayout={event => {
+                  categoriesY.current = event.nativeEvent.layout.y;
+                }}
+              >
+                <Text style={styles.headerText}>Categories</Text>
+              </View>
 
-          {/* CATEGORY TABS */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.categoryScroll}
-            contentContainerStyle={styles.categoryContentContainer}
-          >
-            {categories.map((item, index) => {
-              const isActive = selectedCategory === item;
-              return (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.categoryBtn,
-                    isActive && styles.activeCategoryBtn,
-                  ]}
-                  onPress={() => setSelectedCategory(item)}
-                >
-                  <Text
-                    style={[
-                      styles.categoryBtnText,
-                      isActive && styles.activeCategoryBtnText,
-                    ]}
-                  >
-                    {item}
+              {/* CATEGORY TABS */}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.categoryScroll}
+                contentContainerStyle={styles.categoryContentContainer}
+              >
+                {categories.map((item, index) => {
+                  const isActive = selectedCategory === item;
+                  return (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.categoryBtn,
+                        isActive && styles.activeCategoryBtn,
+                      ]}
+                      onPress={() => setSelectedCategory(item)}
+                    >
+                      <Text
+                        style={[
+                          styles.categoryBtnText,
+                          isActive && styles.activeCategoryBtnText,
+                        ]}
+                      >
+                        {item}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+
+              {/* CARDS GRID */}
+              {mappedCommunities.length > 0 ? (
+                <>
+                  <Text style={styles.sectionTitle}>
+                    {selectedCategory + ' Communities'}
                   </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-
-          {/* CARDS GRID */}
-          <HomeCardGrid data={cardData} onPressCard={() => { }} />
-        </View>
+                  <HomeCardGrid
+                    data={mappedCommunities}
+                    onPressCard={item => {
+                      console.log('Community card clicked:', item);
+                    }}
+                  />
+                </>
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyTitle}>No communities found</Text>
+                  <Text style={styles.emptySubtitle}>
+                    Try adjusting your search criteria or browse all categories
+                  </Text>
+                </View>
+              )}
+            </View>
+          </>
+        )}
       </ScrollView>
     </View>
   );

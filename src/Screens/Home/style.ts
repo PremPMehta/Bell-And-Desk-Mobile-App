@@ -130,6 +130,29 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginLeft: 10,
   },
+  sectionTitle: {
+    ...THEME.fontStyle.h2Regular,
+    marginTop: ms(16),
+  },
+
+  /* --- Empty State --- */
+  emptyContainer: {
+    paddingVertical: ms(60),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyTitle: {
+    ...THEME.fontStyle.h3Regular,
+    color: COLORS.white,
+    textAlign: 'center',
+    marginBottom: ms(8),
+  },
+  emptySubtitle: {
+    ...THEME.fontStyle.h5Regular,
+    color: COLORS.ctgColor,
+    textAlign: 'center',
+    paddingHorizontal: ms(40),
+  },
 });
 
 export default styles;

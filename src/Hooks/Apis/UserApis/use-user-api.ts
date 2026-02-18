@@ -46,6 +46,14 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiGetSiteSettings),
   );
 
+  // Get Communities Apis
+  const [apiGetCommunitiesLoading, setApiGetCommunitiesLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetCommunitiesLoading),
+  );
+  const [apiGetCommunities, setApiGetCommunities] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetCommunities),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -146,6 +154,20 @@ const useUserApi = () => {
     }
   }
 
+  // Get Communities for Home Screen
+  async function getCommunities() {
+    try {
+      setApiGetCommunitiesLoading(true);
+      const communitiesList: any = await api.get(ApiEndPoints.communities);
+      setApiGetCommunities(communitiesList);
+      setApiGetCommunitiesLoading(false);
+      return communitiesList;
+    } catch (error) {
+      console.error('Error fetching communities info:', error);
+      setApiGetCommunitiesLoading(false);
+    }
+  }
+
   return {
     // Auth Apis
     getUserUnifiedLogin,
@@ -163,10 +185,14 @@ const useUserApi = () => {
     /* Home Screen */
 
     // Site-Settings
-
     getSiteSettings,
     apiGetSiteSettingsLoading,
     apiGetSiteSettings,
+
+    // Communities
+    getCommunities,
+    apiGetCommunitiesLoading,
+    apiGetCommunities,
   };
 };
 

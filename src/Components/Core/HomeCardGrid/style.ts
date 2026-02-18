@@ -27,8 +27,9 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   categoryContainer: {
-    borderColor: COLORS.white,
-    borderWidth: ms(1),
+    backgroundColor: COLORS.primary,
+    // borderColor: COLORS.white,
+    // borderWidth: ms(1),
     borderRadius: ms(20),
     paddingVertical: ms(3),
     paddingHorizontal: ms(8),
