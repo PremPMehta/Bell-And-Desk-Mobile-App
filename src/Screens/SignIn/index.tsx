@@ -112,8 +112,8 @@ const SignIn = () => {
             {/* FORM */}
             <Formik
               initialValues={{
-                email: 'admin@cryptomanji.com',
-                password: 'Password@123',
+                email: 'baqy@mailinator.com', //  admin@cryptomanji.com
+                password: 'Pa$$w0rd!', //  Password@123
               }}
               validationSchema={SignInSchema}
               onSubmit={async values => {

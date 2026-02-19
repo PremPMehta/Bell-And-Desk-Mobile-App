@@ -14,6 +14,9 @@ export const AtomKeys = {
   apiUnifiedSignupLoading: 'apiUnifiedSignupLoading',
   apiUnifiedSignup: 'apiUnifiedSignup',
 
+  apiForgotPasswordLoading: 'apiForgotPasswordLoading',
+  apiForgotPassword: 'apiForgotPassword',
+
   apiUpdateUserProfileLoading: 'apiUpdateUserProfileLoading',
   apiUpdateUserProfile: 'apiUpdateUserProfile',
 

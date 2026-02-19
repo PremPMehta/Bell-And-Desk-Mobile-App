@@ -10,9 +10,11 @@ import TextInputField from '@/Components/Core/TextInputField';
 import styles from './style';
 import { COLORS } from '@/Assets/Theme/colors';
 import PrimaryButton from '@/Components/Core/PrimaryButton';
+import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 
 const ForgotPassword = () => {
   const navigation = useNavigation();
+  const { getUserForgotPassword, apiForgotPasswordLoading } = useUserApi();
 
   // FORM VALIDATION SCHEMA
   const ForgotSchema = Yup.object().shape({
@@ -57,9 +59,9 @@ const ForgotPassword = () => {
             <Formik
               initialValues={{ email: '' }}
               validationSchema={ForgotSchema}
-              onSubmit={values => {
+              onSubmit={async values => {
                 console.log('FORGOT FORM DATA:', values);
-                // <-- Here call login API
+                const res = await getUserForgotPassword(values);
               }}
             >
               {({
@@ -87,7 +89,7 @@ const ForgotPassword = () => {
                   <PrimaryButton
                     title="Send Reset Link"
                     onPress={handleSubmit}
-                    loading={false}
+                    loading={apiForgotPasswordLoading}
                     buttonStyle={styles.signInBtnStyle}
                     textStyle={styles.signInTxtStyle}
                   />

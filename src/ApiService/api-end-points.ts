@@ -2,6 +2,8 @@ export const ApiEndPoints = {
   // Auth
   unifiedLogin: 'auth/unified-login',
   unifiedSignup: 'auth/unified-signup',
+  userData: 'auth/user-data',
+  forgotPassword: 'auth/forgot-password',
   updateUserProfile: 'auth/update-profile',
 
   /* Home Screen */

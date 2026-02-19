@@ -1,6 +1,7 @@
 import { api } from '@/ApiService';
 import { ApiEndPoints } from '@/ApiService/api-end-points';
 import ToastModule from '@/Components/Core/Toast';
+import { useNavigation } from '@/Hooks/Utils/use-navigation';
 import { AtomKeys } from '@/Jotai/AtomKeys';
 import {
   booleanDefaultFalseAtomFamily,
@@ -11,6 +12,7 @@ import {
 import { useAtom, useSetAtom } from 'jotai';
 
 const useUserApi = () => {
+  const navigation = useNavigation();
   const setUserToken = useSetAtom(userTokenAtom);
   const setUser = useSetAtom(userAtom);
 
@@ -28,6 +30,14 @@ const useUserApi = () => {
   );
   const [apiUnifiedSignup, setApiUnifiedSignup] = useAtom(
     objectAtomFamily(AtomKeys.apiUnifiedSignup),
+  );
+
+  // User Forgot Password Apis
+  const [apiForgotPasswordLoading, setApiForgotPasswordLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiForgotPasswordLoading),
+  );
+  const [apiForgotPassword, setApiForgotPassword] = useAtom(
+    objectAtomFamily(AtomKeys.apiForgotPassword),
   );
 
   // Update User Profile Apis
@@ -59,27 +69,34 @@ const useUserApi = () => {
     try {
       setApiUnifiedLoginLoading(true);
       const uniLoginInfo: any = await api.post(ApiEndPoints.unifiedLogin, body);
-      const userName =
-        uniLoginInfo?.data?.user?.firstName +
-        ' ' +
-        uniLoginInfo?.data?.user?.lastName;
       console.log('uniLoginInfo', uniLoginInfo);
 
       if (uniLoginInfo?.data?.token) {
         setUserToken(uniLoginInfo?.data?.token);
+
+        // Fetch User Data after successful login
+        const userDataRes: any = await api.get(ApiEndPoints.userData);
+        console.log('userDataRes', userDataRes);
+
+        if (userDataRes?.data) {
+          setUser(userDataRes?.data);
+          const userName =
+            userDataRes?.data?.firstName + ' ' + userDataRes?.data?.lastName;
+          ToastModule.welcomeTop({
+            title: `Welcome Back, ${userName.trim()}!🎉`,
+            msg: '',
+          });
+        }
       }
-      if (uniLoginInfo?.data?.user) {
-        setUser(uniLoginInfo?.data?.user);
-      }
-      ToastModule.welcomeTop({
-        title: `Welcome Back, ${userName}!🎉`,
-        msg: '',
-      });
+
       setApiUnifiedLogin(uniLoginInfo);
       setApiUnifiedLoginLoading(false);
       return uniLoginInfo;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching user signin info:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
       setApiUnifiedLoginLoading(false);
     }
   }
@@ -108,12 +125,41 @@ const useUserApi = () => {
         title: `Welcome Back, ${userName}!🎉`,
         msg: '',
       });
-      setApiUnifiedLogin(uniSignupInfo);
+      setApiUnifiedSignup(uniSignupInfo);
       setApiUnifiedSignupLoading(false);
       return uniSignupInfo;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching user signup info:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
       setApiUnifiedSignupLoading(false);
+    }
+  }
+
+  // User Forgot Password
+  async function getUserForgotPassword(body: any) {
+    try {
+      setApiForgotPasswordLoading(true);
+      const forgotPassword: any = await api.post(
+        ApiEndPoints.forgotPassword,
+        body,
+      );
+      console.log('forgotPassword', forgotPassword);
+
+      ToastModule.successTop({
+        msg: forgotPassword?.message,
+      });
+      setApiForgotPassword(forgotPassword);
+      setApiForgotPasswordLoading(false);
+      navigation.goBack();
+      return forgotPassword;
+    } catch (error: any) {
+      console.error('Error fetching user forgot password info:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiForgotPasswordLoading(false);
     }
   }
 
@@ -134,8 +180,11 @@ const useUserApi = () => {
       setApiUpdateUserProfile(updateUserProfileInfo);
       setApiUpdateUserProfileLoading(false);
       return updateUserProfileInfo;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching update user profile info:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
       setApiUpdateUserProfileLoading(false);
     }
   }
@@ -148,8 +197,11 @@ const useUserApi = () => {
       setApiGetSiteSettings(siteSettingsInfo);
       setApiGetSiteSettingsLoading(false);
       return siteSettingsInfo;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching site settings info:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
       setApiGetSiteSettingsLoading(false);
     }
   }
@@ -162,8 +214,11 @@ const useUserApi = () => {
       setApiGetCommunities(communitiesList);
       setApiGetCommunitiesLoading(false);
       return communitiesList;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching communities info:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
       setApiGetCommunitiesLoading(false);
     }
   }
@@ -178,11 +233,15 @@ const useUserApi = () => {
     apiUnifiedSignupLoading,
     apiUnifiedSignup,
 
+    getUserForgotPassword,
+    apiForgotPasswordLoading,
+    apiForgotPassword,
+
     updateUserProfile,
     apiUpdateUserProfileLoading,
     apiUpdateUserProfile,
 
-    /* Home Screen */
+    /* Home Screen Apis */
 
     // Site-Settings
     getSiteSettings,

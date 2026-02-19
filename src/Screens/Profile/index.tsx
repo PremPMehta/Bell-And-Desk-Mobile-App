@@ -107,13 +107,15 @@ const Profile = () => {
           setFieldValue,
           resetForm,
         }) => {
-          console.log('🚀 ~ Profile ~ values:', values);
           return (
             <KeyboardAwareScrollView
               style={styles.container}
               contentContainerStyle={styles.innerContainer}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
+              enableOnAndroid={true}
+              extraHeight={150}
+              enableAutomaticScroll={true}
             >
               <View style={styles.card}>
                 {/* Header Row */}
@@ -157,9 +159,8 @@ const Profile = () => {
                     ) : (
                       <View style={[styles.avatar, styles.withoutAvatar]}>
                         <Text style={styles.withoutAvatarText}>
-                          {`${values.firstName?.charAt(0) || ''}${
-                            values.lastName?.charAt(0) || ''
-                          }`.toUpperCase()}
+                          {`${values.firstName?.charAt(0) || ''}${values.lastName?.charAt(0) || ''
+                            }`.toUpperCase()}
                         </Text>
                       </View>
                     )}
@@ -215,6 +216,7 @@ const Profile = () => {
                       onBlur={handleBlur('username')}
                       error={errors.username as string}
                       touched={touched.username as boolean}
+                      autoCapitalize="none"
                       mediaHelpText="Username can only contain lowercase letters, numbers, hyphens, and underscores (3-30 characters)"
                     />
                   </>

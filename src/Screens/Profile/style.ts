@@ -9,7 +9,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.header,
   },
   innerContainer: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: sc(15),
     paddingTop: vs(20),
   },
