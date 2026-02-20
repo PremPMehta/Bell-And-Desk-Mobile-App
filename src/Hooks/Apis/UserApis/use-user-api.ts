@@ -64,6 +64,15 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiGetCommunities),
   );
 
+  // Get Communities Slug Apis
+  const [apiGetCommunitiesSlugLoading, setApiGetCommunitiesSlugLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiGetCommunitiesSlugLoading),
+    );
+  const [apiGetCommunitiesSlug, setApiGetCommunitiesSlug] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetCommunitiesSlug),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -223,6 +232,22 @@ const useUserApi = () => {
     }
   }
 
+  // Get Community Details for Category Details Screen
+  async function getCommunitiesSlug(query: any) {
+    try {
+      setApiGetCommunitiesSlugLoading(true);
+      const communityInfo: any = await api.get(
+        ApiEndPoints.communitiesSlug + query,
+      );
+      setApiGetCommunitiesSlug(communityInfo);
+      setApiGetCommunitiesSlugLoading(false);
+      return communityInfo;
+    } catch (error) {
+      console.error('Error fetching community info:', error);
+      setApiGetCommunitiesSlugLoading(false);
+    }
+  }
+
   return {
     // Auth Apis
     getUserUnifiedLogin,
@@ -252,6 +277,12 @@ const useUserApi = () => {
     getCommunities,
     apiGetCommunitiesLoading,
     apiGetCommunities,
+
+    /* Category Details Screen Apis */
+
+    getCommunitiesSlug,
+    apiGetCommunitiesSlugLoading,
+    apiGetCommunitiesSlug,
   };
 };
 

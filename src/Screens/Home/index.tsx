@@ -30,6 +30,7 @@ import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 import { useAtomValue } from 'jotai';
 import { userTokenAtom } from '@/Jotai/Atoms';
 import { useRequireAuth } from '@/Hooks/Utils/use-require-auth';
+import { useNavigation } from '@/Hooks/Utils/use-navigation';
 
 const BANNER_HEIGHT = 220;
 
@@ -48,6 +49,7 @@ interface SiteSettingsData {
 }
 
 const Home = () => {
+  const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [siteSettings, setSiteSettings] = useState<SiteSettingsData | null>(
@@ -146,6 +148,7 @@ const Home = () => {
         return matchesCategory && matchesSearch;
       })
       .map((item: any) => ({
+        ...item,
         id: item.id || item._id,
         title: item.name || item.title,
         category: item.category,
@@ -296,6 +299,16 @@ const Home = () => {
                     data={mappedCommunities}
                     onPressCard={item => {
                       console.log('Community card clicked:', item);
+                      // navigation.navigate('CategoryDetails', {
+                      //   slug: item?.subdomain,
+                      // });
+                      navigation.navigate('MyCommunities', {
+                        screen: 'CommunityLayout',
+                        params: {
+                          title: item?.title || item?.name,
+                          itemData: item,
+                        },
+                      });
                     }}
                   />
                 </>

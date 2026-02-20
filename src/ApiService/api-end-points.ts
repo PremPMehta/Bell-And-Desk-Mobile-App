@@ -13,4 +13,8 @@ export const ApiEndPoints = {
 
   // Communities
   communities: 'communities',
+
+  /* Category Details Screen */
+
+  communitiesSlug: 'communities/slug',
 };

@@ -6,6 +6,7 @@ import styles from './style';
 import SearchBar from '@/Components/Core/SearchBar';
 import Icon from '@/Components/Core/Icons';
 import { COLORS } from '@/Assets/Theme/colors';
+import { useNavigation } from '@/Hooks/Utils/use-navigation';
 
 interface Props {
   onScroll?: (...args: any[]) => void;
@@ -13,6 +14,7 @@ interface Props {
 }
 
 const CommunityCourses = ({ onScroll, scrollEventThrottle }: Props) => {
+  const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
 
   const onChangeSearch = query => setSearchQuery(query);
@@ -28,6 +30,10 @@ const CommunityCourses = ({ onScroll, scrollEventThrottle }: Props) => {
     />
   );
 
+  const handleCreateCourse = () => {
+    navigation.navigate('CreateCourses');
+  };
+
   return (
     <View style={styles.container}>
       {/* <Text style={{ color: 'white' }}>CommunityCourses</Text> */}
@@ -41,7 +47,7 @@ const CommunityCourses = ({ onScroll, scrollEventThrottle }: Props) => {
           searchInputStyle={styles.searchInputStyle}
         />
         {/* <Text>Hello</Text> */}
-        <TouchableOpacity style={styles.create}>
+        <TouchableOpacity style={styles.create} onPress={handleCreateCourse}>
           <Icon name="CirclePlus" size={12} color={COLORS.white} />
           <Text style={styles.createTxt}>Create</Text>
         </TouchableOpacity>

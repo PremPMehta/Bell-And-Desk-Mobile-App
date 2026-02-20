@@ -1,7 +1,7 @@
 import { THEME } from '@/Assets/Theme';
 import { COLORS } from '@/Assets/Theme/colors';
 import { ms, sc, vs, width } from '@/Assets/Theme/fontStyle';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
   container: {
@@ -70,15 +70,24 @@ const styles = StyleSheet.create({
     borderRadius: ms(50),
   },
 
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: ms(10),
+  },
+  title: {
+    ...THEME.fontStyle.h2SemiBold,
+  },
   joinNow: {
     backgroundColor: COLORS.primary,
-    paddingVertical: ms(10),
-    borderRadius: ms(8),
-    marginTop: ms(8),
+    paddingHorizontal: ms(6),
+    paddingVertical: ms(8),
+    borderRadius: ms(20),
     alignItems: 'center',
   },
   joinText: {
-    ...THEME.fontStyle.h4SemiBold,
+    ...THEME.fontStyle.h5Regular,
   },
 
   socialRow: {
@@ -128,13 +137,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     padding: ms(8),
     borderRadius: ms(5),
-    marginLeft: ms(8),
+    // marginLeft: ms(2),
   },
   statNumber: {
     ...THEME.fontStyle.h2Bold,
   },
   statLabel: {
-    ...THEME.fontStyle.h5Regular,
+    ...THEME.fontStyle.h6Regular,
   },
 
   heading: {
@@ -160,6 +169,27 @@ const styles = StyleSheet.create({
     ...THEME.fontStyle.h5Regular,
     flex: 1,
     lineHeight: ms(18),
+  },
+  header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: vs(60),
+    zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: ms(6),
+  },
+  backButton: {
+    width: ms(40),
+    height: ms(40),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    ...THEME.fontStyle.h3Bold,
+    marginLeft: Platform.OS === 'ios' ? ms(84) : ms(24),
   },
 });
 

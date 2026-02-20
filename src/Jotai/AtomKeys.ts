@@ -29,4 +29,9 @@ export const AtomKeys = {
   // Communities
   apiGetCommunitiesLoading: 'apiGetCommunitiesLoading',
   apiGetCommunities: 'apiGetCommunities',
+
+  /* Category Details Screen */
+
+  apiGetCommunitiesSlugLoading: 'apiGetCommunitiesSlugLoading',
+  apiGetCommunitiesSlug: 'apiGetCommunitiesSlug',
 };

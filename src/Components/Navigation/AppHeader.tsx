@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   menuButton: {},
   logoContainer: {
     justifyContent: 'center',
-    marginLeft: ms(30),
+    marginLeft: ms(8),
   },
   headerTitle: {
     ...THEME.fontStyle.h4SemiBold,

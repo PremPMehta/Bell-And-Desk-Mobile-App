@@ -16,6 +16,8 @@ import PrivacyPolicy from '@/Screens/PrivacyPolicy';
 import TermsAndConditions from '@/Screens/TermsAndConditions';
 import FAQ from '@/Screens/FAQ';
 import LanguageSelection from '@/Screens/LanguageSelection';
+import CategoryDetails from '@/Screens/CategoryDetails';
+import CreateCourses from '@/Screens/CommunityTabs/Courses/CreateCourses';
 
 export type StackNavigationProp<T> = any;
 export type RootStackParamList = {
@@ -92,21 +94,21 @@ const AppNavigator = () => {
           options={{ headerShown: false }}
         /> */}
 
-        {/* <MainStack.Screen
+        <MainStack.Screen
           name="CreateCourses"
           component={CreateCourses}
           options={{ headerShown: false }}
-        /> */}
+        />
 
-        {/* <MainStack.Screen
-        name="CategoryDetails"
-        component={CategoryDetails}
-        options={{
-          ...getDefaultStackHeaderOptions(),
-          headerShown: true,
-          title: 'Category Details',
+        <MainStack.Screen
+          name="CategoryDetails"
+          component={CategoryDetails}
+          options={{
+            ...getDefaultStackHeaderOptions(),
+            headerShown: false,
+            title: 'Category Details',
           }}
-          /> */}
+        />
 
         {/* PUBLIC / INFO SCREENS */}
         <MainStack.Screen
