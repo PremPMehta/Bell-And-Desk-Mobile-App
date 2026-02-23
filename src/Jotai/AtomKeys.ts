@@ -34,4 +34,9 @@ export const AtomKeys = {
 
   apiGetCommunitiesSlugLoading: 'apiGetCommunitiesSlugLoading',
   apiGetCommunitiesSlug: 'apiGetCommunitiesSlug',
+
+  /* Choose Plan Screen */
+
+  apiGetCommunitiesPlansLoading: 'apiGetCommunitiesPlansLoading',
+  apiGetCommunitiesPlans: 'apiGetCommunitiesPlans',
 };

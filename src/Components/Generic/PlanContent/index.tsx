@@ -6,25 +6,46 @@ import { COLORS } from '@/Assets/Theme/colors';
 import { features } from '@/Constants/customData';
 
 const PlanContent = ({ item, isGradient = false, onStartNow }) => {
+  const planFeatures = item?.features || features;
+  const renderFeatureText = (text: string) => {
+    if (!text.includes('**')) {
+      return text;
+    }
+
+    const parts = text.split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return (
+          <Text key={index} style={styles.boldText}>
+            {part.slice(2, -2)}
+          </Text>
+        );
+      }
+      return part;
+    });
+  };
+
   return (
     <>
       <Text style={[styles.cardTitle, isGradient && styles.commonColor]}>
-        {item.title}
+        {item?.name || item?.title}
       </Text>
 
       <Text style={[styles.cardPrice, isGradient && styles.commonColor]}>
-        {item.price}{' '}
+        {'$' + item?.price}{' '}
         <Text style={[styles.month, isGradient && styles.commonColor]}>
-          / Month
+          / {item?.period || 'Month'}
         </Text>
       </Text>
+
+      <Text style={styles.descAbove}>{item?.descriptionAbove}</Text>
 
       <TouchableOpacity
         style={[styles.startBtn, isGradient ? styles.bgWhite : styles.bgBlack]}
         onPress={() => onStartNow(item)}
       >
         <Text style={[styles.startBtnText, isGradient && styles.commonColor2]}>
-          Start Now
+          {(item?.isEnterprise && item?.buttonText) || 'Start Now'}
         </Text>
       </TouchableOpacity>
 
@@ -32,7 +53,7 @@ const PlanContent = ({ item, isGradient = false, onStartNow }) => {
         What's included:
       </Text>
 
-      {features.map((f, index) => (
+      {planFeatures.map((f, index) => (
         <View key={index} style={styles.featureRow}>
           <Icon
             name="CircleCheckBig"
@@ -40,7 +61,7 @@ const PlanContent = ({ item, isGradient = false, onStartNow }) => {
             color={isGradient ? COLORS.white : COLORS.green}
           />
           <Text style={[styles.featureText, isGradient && styles.commonColor]}>
-            {f}
+            {renderFeatureText(f)}
           </Text>
         </View>
       ))}

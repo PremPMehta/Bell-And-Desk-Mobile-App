@@ -27,10 +27,10 @@ import { cardData, categories, sliderData } from '@/Constants/customData';
 import { AppImages } from '@/Assets/Images';
 import LinearGradient from 'react-native-linear-gradient';
 import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
-import { useAtomValue } from 'jotai';
-import { userTokenAtom } from '@/Jotai/Atoms';
 import { useRequireAuth } from '@/Hooks/Utils/use-require-auth';
 import { useNavigation } from '@/Hooks/Utils/use-navigation';
+import { useAtom } from 'jotai';
+import { userAtom } from '@/Jotai/Atoms';
 
 const BANNER_HEIGHT = 220;
 
@@ -50,6 +50,8 @@ interface SiteSettingsData {
 
 const Home = () => {
   const navigation = useNavigation();
+  const [user]: any = useAtom(userAtom);
+  console.log('🚀 ~ Home ~ user:', user);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [siteSettings, setSiteSettings] = useState<SiteSettingsData | null>(
@@ -62,10 +64,11 @@ const Home = () => {
     getCommunities,
     apiGetCommunitiesLoading,
   } = useUserApi();
-  const { requireAuth } = useRequireAuth();
+  const { requireAuth, isLoggedIn } = useRequireAuth();
   const isLoading = apiGetSiteSettingsLoading || apiGetCommunitiesLoading;
-  const userToken = useAtomValue(userTokenAtom);
-  const isLoggedIn = !!userToken;
+  const isHavePlan = user?.planEntitlements?.length > 0;
+
+  console.log('🚀 ~ Home ~ isLoggedIn:', isLoggedIn);
 
   const scrollY = useRef(0);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -176,7 +179,7 @@ const Home = () => {
 
   const handlePrimaryButtonPress = () => {
     console.log('Primary Button Pressed');
-    requireAuth('MyCommunities');
+    requireAuth('ChoosePlan');
   };
 
   const handleButtonPress = () => {
@@ -233,7 +236,13 @@ const Home = () => {
               {/* CAROUSEL CONTAINER */}
               <ImageCarousel
                 data={carouselData}
-                primaryButtonText={isLoggedIn ? null : 'Ring the Bell'}
+                primaryButtonText={
+                  isLoggedIn
+                    ? !isHavePlan
+                      ? 'Start Your Own Community'
+                      : null
+                    : 'Ring the Bell'
+                }
                 onPressPrimaryButton={handlePrimaryButtonPress}
                 buttonText={isLoggedIn ? 'My Communities' : null}
                 onPressButton={handleButtonPress}
@@ -299,16 +308,16 @@ const Home = () => {
                     data={mappedCommunities}
                     onPressCard={item => {
                       console.log('Community card clicked:', item);
-                      // navigation.navigate('CategoryDetails', {
-                      //   slug: item?.subdomain,
-                      // });
-                      navigation.navigate('MyCommunities', {
-                        screen: 'CommunityLayout',
-                        params: {
-                          title: item?.title || item?.name,
-                          itemData: item,
-                        },
+                      navigation.navigate('CategoryDetails', {
+                        slug: item?.subdomain,
                       });
+                      // navigation.navigate('MyCommunities', {
+                      //   screen: 'CommunityLayout',
+                      //   params: {
+                      //     title: item?.title || item?.name,
+                      //     itemData: item,
+                      //   },
+                      // });
                     }}
                   />
                 </>

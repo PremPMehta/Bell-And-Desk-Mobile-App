@@ -73,6 +73,15 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiGetCommunitiesSlug),
   );
 
+  // Get Communities Plans Apis
+  const [apiGetCommunitiesPlansLoading, setApiGetCommunitiesPlansLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiGetCommunitiesPlansLoading),
+    );
+  const [apiGetCommunitiesPlans, setApiGetCommunitiesPlans] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetCommunitiesPlans),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -248,6 +257,23 @@ const useUserApi = () => {
     }
   }
 
+  // Get Communities Plans for Choose Plan Screen
+  async function getPlansPublic() {
+    try {
+      setApiGetCommunitiesPlansLoading(true);
+      const plans: any = await api.get(ApiEndPoints.plansPublic);
+      setApiGetCommunitiesPlans(plans);
+      setApiGetCommunitiesPlansLoading(false);
+      return plans;
+    } catch (error: any) {
+      console.error('Error fetching communities plans info:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiGetCommunitiesPlansLoading(false);
+    }
+  }
+
   return {
     // Auth Apis
     getUserUnifiedLogin,
@@ -283,6 +309,12 @@ const useUserApi = () => {
     getCommunitiesSlug,
     apiGetCommunitiesSlugLoading,
     apiGetCommunitiesSlug,
+
+    /* Choose Plan Screen Apis */
+
+    getPlansPublic,
+    apiGetCommunitiesPlansLoading,
+    apiGetCommunitiesPlans,
   };
 };
 

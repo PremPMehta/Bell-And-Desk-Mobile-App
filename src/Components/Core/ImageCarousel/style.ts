@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
 
   /* BUTTON STYLES */
   primaryButtonContainer: {
-    flexDirection: 'row',
+    // flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
     marginTop: ms(20),
@@ -76,14 +76,45 @@ const styles = StyleSheet.create({
     width: sc(80),
     gap: ms(8),
   },
+  priButton: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.primary,
+    borderRadius: sc(20),
+    justifyContent: 'center',
+    alignItems: 'center',
+    // alignSelf: 'center',
+    paddingVertical: ms(5),
+    paddingHorizontal: ms(10),
+    marginTop: ms(10),
+    gap: ms(8),
+  },
 
+  extraViewContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // marginTop: ms(10),
+    gap: ms(8),
+  },
+  newBtnContainer: {
+    flexDirection: 'row',
+    alignSelf: 'center',
+    justifyContent: 'center',
+    // marginTop: ms(10),
+    gap: ms(8),
+  },
   buttonContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-evenly',
-    paddingHorizontal: ms(16),
-    paddingVertical: ms(12),
-    // marginTop: ms(80),
+    justifyContent: 'space-between',
+    marginTop: ms(10),
+  },
+  withoutButtonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: ms(8),
+    marginTop: ms(10),
   },
   buttonShadow: {
     alignSelf: 'center',

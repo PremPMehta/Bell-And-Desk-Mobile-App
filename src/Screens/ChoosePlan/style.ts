@@ -26,6 +26,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     width: '80%',
   },
+
+  bottomTextContainer: {
+    alignSelf: 'center',
+  },
+  bottomText: {
+    ...THEME.fontStyle.h5Regular,
+    textAlign: 'center',
+  },
+  bottomLink: {
+    ...THEME.fontStyle.h5Regular,
+    color: COLORS.primary,
+    textAlign: 'center',
+  },
 });
 
 export default styles;

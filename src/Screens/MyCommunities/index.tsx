@@ -5,6 +5,8 @@ import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
   interpolate,
+  withTiming,
+  Easing,
 } from 'react-native-reanimated';
 import { useNavigation } from '@/Hooks/Utils/use-navigation';
 import styles from './style';
@@ -19,13 +21,15 @@ const MyCommunities = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const scrollY = useSharedValue(0);
-  const translationY = useSharedValue(0);
   const lastScrollY = useSharedValue(0);
+  const categoryVisible = useSharedValue(1); // 1 = visible, 0 = hidden
 
-  // Tighter height and gap values
+  // Fixed height of the category tab row
   const TAB_HEIGHT = ms(36);
   const MARGIN_GAP = ms(12);
   const TOTAL_HEIGHT = TAB_HEIGHT + MARGIN_GAP;
+
+  const SCROLL_THRESHOLD = ms(10); // how many px before toggling
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -33,40 +37,40 @@ const MyCommunities = () => {
       const diff = currentY - lastScrollY.value;
 
       if (currentY <= 0) {
-        translationY.value = 0;
-      } else {
-        // Accumulate diff but clamp it
-        const nextTranslationY = translationY.value - diff;
-        translationY.value = Math.max(-TOTAL_HEIGHT, Math.min(0, nextTranslationY));
+        // At the very top — always show the category
+        if (categoryVisible.value !== 1) {
+          categoryVisible.value = withTiming(1, {
+            duration: 250,
+            easing: Easing.out(Easing.cubic),
+          });
+        }
+      } else if (diff > SCROLL_THRESHOLD && categoryVisible.value !== 0) {
+        // Scrolling DOWN — hide category
+        categoryVisible.value = withTiming(0, {
+          duration: 250,
+          easing: Easing.out(Easing.cubic),
+        });
+      } else if (diff < -SCROLL_THRESHOLD && categoryVisible.value !== 1) {
+        // Scrolling UP — show category
+        categoryVisible.value = withTiming(1, {
+          duration: 250,
+          easing: Easing.out(Easing.cubic),
+        });
       }
 
       lastScrollY.value = currentY;
       scrollY.value = currentY;
     },
-    // Reset or handle edge cases if needed
     onBeginDrag: (event) => {
       lastScrollY.value = event.contentOffset.y;
-    }
+    },
   });
 
-  const DYNAMIC_MARGIN = ms(4);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    // Smoothly interpolate opacity but keep height/transform direct for performance
-    const opacity = interpolate(translationY.value, [-TOTAL_HEIGHT, 0], [0, 1]);
-
-    // Overscroll compensation to prevent gap at top
-    const overscroll = scrollY.value < 0 ? -scrollY.value : 0;
-
+  // Animated style for the outer clipping wrapper (fixed height, clips overflow)
+  const animatedContainerStyle = useAnimatedStyle(() => {
     return {
-      height: Math.max(0, TOTAL_HEIGHT + translationY.value),
-      opacity: opacity,
-      transform: [{ translateY: overscroll }],
-      marginBottom: interpolate(
-        translationY.value,
-        [-TOTAL_HEIGHT, 0],
-        [0, DYNAMIC_MARGIN],
-      ), // Subtle dynamic margin
+      height: interpolate(categoryVisible.value, [0, 1], [0, TOTAL_HEIGHT]),
+      opacity: interpolate(categoryVisible.value, [0, 1], [0, 1]),
     };
   });
 
@@ -96,8 +100,8 @@ const MyCommunities = () => {
         />
       </View>
 
-      {/* CATEGORY TABS */}
-      <Animated.View style={[styles.scrollContainer, animatedStyle]}>
+      {/* CATEGORY TABS — animated slide/fade on scroll */}
+      <Animated.View style={[styles.scrollContainer, animatedContainerStyle]}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}

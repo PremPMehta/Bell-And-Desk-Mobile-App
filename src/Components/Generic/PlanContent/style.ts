@@ -15,7 +15,12 @@ const styles = StyleSheet.create({
   },
   month: {
     ...THEME.fontStyle.h5Regular,
+    color: COLORS.ctgColor,
+  },
+  descAbove: {
+    ...THEME.fontStyle.h5Regular,
     color: COLORS.black,
+    marginTop: ms(16),
   },
 
   startBtn: {
@@ -56,6 +61,9 @@ const styles = StyleSheet.create({
   },
   commonColor2: {
     color: COLORS.black,
+  },
+  boldText: {
+    fontFamily: 'Roboto-Bold',
   },
 });
 

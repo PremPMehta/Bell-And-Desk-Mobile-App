@@ -39,7 +39,9 @@ const styles = StyleSheet.create({
     marginBottom: ms(20),
   },
   ul: {
+    ...THEME.fontStyle.h4Regular,
     marginVertical: ms(8),
+    paddingLeft: ms(22),
   },
   liRow: {
     flexDirection: 'row',
@@ -52,7 +54,17 @@ const styles = StyleSheet.create({
   },
   li: {
     ...THEME.fontStyle.h4Regular,
-    flex: 1,
+    // flex: 1,
+    lineHeight: ms(18),
+    marginBottom: ms(8),
+    marginLeft: ms(16),
+  },
+  b: {
+    fontWeight: 'bold',
+  },
+  a: {
+    color: COLORS.primary,
+    textDecorationLine: 'underline',
   },
 });
 

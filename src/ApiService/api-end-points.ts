@@ -17,4 +17,8 @@ export const ApiEndPoints = {
   /* Category Details Screen */
 
   communitiesSlug: 'communities/slug',
+
+  /* Choose Plan Screen */
+
+  plansPublic: 'plans/public',
 };

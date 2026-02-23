@@ -32,6 +32,11 @@ const ImageCarousel = ({
   const userName = user?.firstName + ' ' + user?.lastName;
   const scrollOffsetValue = useSharedValue(0);
   const [activeIndex, setActiveIndex] = useState(0);
+  const isStartOwnCommunity = primaryButtonText === 'Start Your Own Community';
+  const isPrimary = onPressPrimaryButton && primaryButtonText;
+  const isSimple = onPressButton && buttonText;
+  const isExplore = onPressExploreButton && exploreButtonText;
+  const isCommon = !isPrimary && !isSimple && !isExplore;
 
   const getImageSource = (source: any) => {
     if (!source) return AppImages.homeBanner;
@@ -134,7 +139,7 @@ const ImageCarousel = ({
   //   );
   // };
 
-  const item = (data && data.length > 0) ? data[0] : null;
+  const item = data && data.length > 0 ? data[0] : null;
   const bannerSource = getImageSource(item?.heroImage || item);
 
   return (
@@ -187,7 +192,59 @@ const ImageCarousel = ({
                 <Text style={styles.subtitle}>{item?.subHeaderTitle}</Text>
               )}
 
-              {onPressPrimaryButton && primaryButtonText && (
+              <View
+                style={
+                  isStartOwnCommunity
+                    ? styles.primaryButtonContainer
+                    : isCommon
+                    ? styles.buttonContainer
+                    : styles.withoutButtonContainer
+                }
+              >
+                {isPrimary && (
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    onPress={onPressPrimaryButton}
+                    style={
+                      isStartOwnCommunity
+                        ? styles.priButton
+                        : styles.primaryButton
+                    }
+                  >
+                    <Icon name="BellRing" size={14} color={COLORS.white} />
+                    <Text style={styles.buttonText}>{primaryButtonText}</Text>
+                  </TouchableOpacity>
+                )}
+                <View
+                  style={
+                    isStartOwnCommunity
+                      ? styles.extraViewContainer
+                      : styles.newBtnContainer
+                  }
+                >
+                  {isSimple && (
+                    <TouchableOpacity
+                      activeOpacity={0.9}
+                      onPress={onPressButton}
+                      style={styles.buttonShadow}
+                    >
+                      <Text style={styles.buttonText}>{buttonText}</Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {isExplore && (
+                    <TouchableOpacity
+                      activeOpacity={0.9}
+                      onPress={onPressExploreButton}
+                      style={styles.buttonShadow}
+                    >
+                      <Text style={styles.buttonText}>{exploreButtonText}</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+
+              {/* {onPressPrimaryButton && primaryButtonText && (
                 <View style={styles.primaryButtonContainer}>
                   <TouchableOpacity
                     activeOpacity={0.9}
@@ -205,9 +262,9 @@ const ImageCarousel = ({
                     <Text style={styles.buttonText}>{exploreButtonText}</Text>
                   </TouchableOpacity>
                 </View>
-              )}
+              )} */}
 
-              {onPressButton && buttonText && (
+              {/* {onPressButton && buttonText && (
                 <View style={styles.buttonContainer}>
                   <TouchableOpacity
                     activeOpacity={0.9}
@@ -226,7 +283,7 @@ const ImageCarousel = ({
                     </TouchableOpacity>
                   )}
                 </View>
-              )}
+              )} */}
             </View>
           </ImageBackground>
         </View>
@@ -250,7 +307,6 @@ const ImageCarousel = ({
       </View> */}
     </View>
   );
-
 };
 
 export default ImageCarousel;
