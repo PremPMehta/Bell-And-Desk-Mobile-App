@@ -31,12 +31,18 @@ export const AtomKeys = {
   apiGetCommunities: 'apiGetCommunities',
 
   /* Category Details Screen */
-
   apiGetCommunitiesSlugLoading: 'apiGetCommunitiesSlugLoading',
   apiGetCommunitiesSlug: 'apiGetCommunitiesSlug',
 
   /* Choose Plan Screen */
-
   apiGetCommunitiesPlansLoading: 'apiGetCommunitiesPlansLoading',
   apiGetCommunitiesPlans: 'apiGetCommunitiesPlans',
+
+  /* My Communities Screen */
+  apiGetUserDataLoading: 'apiGetUserDataLoading',
+  apiGetUserData: 'apiGetUserData',
+
+  /* Community Courses Screen */
+  apiGetCommunityCoursesLoading: 'apiGetCommunityCoursesLoading',
+  apiGetCommunityCourses: 'apiGetCommunityCourses',
 };

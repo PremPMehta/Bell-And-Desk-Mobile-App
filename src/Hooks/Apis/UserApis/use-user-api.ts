@@ -82,6 +82,23 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiGetCommunitiesPlans),
   );
 
+  // Get User Data Apis
+  const [apiGetUserDataLoading, setApiGetUserDataLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetUserDataLoading),
+  );
+  const [apiGetUserData, setApiGetUserData] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetUserData),
+  );
+
+  // Get Community Courses Apis
+  const [apiGetCommunityCoursesLoading, setApiGetCommunityCoursesLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiGetCommunityCoursesLoading),
+    );
+  const [apiGetCommunityCourses, setApiGetCommunityCourses] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetCommunityCourses),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -274,6 +291,42 @@ const useUserApi = () => {
     }
   }
 
+  // Get User Data for My Communities Screen
+  async function getUserData() {
+    try {
+      setApiGetUserDataLoading(true);
+      const userDataInfo: any = await api.get(ApiEndPoints.userData);
+      if (userDataInfo?.data) {
+        setUser(userDataInfo?.data);
+      }
+      setApiGetUserData(userDataInfo);
+      setApiGetUserDataLoading(false);
+      return userDataInfo;
+    } catch (error: any) {
+      console.error('Error fetching user data info:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiGetUserDataLoading(false);
+    }
+  }
+
+  // Get Courses for Community Courses Screen
+  async function getCommunityCourses(query: any) {
+    try {
+      setApiGetCommunityCoursesLoading(true);
+      const communityCourses: any = await api.get(
+        ApiEndPoints.communityCourses + query,
+      );
+      setApiGetCommunityCourses(communityCourses);
+      setApiGetCommunityCoursesLoading(false);
+      return communityCourses;
+    } catch (error) {
+      console.error('Error fetching community courses info:', error);
+      setApiGetCommunityCoursesLoading(false);
+    }
+  }
+
   return {
     // Auth Apis
     getUserUnifiedLogin,
@@ -305,16 +358,24 @@ const useUserApi = () => {
     apiGetCommunities,
 
     /* Category Details Screen Apis */
-
     getCommunitiesSlug,
     apiGetCommunitiesSlugLoading,
     apiGetCommunitiesSlug,
 
     /* Choose Plan Screen Apis */
-
     getPlansPublic,
     apiGetCommunitiesPlansLoading,
     apiGetCommunitiesPlans,
+
+    /* My Communities Screen Apis */
+    getUserData,
+    apiGetUserDataLoading,
+    apiGetUserData,
+
+    /* Community Courses Screen Apis */
+    getCommunityCourses,
+    apiGetCommunityCoursesLoading,
+    apiGetCommunityCourses,
   };
 };
 

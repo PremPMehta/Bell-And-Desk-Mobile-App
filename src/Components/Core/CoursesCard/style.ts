@@ -50,11 +50,12 @@ const styles = StyleSheet.create({
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: ms(10),
+    // paddingHorizontal: ms(10),
+    marginLeft: ms(10),
     marginTop: ms(12),
     gap: ms(8),
   },
-  tag: {
+  targetAudience: {
     paddingHorizontal: ms(10),
     paddingVertical: ms(4),
     borderRadius: ms(12),
@@ -62,10 +63,26 @@ const styles = StyleSheet.create({
     borderColor: COLORS.outlineGrey,
     backgroundColor: 'transparent',
   },
-  tagText: {
+  contentType: {
+    paddingHorizontal: ms(10),
+    paddingVertical: ms(4),
+    borderRadius: ms(12),
+    borderWidth: 1,
+    borderColor: COLORS.outlineGrey,
+    backgroundColor: 'transparent',
+  },
+  category: {
+    paddingHorizontal: ms(10),
+    paddingVertical: ms(4),
+    borderRadius: ms(12),
+    borderWidth: 1,
+    borderColor: COLORS.outlineGrey,
+    backgroundColor: 'transparent',
+  },
+  commonChipTxt: {
     ...THEME.fontStyle.h6Regular,
     color: COLORS.white,
-    fontSize: ms(10),
+    textTransform: 'capitalize',
   },
   communityName: {
     ...THEME.fontStyle.h4Bold,
@@ -73,7 +90,7 @@ const styles = StyleSheet.create({
   },
   description: {
     ...THEME.fontStyle.h6Regular,
-    color: COLORS.gray,
+    color: COLORS.subText,
     marginTop: ms(10),
     lineHeight: ms(18),
   },
@@ -90,6 +107,7 @@ const styles = StyleSheet.create({
   },
   communityText: {
     ...THEME.fontStyle.h6Regular,
+    color: COLORS.subText,
   },
 });
 

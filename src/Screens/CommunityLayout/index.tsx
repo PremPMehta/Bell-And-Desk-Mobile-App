@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import { useNavigation } from '@/Hooks/Utils/use-navigation';
+import { useRoute } from '@react-navigation/native';
 import Icon from '@/Components/Core/Icons';
 import { COLORS } from '@/Assets/Theme/colors';
 import styles from './style';
@@ -13,6 +14,9 @@ const TAB_HEIGHT = 50; // Height of the tab bar
 
 const CommunityLayout = () => {
   const navigation = useNavigation();
+  const route = useRoute<any>();
+  const { communityId } = route.params || {};
+
   const [selectedTab, setSelectedTab] = useState('courses');
 
   // Animation values
@@ -108,6 +112,7 @@ const CommunityLayout = () => {
         <Animated.View style={{ flex: 1, paddingTop: contentPaddingTop }}>
           <CommunityMenuTabsContent
             selectedTab={selectedTab}
+            communityId={communityId}
             onScroll={handleScroll}
             scrollEventThrottle={16}
           />

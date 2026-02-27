@@ -26,7 +26,11 @@ const MyCommunityCard: React.FC<CommunityCardProps> = ({
   onSettingsPress,
 }) => {
   return (
-    <View style={styles.cardContainer}>
+    <TouchableOpacity
+      style={styles.cardContainer}
+      activeOpacity={0.8}
+      onPress={onViewPress}
+    >
       {/* Banner */}
       <Image source={bannerImage} style={styles.bannerImage} />
 
@@ -59,7 +63,7 @@ const MyCommunityCard: React.FC<CommunityCardProps> = ({
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

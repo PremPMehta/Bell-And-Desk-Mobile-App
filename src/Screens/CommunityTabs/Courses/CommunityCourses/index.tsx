@@ -1,29 +1,68 @@
-import { View, Text, Animated, TouchableOpacity } from 'react-native';
-import React, { useState } from 'react';
-import { MOCK_COMMUNITIES } from '@/Constants/customData';
+import {
+  View,
+  Text,
+  Animated,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
+import React, { useState, useEffect } from 'react';
 import CoursesCard from '@/Components/Core/CoursesCard';
 import styles from './style';
 import SearchBar from '@/Components/Core/SearchBar';
 import Icon from '@/Components/Core/Icons';
 import { COLORS } from '@/Assets/Theme/colors';
 import { useNavigation } from '@/Hooks/Utils/use-navigation';
+import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
+import CommunityCoursesSkeleton from '@/Components/Core/Skeleton/CommunityCoursesSkeleton';
 
 interface Props {
+  communityId?: string;
   onScroll?: (...args: any[]) => void;
   scrollEventThrottle?: number;
 }
 
-const CommunityCourses = ({ onScroll, scrollEventThrottle }: Props) => {
+const CommunityCourses = ({
+  communityId,
+  onScroll,
+  scrollEventThrottle,
+}: Props) => {
   const navigation = useNavigation();
+  const {
+    getCommunityCourses,
+    apiGetCommunityCoursesLoading,
+    apiGetCommunityCourses,
+  } = useUserApi();
   const [searchQuery, setSearchQuery] = useState('');
 
+  const courses = apiGetCommunityCourses?.courses || [];
+  console.log('🚀 ~ CommunityCourses ~ courses:', courses);
+
+  useEffect(() => {
+    if (communityId) {
+      const query = `?community=${communityId}`;
+      getCommunityCourses(query);
+    }
+  }, [communityId]);
+
   const onChangeSearch = query => setSearchQuery(query);
+
+  const filteredCourses = searchQuery
+    ? courses.filter(
+        (c: any) =>
+          c.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          c.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+    : courses;
+
   const renderItem = ({ item }: { item: any }) => (
     <CoursesCard
-      name={item.name}
+      name={item.title}
       description={item.description}
-      bannerImage={item.bannerImage}
-      tags={item.tags}
+      bannerImage={item.thumbnail}
+      category={item.category}
+      contentType={item.contentType}
+      targetAudience={item.targetAudience}
+      community={item.community}
       onEyePress={() => {}}
       onEditPress={() => {}}
       onDeletePress={() => {}}
@@ -53,15 +92,19 @@ const CommunityCourses = ({ onScroll, scrollEventThrottle }: Props) => {
         </TouchableOpacity>
       </View>
 
-      <Animated.FlatList
-        data={MOCK_COMMUNITIES}
-        renderItem={renderItem}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-        onScroll={onScroll}
-        scrollEventThrottle={scrollEventThrottle}
-      />
+      {apiGetCommunityCoursesLoading && courses.length === 0 ? (
+        <CommunityCoursesSkeleton />
+      ) : (
+        <Animated.FlatList
+          data={filteredCourses}
+          renderItem={renderItem}
+          keyExtractor={item => item._id || item.id}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+          onScroll={onScroll}
+          scrollEventThrottle={scrollEventThrottle}
+        />
+      )}
     </View>
   );
 };

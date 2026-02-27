@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,10 @@ interface CoursesCardProps {
   name: string;
   description: string;
   bannerImage: ImageSourcePropType;
-  tags: string[];
+  category: string;
+  contentType: string;
+  targetAudience: string;
+  community: any;
   onEyePress: () => void;
   onEditPress: () => void;
   onDeletePress: () => void;
@@ -25,11 +28,23 @@ const CoursesCard: React.FC<CoursesCardProps> = ({
   name,
   description,
   bannerImage,
-  tags,
+  category,
+  contentType,
+  targetAudience,
+  community,
   onEyePress,
   onEditPress,
   onDeletePress,
 }) => {
+  const [imageError, setImageError] = useState(false);
+
+  const getSource = () => {
+    if (imageError || !bannerImage) {
+      return AppImages.homeBanner;
+    }
+    return { uri: bannerImage as string };
+  };
+
   return (
     <View style={styles.cardContainer}>
       <View style={styles.actionContainer}>
@@ -45,15 +60,28 @@ const CoursesCard: React.FC<CoursesCardProps> = ({
       </View>
 
       {/* Banner */}
-      <Image source={bannerImage} style={styles.bannerImage} />
+      <Image
+        source={getSource()}
+        style={styles.bannerImage}
+        onError={() => setImageError(true)}
+      />
 
       {/* Tags (positioned absolutely to match design) */}
       <View style={styles.tagsContainer}>
-        {tags.map((tag, index) => (
+        {/* {tags.map((tag, index) => (
           <View key={index} style={styles.tag}>
             <Text style={styles.tagText}>{tag}</Text>
           </View>
-        ))}
+        ))} */}
+        <View style={styles.targetAudience}>
+          <Text style={styles.commonChipTxt}>{targetAudience}</Text>
+        </View>
+        <View style={styles.contentType}>
+          <Text style={styles.commonChipTxt}>{contentType}</Text>
+        </View>
+        <View style={styles.category}>
+          <Text style={styles.commonChipTxt}>{category}</Text>
+        </View>
       </View>
 
       {/* Content */}
@@ -65,11 +93,11 @@ const CoursesCard: React.FC<CoursesCardProps> = ({
 
         {/* Community */}
         <View style={styles.buttonContainer}>
-          <Image
+          {/* <Image
             source={AppImages.communityLogo}
             style={styles.communityLogo}
-          />
-          <Text style={styles.communityText}>Bell & Desk</Text>
+          /> */}
+          <Text style={styles.communityText}>{`By ${community?.name}`}</Text>
         </View>
       </View>
     </View>

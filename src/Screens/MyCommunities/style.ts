@@ -57,6 +57,111 @@ const styles = StyleSheet.create({
     paddingHorizontal: ms(16),
     paddingBottom: ms(20),
   },
+
+  /* --- Empty List FlatList contentContainer fill --- */
+  emptyListContainer: {
+    flex: 1,
+  },
+
+  /* --- Empty State --- */
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: ms(32),
+  },
+
+  emptyIconCircle: {
+    width: ms(80),
+    height: ms(80),
+    borderRadius: ms(40),
+    backgroundColor: '#2C2C2E',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: ms(20),
+  },
+
+  emptyTitle: {
+    ...THEME.fontStyle.h3Bold,
+    marginBottom: ms(10),
+    textAlign: 'center',
+  },
+
+  emptySubtitle: {
+    ...THEME.fontStyle.h5Regular,
+    color: COLORS.placeholder,
+    textAlign: 'center',
+    lineHeight: ms(20),
+    marginBottom: ms(28),
+  },
+
+  emptyButtonRow: {
+    flexDirection: 'row',
+    gap: ms(12),
+  },
+
+  createBtn: {
+    backgroundColor: COLORS.primary,
+    borderRadius: ms(26),
+    paddingVertical: ms(12),
+    paddingHorizontal: ms(18),
+  },
+
+  createBtnText: {
+    ...THEME.fontStyle.h5Bold,
+  },
+
+  discoverBtn: {
+    backgroundColor: COLORS.modalBG,
+    borderRadius: ms(26),
+    paddingVertical: ms(12),
+    paddingHorizontal: ms(18),
+  },
+
+  discoverBtnText: {
+    ...THEME.fontStyle.h5Bold,
+  },
+
+  /* --- Create New Community Banner --- */
+  createBannerCard: {
+    marginVertical: ms(12),
+    borderRadius: ms(12),
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.newModalBG,
+    padding: ms(16),
+    overflow: 'hidden',
+  },
+
+  createBannerTitle: {
+    ...THEME.fontStyle.h4Bold,
+    color: COLORS.primary,
+    marginBottom: ms(6),
+  },
+
+  createBannerSubtitle: {
+    ...THEME.fontStyle.h5Regular,
+    color: COLORS.white,
+    lineHeight: ms(20),
+    marginBottom: ms(24),
+  },
+
+  createBannerHighlight: {
+    ...THEME.fontStyle.h5Bold,
+    color: COLORS.white,
+  },
+
+  createBannerBtn: {
+    backgroundColor: COLORS.primary,
+    borderRadius: ms(26),
+    paddingVertical: ms(10),
+    alignItems: 'center',
+  },
+
+  createBannerBtnText: {
+    ...THEME.fontStyle.h5Bold,
+    color: COLORS.white,
+  },
 });
 
 export default styles;

@@ -158,8 +158,6 @@ const CreateNewPostModal = () => {
       }
     }
 
-
-
     if (editingPost) {
       // Update Existing Post
       const updatedPosts = posts.map(p => {
@@ -193,7 +191,9 @@ const CreateNewPostModal = () => {
       <View style={styles.mainModalView}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>{editingPost ? 'Edit Post' : 'Create New Post'}</Text>
+          <Text style={styles.title}>
+            {editingPost ? 'Edit Post' : 'Create New Post'}
+          </Text>
           <TouchableOpacity onPress={handleCancel}>
             <Icon name="X" size={24} color={COLORS.white} />
           </TouchableOpacity>
@@ -343,12 +343,12 @@ const CreateNewPostModal = () => {
               />
 
               {/* Poll Options */}
-              <Text style={styles.optionLabel}>Option</Text>
+              <Text style={styles.optionLabel}>Options</Text>
               {pollOptions.map((option, index) => (
                 <View key={index} style={styles.optionRow}>
                   <TextInput
                     style={styles.optionInput}
-                    placeholder={'Add'}
+                    placeholder={'Option' + ' ' + (index + 1)}
                     placeholderTextColor={COLORS.placeholder}
                     value={option}
                     onChangeText={text => handleOptionChange(text, index)}
@@ -401,7 +401,11 @@ const CreateNewPostModal = () => {
         <View style={styles.footer}>
           <TouchableOpacity style={styles.postButton} onPress={handlePost}>
             <Text style={styles.postText}>
-              {editingPost ? 'Update Post' : (isPollEnabled ? 'Create Poll' : 'Post')}
+              {editingPost
+                ? 'Update Post'
+                : isPollEnabled
+                ? 'Create Poll'
+                : 'Post'}
             </Text>
           </TouchableOpacity>
         </View>

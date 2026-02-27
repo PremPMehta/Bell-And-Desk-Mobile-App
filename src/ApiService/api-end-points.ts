@@ -21,4 +21,8 @@ export const ApiEndPoints = {
   /* Choose Plan Screen */
 
   plansPublic: 'plans/public',
+
+  /* Community Courses Screen */
+
+  communityCourses: 'courses',
 };

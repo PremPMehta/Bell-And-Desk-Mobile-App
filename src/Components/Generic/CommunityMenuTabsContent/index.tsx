@@ -18,12 +18,14 @@ import React from 'react';
 
 interface Props {
   selectedTab: string;
+  communityId?: string;
   onScroll?: (...args: any[]) => void;
   scrollEventThrottle?: number;
 }
 
 const CommunityMenuTabsContent = ({
   selectedTab,
+  communityId,
   onScroll,
   scrollEventThrottle,
 }: Props) => {
@@ -36,7 +38,7 @@ const CommunityMenuTabsContent = ({
     // case 'mycommunities':
     //   return <MyCommunities />;
     case 'courses':
-      return <CommunityCourses {...scrollProps} />;
+      return <CommunityCourses communityId={communityId} {...scrollProps} />;
     case 'livestream':
       return <CommunityLiveStream {...scrollProps} />;
     case 'board':
