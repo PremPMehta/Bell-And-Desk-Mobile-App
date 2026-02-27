@@ -45,4 +45,20 @@ export const AtomKeys = {
   /* Community Courses Screen */
   apiGetCommunityCoursesLoading: 'apiGetCommunityCoursesLoading',
   apiGetCommunityCourses: 'apiGetCommunityCourses',
+
+  /* Community Board Screen */
+  apiGetSocialFeedCategoriesLoading: 'apiGetSocialFeedCategoriesLoading',
+  apiGetSocialFeedCategories: 'apiGetSocialFeedCategories',
+
+  apiCreateSocialFeedCategoryLoading: 'apiCreateSocialFeedCategoryLoading',
+  apiCreateSocialFeedCategory: 'apiCreateSocialFeedCategory',
+
+  apiUpdateSocialFeedCategoryLoading: 'apiUpdateSocialFeedCategoryLoading',
+  apiUpdateSocialFeedCategory: 'apiUpdateSocialFeedCategory',
+
+  apiDeleteSocialFeedCategoryLoading: 'apiDeleteSocialFeedCategoryLoading',
+  apiDeleteSocialFeedCategory: 'apiDeleteSocialFeedCategory',
+
+  apiGetSocialFeedsLoading: 'apiGetSocialFeedsLoading',
+  apiGetSocialFeeds: 'apiGetSocialFeeds',
 };

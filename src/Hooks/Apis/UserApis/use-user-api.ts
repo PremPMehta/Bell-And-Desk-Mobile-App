@@ -99,6 +99,54 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiGetCommunityCourses),
   );
 
+  // Get Community Board Apis
+  const [
+    apiGetSocialFeedCategoriesLoading,
+    setApiGetSocialFeedCategoriesLoading,
+  ] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetSocialFeedCategoriesLoading),
+  );
+  const [apiGetSocialFeedCategories, setApiGetSocialFeedCategories] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetSocialFeedCategories),
+  );
+
+  const [
+    apiCreateSocialFeedCategoryLoading,
+    setApiCreateSocialFeedCategoryLoading,
+  ] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiCreateSocialFeedCategoryLoading),
+  );
+  const [apiCreateSocialFeedCategory, setApiCreateSocialFeedCategory] = useAtom(
+    objectAtomFamily(AtomKeys.apiCreateSocialFeedCategory),
+  );
+
+  const [
+    apiUpdateSocialFeedCategoryLoading,
+    setApiUpdateSocialFeedCategoryLoading,
+  ] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiUpdateSocialFeedCategoryLoading),
+  );
+  const [apiUpdateSocialFeedCategory, setApiUpdateSocialFeedCategory] = useAtom(
+    objectAtomFamily(AtomKeys.apiUpdateSocialFeedCategory),
+  );
+
+  const [
+    apiDeleteSocialFeedCategoryLoading,
+    setApiDeleteSocialFeedCategoryLoading,
+  ] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiDeleteSocialFeedCategoryLoading),
+  );
+  const [apiDeleteSocialFeedCategory, setApiDeleteSocialFeedCategory] = useAtom(
+    objectAtomFamily(AtomKeys.apiDeleteSocialFeedCategory),
+  );
+
+  const [apiGetSocialFeedsLoading, setApiGetSocialFeedsLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetSocialFeedsLoading),
+  );
+  const [apiGetSocialFeeds, setApiGetSocialFeeds] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetSocialFeeds),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -327,6 +375,98 @@ const useUserApi = () => {
     }
   }
 
+  // Get Social Feed Categories for Community Board Screen
+  async function getSocialFeedCategories(query: any) {
+    try {
+      setApiGetSocialFeedCategoriesLoading(true);
+      const socialFeedCategories: any = await api.get(
+        ApiEndPoints.socialFeedCategories + query,
+      );
+      setApiGetSocialFeedCategories(socialFeedCategories);
+      setApiGetSocialFeedCategoriesLoading(false);
+      return socialFeedCategories;
+    } catch (error) {
+      console.error('Error fetching social feed categories info:', error);
+      setApiGetSocialFeedCategoriesLoading(false);
+    }
+  }
+
+  // Create Social Feed Category
+  async function createSocialFeedCategory(query: any, body: any) {
+    console.log('🚀 ~ createSocialFeedCategory ~ query:', query);
+    console.log('🚀 ~ createSocialFeedCategory ~ body:', body);
+
+    try {
+      setApiCreateSocialFeedCategoryLoading(true);
+      const res: any = await api.post(
+        ApiEndPoints.socialFeedCategories + query,
+        body,
+      );
+      setApiCreateSocialFeedCategory(res);
+      setApiCreateSocialFeedCategoryLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error creating social feed category:', error);
+      ToastModule.errorTop({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiCreateSocialFeedCategoryLoading(false);
+    }
+  }
+
+  // Update Social Feed Category
+  async function updateSocialFeedCategory(id: string, body: any) {
+    try {
+      setApiUpdateSocialFeedCategoryLoading(true);
+      const res: any = await api.put(
+        `${ApiEndPoints.socialFeedCategories}/${id}`,
+        body,
+      );
+      setApiUpdateSocialFeedCategory(res);
+      setApiUpdateSocialFeedCategoryLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error updating social feed category:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiUpdateSocialFeedCategoryLoading(false);
+    }
+  }
+
+  // Delete Social Feed Category
+  async function deleteSocialFeedCategory(id: string) {
+    try {
+      setApiDeleteSocialFeedCategoryLoading(true);
+      const res: any = await api.delete(
+        `${ApiEndPoints.socialFeedCategories}/${id}`,
+      );
+      setApiDeleteSocialFeedCategory(res);
+      setApiDeleteSocialFeedCategoryLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error deleting social feed category:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiDeleteSocialFeedCategoryLoading(false);
+    }
+  }
+
+  // Get Social Feeds for Community Board Screen
+  async function getSocialFeeds(query: any) {
+    try {
+      setApiGetSocialFeedsLoading(true);
+      const socialFeeds: any = await api.get(ApiEndPoints.socialFeeds + query);
+      setApiGetSocialFeeds(socialFeeds);
+      setApiGetSocialFeedsLoading(false);
+      return socialFeeds;
+    } catch (error) {
+      console.error('Error fetching social feeds info:', error);
+      setApiGetSocialFeedsLoading(false);
+    }
+  }
+
   return {
     // Auth Apis
     getUserUnifiedLogin,
@@ -376,6 +516,27 @@ const useUserApi = () => {
     getCommunityCourses,
     apiGetCommunityCoursesLoading,
     apiGetCommunityCourses,
+
+    /* Community Board Screen Apis */
+    getSocialFeedCategories,
+    apiGetSocialFeedCategoriesLoading,
+    apiGetSocialFeedCategories,
+
+    createSocialFeedCategory,
+    apiCreateSocialFeedCategoryLoading,
+    apiCreateSocialFeedCategory,
+
+    updateSocialFeedCategory,
+    apiUpdateSocialFeedCategoryLoading,
+    apiUpdateSocialFeedCategory,
+
+    deleteSocialFeedCategory,
+    apiDeleteSocialFeedCategoryLoading,
+    apiDeleteSocialFeedCategory,
+
+    getSocialFeeds,
+    apiGetSocialFeedsLoading,
+    apiGetSocialFeeds,
   };
 };
 

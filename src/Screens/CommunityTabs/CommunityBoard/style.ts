@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
     ...THEME.fontStyle.h4Regular,
     color: COLORS.ctgColor,
     marginTop: ms(5),
-    marginBottom: ms(24),
+    marginBottom: ms(16),
   },
 
   // Create Post Section
@@ -93,11 +93,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderStyle: 'dashed',
     minHeight: ms(250),
   },
   emptyStateTitle: {
     ...THEME.fontStyle.h3Bold,
+    color: COLORS.white,
     marginTop: ms(16),
     marginBottom: ms(8),
     textAlign: 'center',
@@ -116,7 +116,15 @@ const styles = StyleSheet.create({
     borderRadius: ms(8),
   },
   createPostButtonText: {
-    ...THEME.fontStyle.h6Regular,
+    ...THEME.fontStyle.h5Bold,
+    color: COLORS.white,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
   },
 });
 

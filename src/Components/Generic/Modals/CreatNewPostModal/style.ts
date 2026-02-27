@@ -1,6 +1,6 @@
 import { THEME } from '@/Assets/Theme';
 import { COLORS } from '@/Assets/Theme/colors';
-import { ms } from '@/Assets/Theme/fontStyle';
+import { ms, sc } from '@/Assets/Theme/fontStyle';
 import { StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
@@ -13,7 +13,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.newModalBG,
     borderTopLeftRadius: ms(16),
     borderTopRightRadius: ms(16),
-    paddingBottom: ms(30),
     maxHeight: '90%',
   },
   header: {
@@ -83,10 +82,13 @@ const styles = StyleSheet.create({
     marginLeft: ms(6),
   },
   footer: {
-    marginTop: ms(24),
     paddingHorizontal: ms(16),
+    paddingVertical: ms(16),
+    borderTopWidth: 1,
+    borderTopColor: COLORS.innerCardBG,
     flexDirection: 'row',
     justifyContent: 'flex-end',
+    backgroundColor: COLORS.newModalBG,
   },
   postButton: {
     paddingHorizontal: ms(32),
@@ -187,12 +189,110 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    marginTop: ms(8),
+    marginVertical: ms(12),
   },
   multipleAnswersLabel: {
     ...THEME.fontStyle.h5Regular,
     color: COLORS.white,
     marginLeft: ms(8),
+  },
+  // Categories & Visibility
+  sectionTitle: {
+    ...THEME.fontStyle.h5SemiBold,
+    color: COLORS.white,
+    marginBottom: ms(12),
+  },
+  categoryScroll: {
+    marginBottom: ms(20),
+  },
+  categoryChip: {
+    paddingHorizontal: ms(16),
+    paddingVertical: ms(6),
+    borderRadius: ms(20),
+    backgroundColor: COLORS.innerCardBG,
+    marginRight: ms(8),
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  categoryChipActive: {
+    backgroundColor: COLORS.primary + '20',
+    borderColor: COLORS.primary,
+  },
+  categoryChipText: {
+    ...THEME.fontStyle.h6Regular,
+    color: COLORS.subText,
+  },
+  categoryChipTextActive: {
+    color: COLORS.primary,
+  },
+  visibilityContainer: {
+    marginTop: ms(12),
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: ms(8),
+  },
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.innerCardBG,
+    marginVertical: ms(10),
+  },
+  titleInputContainer: {
+    marginBottom: ms(20),
+  },
+  charCount: {
+    ...THEME.fontStyle.h6Regular,
+    color: COLORS.outlineGrey,
+    textAlign: 'right',
+    // marginTop: ms(5),
+  },
+  videoLinksContainer: {
+    marginTop: ms(20),
+    // marginBottom: ms(20),
+  },
+  videoLinkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    // marginTop: ms(10),
+  },
+  videoInput: {
+    flex: 1,
+    marginRight: ms(10),
+    width: sc(265),
+    // height: ms(45),
+  },
+  addLinkButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: ms(15),
+    paddingVertical: ms(10),
+    borderRadius: ms(8),
+    marginBottom: ms(14),
+    justifyContent: 'center',
+  },
+  addLinkText: {
+    ...THEME.fontStyle.h5Bold,
+    color: COLORS.white,
+  },
+  addedLinksList: {
+    marginTop: ms(10),
+  },
+  addedLinkItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.cardBG,
+    padding: ms(10),
+    borderRadius: ms(8),
+    marginBottom: ms(5),
+    borderWidth: 1,
+    borderColor: COLORS.outlineGrey,
+  },
+  addedLinkText: {
+    flex: 1,
+    ...THEME.fontStyle.h5Regular,
+    color: COLORS.white,
+    marginRight: ms(10),
   },
 });
 

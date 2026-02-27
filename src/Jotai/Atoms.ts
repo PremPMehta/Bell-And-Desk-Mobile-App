@@ -8,6 +8,12 @@ const systemTheme = Appearance.getColorScheme();
 const storage = createJSONStorage(() => AsyncStorage);
 
 export const stringAtomFamily = atomFamily(key => atom(''));
+
+export interface Category {
+  id: string;
+  name: string;
+  isDefault?: boolean;
+}
 export const objectAtomFamily = atomFamily(key => atom({} as any));
 export const arrayAtomFamily = atomFamily(key => atom([] as any));
 export const booleanDefaultFalseAtomFamily = atomFamily(key => atom(false));
@@ -56,6 +62,8 @@ export const editingPostAtom = atom<Post | null>(null);
 export const onCreatePostMediaAddedAtom = atom<((media: any) => void) | null>(
   null,
 );
+export const currentCommunityIdAtom = atom<string | null>(null);
+export const communityCategoriesAtom = atom<Category[]>([]);
 
 export interface Post {
   id: string;
@@ -81,6 +89,10 @@ export interface Post {
   likes: number;
   comments: number;
   isLiked?: boolean;
+  categoryId?: string | null;
+  visibility?: string;
+  title?: string;
+  videoLinks?: string[];
 }
 
 export const postsAtom = atomWithStorage<Post[]>('community_posts', [], storage as any);

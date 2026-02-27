@@ -42,7 +42,7 @@ const CommunityMenuTabsContent = ({
     case 'livestream':
       return <CommunityLiveStream {...scrollProps} />;
     case 'board':
-      return <CommunityBoard {...scrollProps} />;
+      return <CommunityBoard communityId={communityId} {...scrollProps} />;
     case 'members':
       return <CommunityMembers {...scrollProps} />;
     case 'about':

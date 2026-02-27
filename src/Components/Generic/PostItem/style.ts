@@ -39,13 +39,18 @@ const styles = StyleSheet.create({
     color: COLORS.subText,
     marginTop: ms(2),
   },
+  title: {
+    ...fontStyle.h4Bold,
+    color: COLORS.white,
+    marginBottom: ms(4),
+  },
   moreButton: {
     padding: ms(4),
   },
   content: {
     ...fontStyle.h4Regular,
     color: COLORS.white,
-    marginBottom: ms(12),
+    marginVertical: ms(12),
   },
   mediaGrid: {
     marginTop: ms(4),
@@ -60,7 +65,7 @@ const styles = StyleSheet.create({
     marginBottom: ms(12),
   },
   mediaImage: {
-    // Kept 
+    // Kept
     width: '100%',
     height: ms(200),
     resizeMode: 'cover',

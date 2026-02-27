@@ -9,6 +9,8 @@ import { COMMUNITY_MENU_TABS, MOCK_COMMUNITIES } from '@/Constants/customData';
 import CommunityMenuTabs from '@/Components/Core/CommunityMenuTabs';
 import CommunityMenuTabsContent from '@/Components/Generic/CommunityMenuTabsContent';
 import AppHeader from '@/Components/Navigation/AppHeader';
+import { useAtom } from 'jotai';
+import { currentCommunityIdAtom } from '@/Jotai/Atoms';
 
 const TAB_HEIGHT = 50; // Height of the tab bar
 
@@ -16,8 +18,15 @@ const CommunityLayout = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
   const { communityId } = route.params || {};
+  const [, setCurrentCommunityId] = useAtom(currentCommunityIdAtom);
 
   const [selectedTab, setSelectedTab] = useState('courses');
+
+  React.useEffect(() => {
+    if (communityId) {
+      setCurrentCommunityId(communityId);
+    }
+  }, [communityId, setCurrentCommunityId]);
 
   // Animation values
   const scrollY = useRef(new Animated.Value(0)).current;

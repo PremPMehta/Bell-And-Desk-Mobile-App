@@ -25,4 +25,9 @@ export const ApiEndPoints = {
   /* Community Courses Screen */
 
   communityCourses: 'courses',
+
+  /* Community Board Screen */
+
+  socialFeedCategories: 'social-feed/categories',
+  socialFeeds: 'social-feed',
 };

@@ -8,6 +8,7 @@ import {
   ScrollView,
   Image,
   FlatList,
+  Dimensions,
 } from 'react-native';
 import React, { useState, useRef } from 'react';
 import Modal from 'react-native-modal';
@@ -19,14 +20,24 @@ import {
   postsAtom,
   Post,
   editingPostAtom,
+  currentCommunityIdAtom,
+  communityCategoriesAtom,
+  Category,
 } from '@/Jotai/Atoms';
+import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
+import DropdownField from '@/Components/Core/DropdownField';
+import { TextInput as PaperTextInput } from 'react-native-paper';
 
 import { Asset, launchImageLibrary } from 'react-native-image-picker';
 import styles from './style';
 import Icon from '@/Components/Core/Icons';
 import { COLORS } from '@/Assets/Theme/colors';
+import { THEME } from '@/Assets/Theme';
+import { ms } from '@/Assets/Theme/fontStyle';
 import TextInputField from '@/Components/Core/TextInputField';
 import ToastModule from '@/Components/Core/Toast';
+
+const { height: DEVICE_HEIGHT, width: DEVICE_WIDTH } = Dimensions.get('window');
 
 const CreateNewPostModal = () => {
   const [isCreatePostModalVisible, setIsCreatePostModalVisible] = useAtom(
@@ -38,6 +49,31 @@ const CreateNewPostModal = () => {
   const [description, setDescription] = useState('');
   const [isPollEnabled, setIsPollEnabled] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<Asset[]>([]);
+  const [communityId] = useAtom(currentCommunityIdAtom);
+  const { getSocialFeedCategories } = useUserApi();
+
+  const [categories] = useAtom(communityCategoriesAtom);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null,
+  );
+  const [visibility, setVisibility] = useState('Everyone');
+  const [isVisibilityDropdownVisible, setIsVisibilityDropdownVisible] =
+    useState(false);
+
+  const [title, setTitle] = useState('');
+  const [videoLinkInput, setVideoLinkInput] = useState('');
+  const [videoLinks, setVideoLinks] = useState<string[]>([]);
+
+  const visibilityOptions = [
+    { label: 'Everyone', value: 'Everyone', icon: 'Earth' },
+    { label: 'Paid Members Only', value: 'Paid Members Only', icon: 'Diamond' },
+    { label: 'Admins Only', value: 'Admins Only', icon: 'Lock' },
+    {
+      label: 'Specific Plans/Products',
+      value: 'Specific Plans/Products',
+      icon: 'Key',
+    },
+  ];
 
   // Effect to populate fields when editing
   React.useEffect(() => {
@@ -45,7 +81,16 @@ const CreateNewPostModal = () => {
       setDescription(editingPost.content || '');
       setSelectedMedia((editingPost.media as Asset[]) || []);
       setIsPollEnabled(!!editingPost.isPoll);
-      // Pre-fill poll data if needed, but we currently restrict editing to non-polls
+      setSelectedCategoryId(editingPost.categoryId || null);
+
+      // Normalize visibility to match one of the options
+      const normalizedVisibility = visibilityOptions.find(
+        opt => opt.value.toLowerCase() === editingPost.visibility?.toLowerCase()
+      )?.value || 'Everyone';
+      setVisibility(normalizedVisibility);
+
+      setTitle(editingPost.title || '');
+      setVideoLinks(editingPost.videoLinks || []);
     }
   }, [editingPost]);
 
@@ -66,6 +111,11 @@ const CreateNewPostModal = () => {
     setPollQuestion('');
     setPollOptions(['', '']);
     setAllowMultipleAnswers(false);
+    setSelectedCategoryId(null);
+    setVisibility('Everyone');
+    setTitle('');
+    setVideoLinkInput('');
+    setVideoLinks([]);
   };
 
   const handleOptionChange = (text: string, index: number) => {
@@ -82,6 +132,17 @@ const CreateNewPostModal = () => {
     if (pollOptions.length > 2) {
       setPollOptions(pollOptions.filter((_, i) => i !== index));
     }
+  };
+
+  const handleAddVideoLink = () => {
+    if (videoLinkInput.trim()) {
+      setVideoLinks(prev => [...prev, videoLinkInput.trim()]);
+      setVideoLinkInput('');
+    }
+  };
+
+  const removeVideoLink = (index: number) => {
+    setVideoLinks(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleMediaSelection = (type: 'photo' | 'video') => {
@@ -123,10 +184,13 @@ const CreateNewPostModal = () => {
       comments: 0,
       isPoll: isPollEnabled,
       media: isPollEnabled ? [] : selectedMedia,
+      categoryId: selectedCategoryId,
+      visibility: visibility,
+      title: title,
+      videoLinks: videoLinks,
     };
 
     if (isPollEnabled) {
-      // Filter out empty options
       const validOptions = pollOptions.filter(opt => opt.trim() !== '');
       if (pollQuestion.trim() === '' || validOptions.length < 2) {
         Alert.alert(
@@ -149,7 +213,6 @@ const CreateNewPostModal = () => {
       };
     } else {
       if (!description?.trim()) {
-        // Alert.alert('Error', 'Please add some content to your post.');
         ToastModule.errorTop({
           msg: 'Please add some content to your post.',
           ref: toastRef,
@@ -159,20 +222,21 @@ const CreateNewPostModal = () => {
     }
 
     if (editingPost) {
-      // Update Existing Post
       const updatedPosts = posts.map(p => {
         if (p.id === editingPost.id) {
           return {
             ...p,
-            content: description, // Only update content
-            // Keep original media and poll properties unchanged
+            content: description,
+            categoryId: selectedCategoryId,
+            visibility: visibility,
+            title: title,
+            videoLinks: videoLinks,
           };
         }
         return p;
       });
       setPosts(updatedPosts);
     } else {
-      // Create New Post
       setPosts([newPost, ...posts]);
     }
 
@@ -187,6 +251,16 @@ const CreateNewPostModal = () => {
       swipeDirection="down"
       style={styles.modalContainer}
       avoidKeyboard
+      useNativeDriver={true}
+      useNativeDriverForBackdrop={true}
+      hideModalContentWhileAnimating={true}
+      backdropTransitionOutTiming={0}
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      animationInTiming={300}
+      animationOutTiming={300}
+      deviceHeight={DEVICE_HEIGHT}
+      deviceWidth={DEVICE_WIDTH}
     >
       <View style={styles.mainModalView}>
         {/* Header */}
@@ -199,9 +273,78 @@ const CreateNewPostModal = () => {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.contentContainer}>
+        <ScrollView
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Select Category */}
+          {!editingPost && (
+            <>
+              <View style={styles.labelRow}>
+                <Text style={styles.sectionTitle}>
+                  Select Category<Text style={{ color: COLORS.red }}> *</Text>
+                </Text>
+              </View>
+
+              <View style={{ marginBottom: ms(20) }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {categories.map(cat => (
+                    <TouchableOpacity
+                      key={cat.id}
+                      style={[
+                        styles.categoryChip,
+                        selectedCategoryId === cat.id &&
+                        styles.categoryChipActive,
+                      ]}
+                      onPress={() => setSelectedCategoryId(cat.id)}
+                    >
+                      <Text
+                        style={[
+                          styles.categoryChipText,
+                          selectedCategoryId === cat.id &&
+                          styles.categoryChipTextActive,
+                        ]}
+                      >
+                        {cat.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </>
+          )}
+
+          <View style={styles.visibilityContainer}>
+            <Text style={styles.sectionTitle}>Visibility</Text>
+            <DropdownField
+              placeholder="Select Visibility"
+              value={visibility}
+              onPress={() => setIsVisibilityDropdownVisible(true)}
+              left={
+                <PaperTextInput.Icon
+                  icon={
+                    visibilityOptions
+                      .find(opt => opt.value === visibility)
+                      ?.icon?.toLowerCase() || 'globe'
+                  }
+                  color={COLORS.white}
+                />
+              }
+              theme={{
+                colors: {
+                  background: COLORS.cardBG,
+                  text: COLORS.white,
+                  placeholder: COLORS.outlineGrey,
+                },
+              }}
+              textColor={COLORS.white}
+              outlineColor={COLORS.outlineGrey}
+              activeOutlineColor={COLORS.white}
+            />
+          </View>
+
           {/* Poll Toggle */}
-          {/* Poll Toggle - Hide when editing */}
           {!editingPost && (
             <TouchableOpacity
               style={styles.toggleRow}
@@ -219,19 +362,31 @@ const CreateNewPostModal = () => {
             </TouchableOpacity>
           )}
 
-          {/* Conditional Content */}
           {!isPollEnabled ? (
             <>
-              {/* Description Input */}
-              {/* <Text style={styles.inputLabel}>Description</Text> */}
-              {/* <TextInput
-                style={styles.descriptionInput}
-                placeholder="What do you want to share ?*"
-                placeholderTextColor={COLORS.placeholder}
-                multiline
-                value={description}
-                onChangeText={setDescription}
-              /> */}
+              {/* Title Field */}
+              <View style={styles.titleInputContainer}>
+                <TextInputField
+                  label="Title (optional)"
+                  placeholder="Title (optional)"
+                  value={title}
+                  onChangeText={text => setTitle(text.slice(0, 200))}
+                  style={[styles.inputStyle]}
+                  theme={{
+                    colors: {
+                      background: COLORS.cardBG,
+                      text: COLORS.white,
+                      placeholder: COLORS.outlineGrey,
+                    },
+                  }}
+                  textColor={COLORS.white}
+                  outlineColor={COLORS.outlineGrey}
+                  activeOutlineColor={COLORS.white}
+                />
+                <Text style={styles.charCount}>
+                  {title.length}/200 characters
+                </Text>
+              </View>
               <TextInputField
                 label="Content"
                 placeholder="What do you want to share ?*"
@@ -240,8 +395,6 @@ const CreateNewPostModal = () => {
                 value={description}
                 onChangeText={setDescription}
                 onBlur={setDescription}
-                // touched={touched.name}
-                // error={errors.name}
                 style={[styles.inputStyle, styles.descriptionStyle]}
                 theme={{
                   colors: {
@@ -255,8 +408,6 @@ const CreateNewPostModal = () => {
                 activeOutlineColor={COLORS.white}
               />
 
-              {/* Media Buttons */}
-              {/* Media Buttons - Hide when editing */}
               {!editingPost && (
                 <View style={styles.mediaActionsRow}>
                   <TouchableOpacity
@@ -276,7 +427,62 @@ const CreateNewPostModal = () => {
                 </View>
               )}
 
-              {/* Media List - Hide when editing */}
+              {/* Video Links Selection */}
+              {!editingPost && (
+                <View style={styles.videoLinksContainer}>
+                  <Text style={styles.sectionTitle}>
+                    Add Video Links (YouTube, LinkedIn, Instagram, X/Twitter,
+                    Video Bank)
+                  </Text>
+                  <View style={styles.videoLinkRow}>
+                    <TextInputField
+                      label="Add Link"
+                      placeholder="Paste video URL from YouTube, LinkedIn, Instagram, or X (Twitter)"
+                      value={videoLinkInput}
+                      onChangeText={setVideoLinkInput}
+                      style={styles.videoInput}
+                      theme={{
+                        colors: {
+                          background: COLORS.cardBG,
+                          text: COLORS.white,
+                          placeholder: COLORS.outlineGrey,
+                        },
+                      }}
+                      textColor={COLORS.white}
+                      outlineColor={COLORS.outlineGrey}
+                      activeOutlineColor={COLORS.white}
+                    />
+                    <TouchableOpacity
+                      style={styles.addLinkButton}
+                      onPress={handleAddVideoLink}
+                    >
+                      <Text style={styles.addLinkText}>Add</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {videoLinks.length > 0 && (
+                    <View style={styles.addedLinksList}>
+                      {videoLinks.map((link, index) => (
+                        <View key={index} style={styles.addedLinkItem}>
+                          <Text
+                            style={styles.addedLinkText}
+                            numberOfLines={1}
+                            ellipsizeMode="middle"
+                          >
+                            {link}
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() => removeVideoLink(index)}
+                          >
+                            <Icon name="X" size={16} color={COLORS.red} />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              )}
+
               {!editingPost && selectedMedia.length > 0 && (
                 <View style={styles.mediaListContainer}>
                   <FlatList
@@ -309,16 +515,6 @@ const CreateNewPostModal = () => {
             </>
           ) : (
             <>
-              {/* Poll Question */}
-              {/* <Text style={styles.inputLabel}>Question *</Text>
-              <TextInput
-                style={styles.pollQuestionInput}
-                placeholder="Poll Question *"
-                placeholderTextColor={COLORS.placeholder}
-                multiline
-                value={pollQuestion}
-                onChangeText={setPollQuestion}
-              /> */}
               <TextInputField
                 label="Poll Question *"
                 placeholder="Poll Question *"
@@ -327,8 +523,6 @@ const CreateNewPostModal = () => {
                 value={pollQuestion}
                 onChangeText={setPollQuestion}
                 onBlur={setPollQuestion}
-                // touched={touched.name}
-                // error={errors.name}
                 style={[styles.inputStyle, styles.descriptionStyle]}
                 theme={{
                   colors: {
@@ -342,7 +536,6 @@ const CreateNewPostModal = () => {
                 activeOutlineColor={COLORS.white}
               />
 
-              {/* Poll Options */}
               <Text style={styles.optionLabel}>Options</Text>
               {pollOptions.map((option, index) => (
                 <View key={index} style={styles.optionRow}>
@@ -365,11 +558,6 @@ const CreateNewPostModal = () => {
                       />
                     </TouchableOpacity>
                   )}
-                  {/* {pollOptions.length <= 2 && (
-                    <View style={styles.removeOptionButton}>
-                      <Icon name="CircleX" size={20} color={'transparent'} />
-                    </View>
-                  )} */}
                 </View>
               ))}
 
@@ -380,7 +568,6 @@ const CreateNewPostModal = () => {
                 <Text style={styles.addOptionText}>Add Option</Text>
               </TouchableOpacity>
 
-              {/* Allow Multiple Answers */}
               <View style={styles.multipleAnswersRow}>
                 <Switch
                   trackColor={{ false: '#767577', true: COLORS.primary }}
@@ -395,8 +582,7 @@ const CreateNewPostModal = () => {
               </View>
             </>
           )}
-        </View>
-
+        </ScrollView>
         {/* Footer */}
         <View style={styles.footer}>
           <TouchableOpacity style={styles.postButton} onPress={handlePost}>
@@ -404,12 +590,83 @@ const CreateNewPostModal = () => {
               {editingPost
                 ? 'Update Post'
                 : isPollEnabled
-                ? 'Create Poll'
-                : 'Post'}
+                  ? 'Create Poll'
+                  : 'Post'}
             </Text>
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Visibility Options Modal/Picker */}
+      <Modal
+        isVisible={isVisibilityDropdownVisible}
+        onBackdropPress={() => setIsVisibilityDropdownVisible(false)}
+        style={{ justifyContent: 'flex-end', margin: 0 }}
+        useNativeDriver={true}
+        useNativeDriverForBackdrop={true}
+        hideModalContentWhileAnimating={true}
+        backdropTransitionOutTiming={0}
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+      >
+        <View
+          style={{
+            backgroundColor: COLORS.newModalBG,
+            padding: ms(20),
+            borderTopLeftRadius: ms(16),
+            borderTopRightRadius: ms(16),
+          }}
+        >
+          <Text
+            style={[
+              styles.sectionTitle,
+              { marginBottom: ms(20), textAlign: 'center' },
+            ]}
+          >
+            Select Visibility
+          </Text>
+          {visibilityOptions.map(option => (
+            <TouchableOpacity
+              key={option.value}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingVertical: ms(15),
+                borderBottomWidth: 1,
+                borderBottomColor: COLORS.innerCardBG,
+              }}
+              onPress={() => {
+                setVisibility(option.value);
+                setIsVisibilityDropdownVisible(false);
+              }}
+            >
+              <Icon
+                name={option.icon as any}
+                size={20}
+                color={
+                  visibility === option.value ? COLORS.primary : COLORS.white
+                }
+              />
+              <Text
+                style={{
+                  marginLeft: ms(15),
+                  ...THEME.fontStyle.h5Regular,
+                  color:
+                    visibility === option.value ? COLORS.primary : COLORS.white,
+                }}
+              >
+                {option.label}
+              </Text>
+              {visibility === option.value && (
+                <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                  <Icon name="Check" size={20} color={COLORS.primary} />
+                </View>
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+      </Modal>
+
       {/* @ts-ignore */}
       <Toast ref={toastRef} />
     </Modal>

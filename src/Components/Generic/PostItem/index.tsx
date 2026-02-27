@@ -7,9 +7,15 @@ import {
   Dimensions,
 } from 'react-native';
 import React, { useState, useRef } from 'react';
-import { Post, postsAtom, userAtom, mediaPreviewAtom, createPostVisibleAtom, editingPostAtom } from '@/Jotai/Atoms';
+import {
+  Post,
+  postsAtom,
+  userAtom,
+  mediaPreviewAtom,
+  createPostVisibleAtom,
+  editingPostAtom,
+} from '@/Jotai/Atoms';
 import ImageViewing from 'react-native-image-viewing';
-
 
 import { useAtom } from 'jotai';
 import { ms } from '@/Assets/Theme/fontStyle';
@@ -23,6 +29,7 @@ interface Props {
 }
 
 const PostItem = ({ post }: Props) => {
+  console.log('🚀 ~ PostItem ~ post:', post);
   const [showMenu, setShowMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState<{
     top: number;
@@ -35,7 +42,7 @@ const PostItem = ({ post }: Props) => {
   const [, setMediaPreview] = useAtom(mediaPreviewAtom);
   const [, setCreatePostVisible] = useAtom(createPostVisibleAtom);
   const [, setEditingPost] = useAtom(editingPostAtom);
-
+  // const profilePicture = post?.authorId?.
 
   // Mock checking if current user voted (simplified for now without real user ID)
   // For now, relies on post.pollData?.userVotedOptionIds
@@ -202,7 +209,9 @@ const PostItem = ({ post }: Props) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const images = post.media
-    ? post.media.filter(m => !m.type?.includes('video')).map(m => ({ uri: m.uri }))
+    ? post.media
+        .filter(m => !m.type?.includes('video'))
+        .map(m => ({ uri: m.uri }))
     : [];
 
   const handleMediaPress = (media: any, index: number) => {
@@ -266,7 +275,8 @@ const PostItem = ({ post }: Props) => {
                 marginBottom,
                 borderRadius: ms(8),
                 overflow: 'hidden',
-                marginRight: (mediaCount > 1 && maxColumns(index, mediaCount)) ? '2%' : 0
+                marginRight:
+                  mediaCount > 1 && maxColumns(index, mediaCount) ? '2%' : 0,
                 // Simple 2 col logic gap:
                 // Just use flexWrap: 'wrap', justifyContent: 'space-between' on container
               }}
@@ -286,13 +296,13 @@ const PostItem = ({ post }: Props) => {
                 </View>
               )}
             </TouchableOpacity>
-          )
+          );
         })}
       </View>
-    )
-  }
+    );
+  };
 
-  // Helper to determine if item needs specific margin? 
+  // Helper to determine if item needs specific margin?
   // Easier to use styles.mediaGrid { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }
   const maxColumns = (index: number, total: number) => {
     // Return true if not last in row
@@ -301,7 +311,6 @@ const PostItem = ({ post }: Props) => {
     return index % 2 === 0; // Left column items need margin if using basic flow
     // But with space-between, we just need widths to sum to < 100%
   };
-
 
   return (
     <View style={styles.container}>
@@ -358,7 +367,6 @@ const PostItem = ({ post }: Props) => {
               },
             ]}
           >
-
             {post.content && !post.isPoll && (
               <TouchableOpacity
                 style={styles.menuItem}
@@ -382,11 +390,10 @@ const PostItem = ({ post }: Props) => {
 
       {/* Content */}
       {post.isPoll ? (
-        <View>
-          {renderPoll()}
-        </View>
+        <View>{renderPoll()}</View>
       ) : (
         <View>
+          {!!post.title && <Text style={styles.title}>{post.title}</Text>}
           {!!post.content && <Text style={styles.content}>{post.content}</Text>}
 
           {/* Media Grid */}
