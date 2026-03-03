@@ -110,6 +110,7 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiGetSocialFeedCategories),
   );
 
+  // Create Social Feed Category Apis
   const [
     apiCreateSocialFeedCategoryLoading,
     setApiCreateSocialFeedCategoryLoading,
@@ -120,6 +121,7 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiCreateSocialFeedCategory),
   );
 
+  // Update Social Feed Category Apis
   const [
     apiUpdateSocialFeedCategoryLoading,
     setApiUpdateSocialFeedCategoryLoading,
@@ -130,6 +132,7 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiUpdateSocialFeedCategory),
   );
 
+  // Delete Social Feed Category Apis
   const [
     apiDeleteSocialFeedCategoryLoading,
     setApiDeleteSocialFeedCategoryLoading,
@@ -140,11 +143,44 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiDeleteSocialFeedCategory),
   );
 
+  // Get Social Feeds Apis
   const [apiGetSocialFeedsLoading, setApiGetSocialFeedsLoading] = useAtom(
     booleanDefaultFalseAtomFamily(AtomKeys.apiGetSocialFeedsLoading),
   );
   const [apiGetSocialFeeds, setApiGetSocialFeeds] = useAtom(
     objectAtomFamily(AtomKeys.apiGetSocialFeeds),
+  );
+
+  // Create Community Board Posts
+  const [apiCreateSocialFeedLoading, setApiCreateSocialFeedLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiCreateSocialFeedLoading),
+  );
+  const [apiCreateSocialFeed, setApiCreateSocialFeed] = useAtom(
+    objectAtomFamily(AtomKeys.apiCreateSocialFeed),
+  );
+
+  // Update Community Board Post Apis
+  const [apiUpdateSocialFeedLoading, setApiUpdateSocialFeedLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiUpdateSocialFeedLoading),
+  );
+  const [apiUpdateSocialFeed, setApiUpdateSocialFeed] = useAtom(
+    objectAtomFamily(AtomKeys.apiUpdateSocialFeed),
+  );
+
+  // Delete Community Board Post Apis
+  const [apiDeleteSocialFeedLoading, setApiDeleteSocialFeedLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiDeleteSocialFeedLoading),
+  );
+  const [apiDeleteSocialFeed, setApiDeleteSocialFeed] = useAtom(
+    objectAtomFamily(AtomKeys.apiDeleteSocialFeed),
+  );
+
+  // Vote on Poll Post Apis
+  const [apiVoteOnPollLoading, setApiVoteOnPollLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiVoteOnPollLoading),
+  );
+  const [apiVoteOnPoll, setApiVoteOnPoll] = useAtom(
+    objectAtomFamily(AtomKeys.apiVoteOnPoll),
   );
 
   // User Unified Login
@@ -277,6 +313,7 @@ const useUserApi = () => {
     try {
       setApiGetSiteSettingsLoading(true);
       const siteSettingsInfo: any = await api.get(ApiEndPoints.siteSettings);
+      console.log('🚀 ~ getSiteSettings ~ siteSettingsInfo:', siteSettingsInfo);
       setApiGetSiteSettings(siteSettingsInfo);
       setApiGetSiteSettingsLoading(false);
       return siteSettingsInfo;
@@ -467,6 +504,84 @@ const useUserApi = () => {
     }
   }
 
+  // Create Social Feed Post
+  async function createSocialFeedPost(query: any, body: any) {
+    const header = { 'Content-Type': 'multipart/form-data' };
+    try {
+      setApiCreateSocialFeedLoading(true);
+      const res: any = await api.post(
+        ApiEndPoints.socialFeeds + query,
+        body,
+        header,
+      );
+      setApiCreateSocialFeed(res);
+      setApiCreateSocialFeedLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error creating social feed posts:', error);
+      ToastModule.errorTop({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiCreateSocialFeedLoading(false);
+    }
+  }
+
+  // Update Social Feed Post
+  async function updateSocialFeedPost(id: string, body: any) {
+    console.log('🚀 ~ updateSocialFeedPost ~ id:', id);
+    console.log('🚀 ~ updateSocialFeedPost ~ body:', body);
+    try {
+      setApiUpdateSocialFeedLoading(true);
+      const res: any = await api.put(`${ApiEndPoints.socialFeeds}/${id}`, body);
+      setApiUpdateSocialFeed(res);
+      setApiUpdateSocialFeedLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error updating social feed posts:', error);
+      ToastModule.errorTop({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiUpdateSocialFeedLoading(false);
+    }
+  }
+
+  // Delete Social Feed Post
+  async function deleteSocialFeedPost(query: any) {
+    try {
+      setApiDeleteSocialFeedLoading(true);
+      const res: any = await api.delete(ApiEndPoints.socialFeeds + query);
+      setApiDeleteSocialFeed(res);
+      setApiDeleteSocialFeedLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error deleting social feed posts:', error);
+      ToastModule.errorTop({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiDeleteSocialFeedLoading(false);
+    }
+  }
+
+  // Vote on Poll
+  async function voteOnPoll(postId: string, body: { optionIds: string[] }) {
+    try {
+      setApiVoteOnPollLoading(true);
+      const res: any = await api.post(
+        `${ApiEndPoints.socialFeeds}/posts/${postId}/poll/vote`,
+        body,
+      );
+      setApiVoteOnPoll(res);
+      setApiVoteOnPollLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error voting on poll:', error);
+      ToastModule.errorTop({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiVoteOnPollLoading(false);
+    }
+  }
+
   return {
     // Auth Apis
     getUserUnifiedLogin,
@@ -518,25 +633,51 @@ const useUserApi = () => {
     apiGetCommunityCourses,
 
     /* Community Board Screen Apis */
+
+    // Get Social Feed Categories
     getSocialFeedCategories,
     apiGetSocialFeedCategoriesLoading,
     apiGetSocialFeedCategories,
 
+    // Create Social Feed Category
     createSocialFeedCategory,
     apiCreateSocialFeedCategoryLoading,
     apiCreateSocialFeedCategory,
 
+    // Update Social Feed Category
     updateSocialFeedCategory,
     apiUpdateSocialFeedCategoryLoading,
     apiUpdateSocialFeedCategory,
 
+    // Delete Social Feed Category
     deleteSocialFeedCategory,
     apiDeleteSocialFeedCategoryLoading,
     apiDeleteSocialFeedCategory,
 
+    // Get Social Feeds
     getSocialFeeds,
     apiGetSocialFeedsLoading,
     apiGetSocialFeeds,
+
+    // Create Social Feed Posts
+    createSocialFeedPost,
+    apiCreateSocialFeedLoading,
+    apiCreateSocialFeed,
+
+    // Update Social Feed Post
+    updateSocialFeedPost,
+    apiUpdateSocialFeedLoading,
+    apiUpdateSocialFeed,
+
+    // Delete Social Feed Post
+    deleteSocialFeedPost,
+    apiDeleteSocialFeedLoading,
+    apiDeleteSocialFeed,
+
+    // Vote on Poll Post
+    voteOnPoll,
+    apiVoteOnPollLoading,
+    apiVoteOnPoll,
   };
 };
 

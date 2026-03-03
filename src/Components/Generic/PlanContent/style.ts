@@ -11,7 +11,7 @@ const styles = StyleSheet.create({
   cardPrice: {
     ...THEME.fontStyle.h1Bold,
     color: COLORS.black,
-    marginTop: ms(4),
+    marginTop: ms(12),
   },
   month: {
     ...THEME.fontStyle.h5Regular,

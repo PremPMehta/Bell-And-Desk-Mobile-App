@@ -9,8 +9,9 @@ import {
   Image,
   FlatList,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Modal from 'react-native-modal';
 import Toast from 'react-native-toast-message';
 import { useAtom } from 'jotai';
@@ -23,6 +24,7 @@ import {
   currentCommunityIdAtom,
   communityCategoriesAtom,
   Category,
+  refreshSocialFeedsAtom,
 } from '@/Jotai/Atoms';
 import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 import DropdownField from '@/Components/Core/DropdownField';
@@ -40,6 +42,12 @@ import ToastModule from '@/Components/Core/Toast';
 const { height: DEVICE_HEIGHT, width: DEVICE_WIDTH } = Dimensions.get('window');
 
 const CreateNewPostModal = () => {
+  const {
+    createSocialFeedPost,
+    apiCreateSocialFeedLoading,
+    updateSocialFeedPost,
+    apiUpdateSocialFeedLoading,
+  } = useUserApi();
   const [isCreatePostModalVisible, setIsCreatePostModalVisible] = useAtom(
     createPostVisibleAtom,
   );
@@ -62,7 +70,23 @@ const CreateNewPostModal = () => {
 
   const [title, setTitle] = useState('');
   const [videoLinkInput, setVideoLinkInput] = useState('');
-  const [videoLinks, setVideoLinks] = useState<string[]>([]);
+  const [videoLinks, setVideoLinks] = useState<
+    { url: string; platform: string }[]
+  >([]);
+
+  const getLinkPlatform = (url: string) => {
+    const lowerUrl = url.toLowerCase();
+    if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) {
+      return 'YouTube';
+    } else if (lowerUrl.includes('linkedin.com')) {
+      return 'LinkedIn';
+    } else if (lowerUrl.includes('instagram.com')) {
+      return 'Instagram';
+    } else if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) {
+      return 'X (Twitter)';
+    }
+    return 'Other';
+  };
 
   const visibilityOptions = [
     { label: 'Everyone', value: 'Everyone', icon: 'Earth' },
@@ -76,7 +100,7 @@ const CreateNewPostModal = () => {
   ];
 
   // Effect to populate fields when editing
-  React.useEffect(() => {
+  useEffect(() => {
     if (editingPost) {
       setDescription(editingPost.content || '');
       setSelectedMedia((editingPost.media as Asset[]) || []);
@@ -84,9 +108,11 @@ const CreateNewPostModal = () => {
       setSelectedCategoryId(editingPost.categoryId || null);
 
       // Normalize visibility to match one of the options
-      const normalizedVisibility = visibilityOptions.find(
-        opt => opt.value.toLowerCase() === editingPost.visibility?.toLowerCase()
-      )?.value || 'Everyone';
+      const normalizedVisibility =
+        visibilityOptions.find(
+          opt =>
+            opt.value.toLowerCase() === editingPost.visibility?.toLowerCase(),
+        )?.value || 'Everyone';
       setVisibility(normalizedVisibility);
 
       setTitle(editingPost.title || '');
@@ -136,7 +162,11 @@ const CreateNewPostModal = () => {
 
   const handleAddVideoLink = () => {
     if (videoLinkInput.trim()) {
-      setVideoLinks(prev => [...prev, videoLinkInput.trim()]);
+      const platform = getLinkPlatform(videoLinkInput.trim());
+      setVideoLinks(prev => [
+        ...prev,
+        { url: videoLinkInput.trim(), platform: platform },
+      ]);
       setVideoLinkInput('');
     }
   };
@@ -171,25 +201,10 @@ const CreateNewPostModal = () => {
 
   const [posts, setPosts] = useAtom(postsAtom);
 
-  const handlePost = () => {
-    const newPost: Post = {
-      id: Date.now().toString(),
-      author: {
-        name: 'You', // Or get from user profile
-        avatar: 'Y',
-      },
-      timestamp: 'Just now',
-      content: isPollEnabled ? '' : description,
-      likes: 0,
-      comments: 0,
-      isPoll: isPollEnabled,
-      media: isPollEnabled ? [] : selectedMedia,
-      categoryId: selectedCategoryId,
-      visibility: visibility,
-      title: title,
-      videoLinks: videoLinks,
-    };
-
+  const [refreshSocialFeeds, setRefreshSocialFeeds] = useAtom(
+    refreshSocialFeedsAtom,
+  );
+  const handlePost = async () => {
     if (isPollEnabled) {
       const validOptions = pollOptions.filter(opt => opt.trim() !== '');
       if (pollQuestion.trim() === '' || validOptions.length < 2) {
@@ -199,48 +214,87 @@ const CreateNewPostModal = () => {
         );
         return;
       }
-
-      newPost.pollData = {
-        question: pollQuestion,
-        options: validOptions.map((text, index) => ({
-          id: `opt-${Date.now()}-${index}`,
-          text,
-          votes: 0,
-        })),
-        totalVotes: 0,
-        allowMultipleAnswers,
-        userVotedOptionIds: [],
-      };
-    } else {
-      if (!description?.trim()) {
-        ToastModule.errorTop({
-          msg: 'Please add some content to your post.',
-          ref: toastRef,
-        });
-        return;
-      }
+      // TODO: Handle poll creation via API if supported
     }
 
-    if (editingPost) {
-      const updatedPosts = posts.map(p => {
-        if (p.id === editingPost.id) {
-          return {
-            ...p,
-            content: description,
-            categoryId: selectedCategoryId,
-            visibility: visibility,
-            title: title,
-            videoLinks: videoLinks,
-          };
-        }
-        return p;
+    if (!isPollEnabled && !description?.trim()) {
+      ToastModule.errorTop({
+        msg: 'Please add some content to your post.',
+        ref: toastRef,
       });
-      setPosts(updatedPosts);
-    } else {
-      setPosts([newPost, ...posts]);
+      return;
     }
 
-    handleCancel();
+    if (!selectedCategoryId) {
+      ToastModule.errorTop({
+        msg: 'Please select a category.',
+        ref: toastRef,
+      });
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('isPinned', 'false');
+    formData.append('isPublic', 'true');
+    formData.append('visibility', visibility.toLowerCase());
+    formData.append('categoryId', selectedCategoryId);
+
+    if (isPollEnabled) {
+      const validOptions = pollOptions.filter(opt => opt.trim() !== '');
+      const pollData = {
+        question: pollQuestion,
+        allowMultipleAnswers: allowMultipleAnswers,
+        options: validOptions,
+      };
+      formData.append('poll', JSON.stringify(pollData));
+      formData.append('content', pollQuestion);
+      formData.append('title', ''); // Polls usually don't have separate titles in this UI
+    } else {
+      formData.append('content', description);
+      formData.append('title', title);
+    }
+
+    if (!isPollEnabled && selectedMedia.length > 0) {
+      selectedMedia.forEach((media: Asset) => {
+        if (media.uri && media.fileName && media.type) {
+          const isVideo = media.type.includes('video');
+          const fieldName = isVideo ? 'videos' : 'images';
+
+          formData.append(fieldName, {
+            uri: media.uri,
+            name: media.fileName,
+            type: media.type,
+          } as any);
+        }
+      });
+    }
+
+    if (videoLinks.length > 0) {
+      formData.append('videoLinks', JSON.stringify(videoLinks));
+    }
+
+    const res = editingPost
+      ? await updateSocialFeedPost(`posts/${editingPost.id}`, {
+        title,
+        content: description,
+        isPublic: true,
+        visibility: visibility.toLowerCase(),
+        videoLinks: JSON.stringify(videoLinks),
+      })
+      : await createSocialFeedPost(`/${communityId}/posts`, formData);
+
+    if (res?.success) {
+      ToastModule.successTop({
+        msg:
+          res?.message ||
+          (editingPost
+            ? 'Post updated successfully!'
+            : 'Post created successfully!'),
+        ref: toastRef,
+      });
+      setRefreshSocialFeeds(!refreshSocialFeeds); // Trigger refresh
+      handleCancel();
+    }
   };
 
   return (
@@ -427,6 +481,36 @@ const CreateNewPostModal = () => {
                 </View>
               )}
 
+              {!editingPost && selectedMedia.length > 0 && (
+                <View style={styles.mediaListContainer}>
+                  <FlatList
+                    data={selectedMedia}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    keyExtractor={(_, index) => index.toString()}
+                    renderItem={({ item, index }) => (
+                      <View style={styles.mediaItem}>
+                        <Image
+                          source={{ uri: item.uri }}
+                          style={styles.mediaImage}
+                        />
+                        {item.type?.includes('video') && (
+                          <View style={styles.videoIconContainer}>
+                            <Icon name="Video" size={24} color={COLORS.white} />
+                          </View>
+                        )}
+                        <TouchableOpacity
+                          style={styles.deleteButton}
+                          onPress={() => removeMedia(index)}
+                        >
+                          <Icon name="X" size={12} color={COLORS.white} />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  />
+                </View>
+              )}
+
               {/* Video Links Selection */}
               {!editingPost && (
                 <View style={styles.videoLinksContainer}>
@@ -462,15 +546,26 @@ const CreateNewPostModal = () => {
 
                   {videoLinks.length > 0 && (
                     <View style={styles.addedLinksList}>
-                      {videoLinks.map((link, index) => (
+                      {videoLinks.map((linkObj, index) => (
                         <View key={index} style={styles.addedLinkItem}>
-                          <Text
-                            style={styles.addedLinkText}
-                            numberOfLines={1}
-                            ellipsizeMode="middle"
-                          >
-                            {link}
-                          </Text>
+                          <View style={{ flex: 1 }}>
+                            <Text
+                              style={styles.addedLinkText}
+                              numberOfLines={1}
+                              ellipsizeMode="middle"
+                            >
+                              {linkObj.url}
+                            </Text>
+                            <Text
+                              style={{
+                                color: COLORS.primary,
+                                fontSize: ms(10),
+                                marginTop: ms(2),
+                              }}
+                            >
+                              Platform: {linkObj.platform}
+                            </Text>
+                          </View>
                           <TouchableOpacity
                             onPress={() => removeVideoLink(index)}
                           >
@@ -483,7 +578,7 @@ const CreateNewPostModal = () => {
                 </View>
               )}
 
-              {!editingPost && selectedMedia.length > 0 && (
+              {/* {!editingPost && selectedMedia.length > 0 && (
                 <View style={styles.mediaListContainer}>
                   <FlatList
                     data={selectedMedia}
@@ -511,7 +606,7 @@ const CreateNewPostModal = () => {
                     )}
                   />
                 </View>
-              )}
+              )} */}
             </>
           ) : (
             <>
@@ -585,14 +680,27 @@ const CreateNewPostModal = () => {
         </ScrollView>
         {/* Footer */}
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.postButton} onPress={handlePost}>
-            <Text style={styles.postText}>
-              {editingPost
-                ? 'Update Post'
-                : isPollEnabled
-                  ? 'Create Poll'
-                  : 'Post'}
-            </Text>
+          <TouchableOpacity
+            style={[
+              styles.postButton,
+              (apiCreateSocialFeedLoading || apiUpdateSocialFeedLoading) && {
+                opacity: 0.7,
+              },
+            ]}
+            onPress={handlePost}
+            disabled={apiCreateSocialFeedLoading || apiUpdateSocialFeedLoading}
+          >
+            {apiCreateSocialFeedLoading || apiUpdateSocialFeedLoading ? (
+              <ActivityIndicator color={COLORS.white} />
+            ) : (
+              <Text style={styles.postText}>
+                {editingPost
+                  ? 'Update Post'
+                  : isPollEnabled
+                    ? 'Create Poll'
+                    : 'Post'}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>

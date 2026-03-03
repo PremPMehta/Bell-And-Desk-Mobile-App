@@ -6,7 +6,7 @@ import {
   Modal,
   Dimensions,
 } from 'react-native';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Post,
   postsAtom,
@@ -14,8 +14,11 @@ import {
   mediaPreviewAtom,
   createPostVisibleAtom,
   editingPostAtom,
+  communityCategoriesAtom,
+  refreshSocialFeedsAtom,
 } from '@/Jotai/Atoms';
 import ImageViewing from 'react-native-image-viewing';
+import LinkPreview from '../LinkPreview';
 
 import { useAtom } from 'jotai';
 import { ms } from '@/Assets/Theme/fontStyle';
@@ -23,13 +26,14 @@ import styles from './style';
 
 import Icon from '@/Components/Core/Icons';
 import { COLORS } from '@/Assets/Theme/colors';
+import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
+import ToastModule from '@/Components/Core/Toast';
 
 interface Props {
   post: Post;
 }
 
 const PostItem = ({ post }: Props) => {
-  console.log('🚀 ~ PostItem ~ post:', post);
   const [showMenu, setShowMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState<{
     top: number;
@@ -42,81 +46,137 @@ const PostItem = ({ post }: Props) => {
   const [, setMediaPreview] = useAtom(mediaPreviewAtom);
   const [, setCreatePostVisible] = useAtom(createPostVisibleAtom);
   const [, setEditingPost] = useAtom(editingPostAtom);
+  const [categories] = useAtom(communityCategoriesAtom);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const contentLimit = 150;
+
+  const categoryName = categories.find(c => c.id === post.categoryId)?.name;
+
+  const getTimeAgo = (timestamp: string) => {
+    if (!timestamp) return '';
+    // Handle "Just now" if it comes from legacy or local state
+    if (timestamp === 'Just now') return 'Just now';
+
+    const now = new Date();
+    const postDate = new Date(timestamp);
+
+    // Check if valid date
+    if (isNaN(postDate.getTime())) return timestamp;
+
+    const diffInSeconds = Math.floor(
+      (now.getTime() - postDate.getTime()) / 1000,
+    );
+
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400)
+      return `${Math.floor(diffInSeconds / 3600)}h ago`;
+
+    // Handle any number of days (e.g., 50d ago)
+    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  };
+
   // const profilePicture = post?.authorId?.
 
   // Mock checking if current user voted (simplified for now without real user ID)
   // For now, relies on post.pollData?.userVotedOptionIds
 
-  const handleVote = (optionId: string) => {
-    if (!post.isPoll || !post.pollData) return;
+  const [localPollData, setLocalPollData] = useState(post.pollData);
 
-    if (
-      post.pollData.userVotedOptionIds?.includes(optionId) &&
-      !post.pollData.allowMultipleAnswers
-    ) {
-      // Allow deselection even if multiple answers not allowed
-    }
+  // Sync local data if post update comes from parent (e.g. general refresh)
+  useEffect(() => {
+    setLocalPollData(post.pollData);
+  }, [post.pollData]);
 
-    // Clone posts to mutate
-    const updatedPosts = posts.map(p => {
-      if (p.id === post.id && p.pollData) {
-        let newUserVotedIds = p.pollData.userVotedOptionIds || [];
-        let newOptions = [...p.pollData.options];
-        let newTotalVotes = p.pollData.totalVotes;
+  const { deleteSocialFeedPost, voteOnPoll, apiVoteOnPollLoading } =
+    useUserApi();
+  const [refreshSocialFeeds, setRefreshSocialFeeds] = useAtom(
+    refreshSocialFeedsAtom,
+  );
 
-        const isSelected = newUserVotedIds.includes(optionId);
+  const handleVote = async (optionId: string) => {
+    if (!post.isPoll || !localPollData) return;
 
-        if (isSelected) {
-          // Deselect: Remove vote
+    const currentVotedIds = localPollData.userVotedOptionIds || [];
+    const isSelected = currentVotedIds.includes(optionId);
+    let newOptionIds: string[] = [];
+
+    // --- Optimistic State Calculation ---
+    const previousPollData = { ...localPollData };
+    let newOptions = [...localPollData.options];
+    let newTotalVotes = localPollData.totalVotes;
+
+    if (localPollData.allowMultipleAnswers) {
+      if (isSelected) {
+        newOptionIds = currentVotedIds.filter(id => id !== optionId);
+        newOptions = newOptions.map(opt =>
+          opt.id === optionId
+            ? { ...opt, votes: Math.max(0, opt.votes - 1) }
+            : opt,
+        );
+        newTotalVotes = Math.max(0, newTotalVotes - 1);
+      } else {
+        newOptionIds = [...currentVotedIds, optionId];
+        newOptions = newOptions.map(opt =>
+          opt.id === optionId ? { ...opt, votes: opt.votes + 1 } : opt,
+        );
+        newTotalVotes++;
+      }
+    } else {
+      if (isSelected) {
+        newOptionIds = []; // Deselect
+        newOptions = newOptions.map(opt =>
+          opt.id === optionId
+            ? { ...opt, votes: Math.max(0, opt.votes - 1) }
+            : opt,
+        );
+        newTotalVotes = Math.max(0, newTotalVotes - 1);
+      } else {
+        // Switch choice: subtract from old (if any), add to new
+        if (currentVotedIds.length > 0) {
+          const oldId = currentVotedIds[0];
           newOptions = newOptions.map(opt =>
-            opt.id === optionId
+            opt.id === oldId
               ? { ...opt, votes: Math.max(0, opt.votes - 1) }
               : opt,
           );
-          newUserVotedIds = newUserVotedIds.filter(id => id !== optionId);
           newTotalVotes = Math.max(0, newTotalVotes - 1);
-        } else {
-          // Select logic
-          // If not multiple answers, clear others
-          if (!p.pollData.allowMultipleAnswers && newUserVotedIds.length > 0) {
-            // Remove vote from previous
-            const prevId = newUserVotedIds[0];
-            newOptions = newOptions.map(opt =>
-              opt.id === prevId
-                ? { ...opt, votes: Math.max(0, opt.votes - 1) }
-                : opt,
-            );
-            newUserVotedIds = [];
-            newTotalVotes = Math.max(0, newTotalVotes - 1);
-          }
-
-          // Add vote
-          newOptions = newOptions.map(opt =>
-            opt.id === optionId ? { ...opt, votes: opt.votes + 1 } : opt,
-          );
-          newUserVotedIds.push(optionId);
-          newTotalVotes++;
         }
-
-        return {
-          ...p,
-          pollData: {
-            ...p.pollData,
-            options: newOptions,
-            totalVotes: newTotalVotes,
-            userVotedOptionIds: newUserVotedIds,
-          },
-        };
+        newOptionIds = [optionId];
+        newOptions = newOptions.map(opt =>
+          opt.id === optionId ? { ...opt, votes: opt.votes + 1 } : opt,
+        );
+        newTotalVotes++;
       }
-      return p;
+    }
+
+    // Apply Optimistic Update
+    setLocalPollData({
+      ...localPollData,
+      options: newOptions,
+      totalVotes: newTotalVotes,
+      userVotedOptionIds: newOptionIds,
     });
 
-    setPosts(updatedPosts);
+    // API Call in background
+    const res = await voteOnPoll(post.id, { optionIds: newOptionIds });
+    if (!res?.success) {
+      // Revert if failed
+      setLocalPollData(previousPollData);
+      ToastModule.errorTop({
+        msg: res?.message || 'Failed to register vote. Please try again.',
+      });
+    }
   };
 
-  const handleDelete = () => {
-    const updatedPosts = posts.filter(p => p.id !== post.id);
-    setPosts(updatedPosts);
+  const handleDelete = async () => {
+    const res = await deleteSocialFeedPost(`/posts/${post.id}`);
+    if (res?.success) {
+      ToastModule.successTop({
+        msg: res?.message || 'Post deleted successfully!',
+      });
+      setRefreshSocialFeeds(!refreshSocialFeeds);
+    }
     setShowMenu(false);
   };
 
@@ -126,20 +186,24 @@ const PostItem = ({ post }: Props) => {
   };
 
   const renderPoll = () => {
-    if (!post.pollData) return null;
+    if (!localPollData) return null;
 
     return (
       <View style={styles.pollContainer}>
-        <Text style={styles.pollQuestion}>{post.pollData.question}</Text>
-        <Text style={styles.pollSubText}>Select one option</Text>
+        <Text style={styles.pollQuestion}>{localPollData.question}</Text>
+        <Text style={styles.pollSubText}>
+          {localPollData.allowMultipleAnswers
+            ? 'Select multiple options'
+            : 'Select one option'}
+        </Text>
 
-        {post.pollData.options.map(option => {
-          const isSelected = post.pollData?.userVotedOptionIds?.includes(
+        {localPollData.options.map(option => {
+          const isSelected = localPollData?.userVotedOptionIds?.includes(
             option.id,
           );
           const percentage = getPercentage(
             option.votes,
-            post.pollData!.totalVotes,
+            localPollData!.totalVotes,
           );
 
           return (
@@ -149,15 +213,13 @@ const PostItem = ({ post }: Props) => {
               onPress={() => handleVote(option.id)}
               activeOpacity={0.8}
             >
-              {post.pollData!.totalVotes > 0 && (
-                <View
-                  style={[
-                    styles.progressBar,
-                    isSelected && styles.progressBarWinner,
-                    { width: `${percentage}%` },
-                  ]}
-                />
-              )}
+              <View
+                style={[
+                  styles.progressBar,
+                  isSelected && styles.progressBarWinner,
+                  { width: `${percentage}%` },
+                ]}
+              />
 
               <View style={styles.pollOptionContent}>
                 <View
@@ -166,25 +228,25 @@ const PostItem = ({ post }: Props) => {
                     isSelected && styles.radioCircleSelected,
                   ]}
                 >
-                  {/* Tick icon or filled circle could go here if selected */}
+                  {isSelected && (
+                    <Icon name="Check" size={12} color={COLORS.white} />
+                  )}
                 </View>
                 <Text style={styles.optionText}>{option.text}</Text>
 
-                {post.pollData!.totalVotes > 0 && (
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={styles.percentageText}>{percentage}%</Text>
-                    <Text style={styles.voteCountText}>
-                      {option.votes} Vote
-                    </Text>
-                  </View>
-                )}
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={styles.percentageText}>{percentage}%</Text>
+                  <Text style={styles.voteCountText}>
+                    {option.votes} Vote{option.votes !== 1 ? 's' : ''}
+                  </Text>
+                </View>
               </View>
             </TouchableOpacity>
           );
         })}
 
         <Text style={styles.totalVotes}>
-          Total Votes : {post.pollData.totalVotes}
+          Total Votes : {localPollData.totalVotes}
         </Text>
       </View>
     );
@@ -210,8 +272,8 @@ const PostItem = ({ post }: Props) => {
 
   const images = post.media
     ? post.media
-        .filter(m => !m.type?.includes('video'))
-        .map(m => ({ uri: m.uri }))
+      .filter(m => !m.type?.includes('video'))
+      .map(m => ({ uri: m.uri }))
     : [];
 
   const handleMediaPress = (media: any, index: number) => {
@@ -277,17 +339,22 @@ const PostItem = ({ post }: Props) => {
                 overflow: 'hidden',
                 marginRight:
                   mediaCount > 1 && maxColumns(index, mediaCount) ? '2%' : 0,
-                // Simple 2 col logic gap:
-                // Just use flexWrap: 'wrap', justifyContent: 'space-between' on container
               }}
             >
               <Image
-                source={{ uri: media.uri }}
+                source={{ uri: media.uri || media.thumbnail || media.thumbnailUrl }}
                 style={{ width: '100%', height: '100%', resizeMode: 'cover' }}
               />
               {media.type?.includes('video') && (
-                <View style={styles.playIconContainer}>
-                  <Icon name="PlayCircle" size={48} color={COLORS.white} />
+                <View style={styles.playIconOverlay}>
+                  <View style={styles.playButtonCircle}>
+                    <Icon
+                      name="Play"
+                      size={30}
+                      color={COLORS.white}
+                      fill={COLORS.white}
+                    />
+                  </View>
                 </View>
               )}
               {isLastMsg && remaining > 0 && (
@@ -326,7 +393,15 @@ const PostItem = ({ post }: Props) => {
         </View>
         <View style={styles.headerInfo}>
           <Text style={styles.name}>{post.author.name}</Text>
-          <Text style={styles.time}>{post.timestamp}</Text>
+          <View style={styles.timestampRow}>
+            <Text style={styles.time}>{getTimeAgo(post.timestamp)}</Text>
+            {categoryName && (
+              <>
+                <View style={styles.dotSeparator} />
+                <Text style={styles.categoryNameText}>{categoryName}</Text>
+              </>
+            )}
+          </View>
         </View>
         <TouchableOpacity
           ref={moreButtonRef}
@@ -394,10 +469,80 @@ const PostItem = ({ post }: Props) => {
       ) : (
         <View>
           {!!post.title && <Text style={styles.title}>{post.title}</Text>}
-          {!!post.content && <Text style={styles.content}>{post.content}</Text>}
+          {!!post.content && (
+            <Text style={styles.content}>
+              {isExpanded || post.content.length <= contentLimit
+                ? post.content
+                : `${post.content.substring(0, contentLimit)}...`}
+              {post.content.length > contentLimit && (
+                <Text
+                  style={styles.readMoreText}
+                  onPress={() => setIsExpanded(!isExpanded)}
+                >
+                  {isExpanded ? ' Read Less' : ' Read More'}
+                </Text>
+              )}
+            </Text>
+          )}
 
           {/* Media Grid */}
           {renderMediaGrid()}
+
+          {/* Native Videos Support */}
+          {post.videos && post.videos.length > 0 && (
+            <View style={styles.nativeVideosContainer}>
+              {post.videos.map((video, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.nativeVideoCard}
+                  activeOpacity={0.9}
+                  onPress={() => {
+                    setMediaPreview({
+                      visible: true,
+                      uri: video.url,
+                      type: 'video',
+                    });
+                  }}
+                >
+                  {video.thumbnail || video.thumbnailUrl ? (
+                    <Image
+                      source={{ uri: video.thumbnail || video.thumbnailUrl }}
+                      style={styles.nativeVideoThumbnail}
+                    />
+                  ) : (
+                    <View style={styles.nativeVideoFallback}>
+                      <Icon name="Film" size={40} color={COLORS.subText} />
+                    </View>
+                  )}
+                  <View style={styles.playIconOverlay}>
+                    <View style={styles.playButtonCircle}>
+                      <Icon
+                        name="Play"
+                        size={30}
+                        color={COLORS.white}
+                        fill={COLORS.white}
+                      />
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* Video Link Previews */}
+          {post.videoLinks && post.videoLinks.length > 0 && (
+            <View style={styles.videoLinkPreviews}>
+              {post.videoLinks.map((linkObj, index) => (
+                <LinkPreview
+                  key={index}
+                  url={typeof linkObj === 'string' ? linkObj : linkObj.url}
+                  platform={
+                    typeof linkObj === 'object' ? linkObj.platform : undefined
+                  }
+                />
+              ))}
+            </View>
+          )}
 
           {/* Image Viewer Modal */}
           <ImageViewing

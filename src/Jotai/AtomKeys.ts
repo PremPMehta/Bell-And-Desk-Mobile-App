@@ -61,4 +61,14 @@ export const AtomKeys = {
 
   apiGetSocialFeedsLoading: 'apiGetSocialFeedsLoading',
   apiGetSocialFeeds: 'apiGetSocialFeeds',
+
+  apiCreateSocialFeedLoading: 'apiCreateSocialFeedLoading',
+  apiCreateSocialFeed: 'apiCreateSocialFeed',
+  apiUpdateSocialFeedLoading: 'apiUpdateSocialFeedLoading',
+  apiUpdateSocialFeed: 'apiUpdateSocialFeed',
+  apiDeleteSocialFeedLoading: 'apiDeleteSocialFeedLoading',
+  apiDeleteSocialFeed: 'apiDeleteSocialFeed',
+  apiVoteOnPollLoading: 'apiVoteOnPollLoading',
+  apiVoteOnPoll: 'apiVoteOnPoll',
+  refreshSocialFeeds: 'refreshSocialFeeds',
 };

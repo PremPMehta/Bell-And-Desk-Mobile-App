@@ -9,18 +9,19 @@ import {
   Linking,
   Animated,
   Platform,
-  ActivityIndicator,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import styles from './style';
 import { COLORS } from '@/Assets/Theme/colors';
 import { useNavigation } from '@/Hooks/Utils/use-navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { vs } from '@/Assets/Theme/fontStyle';
+import { vs, width } from '@/Assets/Theme/fontStyle';
 import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 import { useRoute } from '@react-navigation/native';
 import { Config } from '@/Config';
 import { useRequireAuth } from '@/Hooks/Utils/use-require-auth';
+import WebView from 'react-native-webview';
+import CategoryDetailsSkeleton from '@/Components/Core/Skeleton/CategoryDetailsSkeleton';
 
 const CategoryDetails = () => {
   const navigation = useNavigation();
@@ -33,6 +34,7 @@ const CategoryDetails = () => {
     apiGetCommunitiesSlug,
   } = useUserApi();
   const { requireAuth } = useRequireAuth();
+  const [webHeight, setWebHeight] = useState(600);
 
   const communityData = apiGetCommunitiesSlug?.data?.community || {};
   console.log('🚀 ~ CategoryDetails ~ communityData:', communityData);
@@ -40,7 +42,9 @@ const CategoryDetails = () => {
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
   const [activeIndex, setActiveIndex] = useState(0);
-  const isStaging = __DEV__;
+  // const isStaging = __DEV__;
+  const isStaging = Config.APP_ENV === 'staging';
+  console.log('🚀 ~ CategoryDetails ~ isStaging:', isStaging);
   const copyUrl = isStaging ? Config.STAGING_URL : Config.LIVE_URL;
   const backIcon = Platform.OS === 'ios' ? 'ChevronLeft' : 'ArrowLeft';
 
@@ -74,16 +78,7 @@ const CategoryDetails = () => {
   });
 
   if (apiGetCommunitiesSlugLoading && !communityData?.name) {
-    return (
-      <View
-        style={[
-          styles.container,
-          { justifyContent: 'center', alignItems: 'center' },
-        ]}
-      >
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
+    return <CategoryDetailsSkeleton />;
   }
 
   const handleJoinNow = () => {
@@ -209,32 +204,39 @@ const CategoryDetails = () => {
           </View>
 
           <View style={styles.socialRow}>
-            {communityData?.instagram && (
+            {communityData?.instagramLink && (
               <TouchableOpacity
-                onPress={() => Linking.openURL(communityData.instagram)}
+                onPress={() => Linking.openURL(communityData.instagramLink)}
               >
                 <Icon name="Instagram" color={COLORS.white} size={24} />
               </TouchableOpacity>
             )}
-            {communityData?.linkedin && (
+            {communityData?.linkedinLink && (
               <TouchableOpacity
-                onPress={() => Linking.openURL(communityData.linkedin)}
+                onPress={() => Linking.openURL(communityData.linkedinLink)}
               >
                 <Icon name="Linkedin" color={COLORS.white} size={24} />
               </TouchableOpacity>
             )}
-            {communityData?.youtube && (
+            {communityData?.youtubeLink && (
               <TouchableOpacity
-                onPress={() => Linking.openURL(communityData.youtube)}
+                onPress={() => Linking.openURL(communityData.youtubeLink)}
               >
                 <Icon name="Youtube" color={COLORS.white} size={24} />
               </TouchableOpacity>
             )}
-            {communityData?.twitter && (
+            {communityData?.telegramLink && (
               <TouchableOpacity
-                onPress={() => Linking.openURL(communityData.twitter)}
+                onPress={() => Linking.openURL(communityData.telegramLink)}
               >
-                <Icon name="Twitter" color={COLORS.white} size={24} />
+                <Icon name="Send" color={COLORS.white} size={24} />
+              </TouchableOpacity>
+            )}
+            {communityData?.externalLink && (
+              <TouchableOpacity
+                onPress={() => Linking.openURL(communityData.externalLink)}
+              >
+                <Icon name="Link2" color={COLORS.white} size={24} />
               </TouchableOpacity>
             )}
           </View>
@@ -287,12 +289,75 @@ const CategoryDetails = () => {
           </View>
 
           {communityData?.welcomeMessage && (
-            <>
-              <Text style={styles.heading}>
-                Bienvenido A {communityData.name}
-              </Text>
-              <Text style={styles.subText}>{communityData.welcomeMessage}</Text>
-            </>
+            <View style={{ marginTop: 20 }}>
+              {/<[a-z/][\s\S]*?>/i.test(communityData.welcomeMessage) ? (
+                <WebView
+                  originWhitelist={['*']}
+                  scrollEnabled={false}
+                  nestedScrollEnabled
+                  showsVerticalScrollIndicator={false}
+                  style={{
+                    width: '100%',
+                    height: webHeight,
+                    backgroundColor: 'black',
+                  }}
+                  source={{
+                    html: `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                body {
+                  margin: 0;
+                  padding: 0;
+                  background-color: #000;
+                  color: #fff;
+                  font-family: -apple-system, system-ui;
+                }
+                img {
+                  max-width: 100%;
+                  height: auto;
+                }
+              </style>
+            </head>
+            <body>
+              ${communityData.welcomeMessage}
+              <script>
+                function sendHeight() {
+                  window.ReactNativeWebView.postMessage(
+                    document.body.scrollHeight
+                  );
+                }
+                window.onload = sendHeight;
+                setTimeout(sendHeight, 500);
+              </script>
+            </body>
+          </html>
+        `,
+                  }}
+                  onMessage={event => {
+                    const height = Number(event.nativeEvent.data);
+                    if (height > 0) {
+                      setWebHeight(height);
+                    }
+                  }}
+                />
+              ) : (
+                <>
+                  {/* <Text style={styles.heading}>
+                    Bienvenido A {communityData.name}
+                  </Text> */}
+                  <Text style={styles.subText}>
+                    {communityData.welcomeMessage}
+                  </Text>
+                </>
+              )}
+            </View>
+          )}
+
+          {!communityData?.welcomeMessage && (
+            <Text style={styles.subText}>Welcome to our community!</Text>
           )}
 
           {communityData?.highlights &&

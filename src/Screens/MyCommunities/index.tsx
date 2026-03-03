@@ -30,10 +30,10 @@ const MyCommunities = () => {
   // Filter communities by search query (name or description)
   const filteredCommunities = searchQuery.trim()
     ? communities.filter(
-      c =>
-        c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-    )
+        c =>
+          c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          c.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
     : communities;
 
   const scrollY = useSharedValue(0);
@@ -113,8 +113,8 @@ const MyCommunities = () => {
     <MyCommunityCard
       name={item.name}
       description={item.description}
-      bannerImage={{ uri: item.banner }}
-      tags={[item.role ?? 'Member']}
+      bannerImage={item.banner}
+      tags={item.role ?? 'Member'}
       onViewPress={() =>
         navigation.navigate('CommunityLayout', {
           title: item.name,

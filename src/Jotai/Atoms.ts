@@ -92,7 +92,8 @@ export interface Post {
   categoryId?: string | null;
   visibility?: string;
   title?: string;
-  videoLinks?: string[];
+  videoLinks?: any[];
+  videos?: any[];
 }
 
 export const postsAtom = atomWithStorage<Post[]>('community_posts', [], storage as any);
@@ -106,4 +107,6 @@ export const mediaPreviewAtom = atom<{
   uri: '',
   type: 'image',
 });
+
+export const refreshSocialFeedsAtom = booleanDefaultFalseAtomFamily(AtomKeys.refreshSocialFeeds);
 

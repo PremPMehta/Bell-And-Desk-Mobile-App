@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,12 +7,13 @@ import {
   ImageSourcePropType,
 } from 'react-native';
 import styles from './style';
+import { AppImages } from '@/Assets/Images';
 
 interface CommunityCardProps {
   name: string;
   description: string;
   bannerImage: ImageSourcePropType;
-  tags: string[];
+  tags: string;
   onViewPress: () => void;
   onSettingsPress: () => void;
 }
@@ -25,6 +26,14 @@ const MyCommunityCard: React.FC<CommunityCardProps> = ({
   onViewPress,
   onSettingsPress,
 }) => {
+  const [imageError, setImageError] = useState(false);
+
+  const getSource = () => {
+    if (imageError || !bannerImage) {
+      return AppImages.homeBanner;
+    }
+    return { uri: bannerImage as string };
+  };
   return (
     <TouchableOpacity
       style={styles.cardContainer}
@@ -32,15 +41,19 @@ const MyCommunityCard: React.FC<CommunityCardProps> = ({
       onPress={onViewPress}
     >
       {/* Banner */}
-      <Image source={bannerImage} style={styles.bannerImage} />
+      <Image
+        source={getSource()}
+        style={styles.bannerImage}
+        onError={() => setImageError(true)}
+      />
 
       {/* Tags (positioned absolutely to match design) */}
       <View style={styles.tagsContainer}>
-        {tags.map((tag, index) => (
-          <View key={index} style={styles.tag}>
-            <Text style={styles.tagText}>{tag}</Text>
-          </View>
-        ))}
+        {/* {tags.map((tag, index) => ( */}
+        <View style={styles.tag}>
+          <Text style={styles.tagText}>{tags}</Text>
+        </View>
+        {/* ))} */}
       </View>
 
       {/* Content */}
@@ -50,18 +63,22 @@ const MyCommunityCard: React.FC<CommunityCardProps> = ({
           {description}
         </Text>
 
-        {/* Buttons */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.viewButton} onPress={onViewPress}>
-            <Text style={styles.buttonText}>View</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.settingsButton}
-            onPress={onSettingsPress}
-          >
-            <Text style={styles.buttonText}>Settings</Text>
-          </TouchableOpacity>
-        </View>
+        {tags === 'owner' && (
+          <>
+            {/* Buttons */}
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.viewButton} onPress={onViewPress}>
+                <Text style={styles.buttonText}>View</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.settingsButton}
+                onPress={onSettingsPress}
+              >
+                <Text style={styles.buttonText}>Settings</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
       </View>
     </TouchableOpacity>
   );

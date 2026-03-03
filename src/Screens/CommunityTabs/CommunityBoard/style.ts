@@ -46,7 +46,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: ms(12),
   },
   avatarText: {
     ...THEME.fontStyle.h4Bold,
@@ -59,6 +58,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.uploadBG,
     borderRadius: ms(20),
     paddingHorizontal: ms(16),
+    marginLeft: ms(12),
   },
   inputPlaceholder: {
     ...THEME.fontStyle.h5Regular,

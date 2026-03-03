@@ -17,6 +17,7 @@ import {
   postsAtom,
   communityCategoriesAtom,
   userAtom,
+  refreshSocialFeedsAtom,
 } from '@/Jotai/Atoms';
 import PostItem from '@/Components/Generic/PostItem';
 import MediaPreviewModal from '@/Components/Generic/Modals/MediaPreviewModal';
@@ -155,7 +156,7 @@ const CommunityBoard = ({
                   ? item.authorId.firstName[0]
                   : 'U'),
           },
-          timestamp: new Date(item.createdAt).toLocaleDateString(), // Or use a time-ago logic
+          timestamp: item.createdAt, // Pass raw timestamp for PostItem to handle relative time
           content: item.content,
           media: item.images
             ? item.images.map((img: any) => ({ uri: img.url, type: 'image' }))
@@ -167,19 +168,19 @@ const CommunityBoard = ({
           visibility: item.visibility || 'Everyone',
           title: item.title || '',
           videoLinks: item.videoLinks || [],
-          isPoll: !!item.isPoll,
-          pollData: item.pollData
+          videos: item.videos || [],
+          isPoll: !!item.poll?.isEnabled,
+          pollData: item.poll?.isEnabled
             ? {
-              question: item.pollData.question,
-              options: item.pollData.options.map((opt: any) => ({
-                id: opt._id || opt.id,
+              question: item.poll.question,
+              options: item.poll.options.map((opt: any) => ({
+                id: opt._id,
                 text: opt.text,
-                votes: opt.votes || 0,
+                votes: opt.voteCount || 0,
               })),
-              totalVotes: item.pollData.totalVotes || 0,
-              allowMultipleAnswers:
-                item.pollData.allowMultipleAnswers || false,
-              userVotedOptionIds: item.pollData.userVotedOptionIds || [],
+              totalVotes: item.poll.totalVotes || 0,
+              allowMultipleAnswers: item.poll.allowMultipleAnswers || false,
+              userVotedOptionIds: item.poll.userSelections || [],
             }
             : undefined,
         }));
@@ -199,6 +200,8 @@ const CommunityBoard = ({
     [communityId, selectedCategoryId],
   );
 
+  const [refreshSocialFeeds] = useAtom(refreshSocialFeedsAtom);
+
   useFocusEffect(
     useCallback(() => {
       fetchFeeds(1, true);
@@ -207,7 +210,7 @@ const CommunityBoard = ({
 
   useEffect(() => {
     fetchFeeds(1, true);
-  }, [selectedCategoryId, fetchFeeds]);
+  }, [selectedCategoryId, fetchFeeds, refreshSocialFeeds]);
 
   const handleScroll = (event: any) => {
     onScroll?.(event);
@@ -308,7 +311,9 @@ const CommunityBoard = ({
             {selectedCategoryId ? (
               <>
                 <Icon name="MessageSquare" size={48} color={COLORS.subText} />
-                <Text style={styles.emptyStateTitle}>No posts in this category</Text>
+                <Text style={styles.emptyStateTitle}>
+                  No posts in this category
+                </Text>
                 <Text style={styles.emptyStateSubtitle}>
                   No posts have been shared in this category yet.
                 </Text>
@@ -316,9 +321,12 @@ const CommunityBoard = ({
             ) : (
               <>
                 <Icon name="MessageSquareText" size={48} color={COLORS.white} />
-                <Text style={styles.emptyStateTitle}>Start the Conversation</Text>
+                <Text style={styles.emptyStateTitle}>
+                  Start the Conversation
+                </Text>
                 <Text style={styles.emptyStateSubtitle}>
-                  Be the first to share something amazing with your community!{'\n'}
+                  Be the first to share something amazing with your community!
+                  {'\n'}
                   Your voice matters and we can't wait to hear from you.
                 </Text>
                 <PrimaryButton

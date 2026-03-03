@@ -37,7 +37,22 @@ const styles = StyleSheet.create({
   time: {
     ...fontStyle.h6Regular,
     color: COLORS.subText,
+  },
+  timestampRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginTop: ms(2),
+  },
+  dotSeparator: {
+    width: ms(3),
+    height: ms(3),
+    borderRadius: ms(1.5),
+    backgroundColor: COLORS.subText,
+    marginHorizontal: ms(8),
+  },
+  categoryNameText: {
+    ...fontStyle.h6Regular,
+    color: COLORS.primary,
   },
   title: {
     ...fontStyle.h4Bold,
@@ -48,7 +63,7 @@ const styles = StyleSheet.create({
     padding: ms(4),
   },
   content: {
-    ...fontStyle.h4Regular,
+    ...fontStyle.h5Regular,
     color: COLORS.white,
     marginVertical: ms(12),
   },
@@ -69,12 +84,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: ms(200),
     resizeMode: 'cover',
-  },
-  playIconContainer: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.3)',
   },
   moreOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -208,6 +217,55 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     // backgroundColor: 'rgba(0,0,0,0.1)', // Optional
+  },
+  readMoreText: {
+    ...fontStyle.h5Bold,
+    color: COLORS.primary,
+    marginLeft: ms(4),
+  },
+  videoLinkPreviews: {
+    marginBottom: ms(12),
+  },
+  nativeVideosContainer: {
+    marginTop: ms(8),
+    marginBottom: ms(12),
+  },
+  nativeVideoCard: {
+    width: '100%',
+    height: ms(220),
+    borderRadius: ms(12),
+    overflow: 'hidden',
+    backgroundColor: '#1A1A1A',
+    marginBottom: ms(12),
+    position: 'relative',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  nativeVideoThumbnail: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  nativeVideoFallback: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#262626',
+  },
+  playIconOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  playButtonCircle: {
+    width: ms(60),
+    height: ms(60),
+    borderRadius: ms(30),
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: ms(2),
+    borderColor: COLORS.white,
   },
 });
 

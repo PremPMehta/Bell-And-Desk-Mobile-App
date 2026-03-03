@@ -31,14 +31,22 @@ const PlanContent = ({ item, isGradient = false, onStartNow }) => {
         {item?.name || item?.title}
       </Text>
 
-      <Text style={[styles.cardPrice, isGradient && styles.commonColor]}>
-        {'$' + item?.price}{' '}
-        <Text style={[styles.month, isGradient && styles.commonColor]}>
-          / {item?.period || 'Month'}
+      {item?.isEnterprise ? (
+        <Text style={[styles.cardPrice, isGradient && styles.commonColor]}>
+          Custom Pricing
         </Text>
-      </Text>
+      ) : (
+        <Text style={[styles.cardPrice, isGradient && styles.commonColor]}>
+          {'$' + item?.price}{' '}
+          <Text style={[styles.month, isGradient && styles.commonColor]}>
+            / {item?.period || 'Month'}
+          </Text>
+        </Text>
+      )}
 
-      <Text style={styles.descAbove}>{item?.descriptionAbove}</Text>
+      <Text style={[styles.descAbove, isGradient && styles.commonColor]}>
+        {item?.descriptionAbove}
+      </Text>
 
       <TouchableOpacity
         style={[styles.startBtn, isGradient ? styles.bgWhite : styles.bgBlack]}
