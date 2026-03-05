@@ -47,28 +47,46 @@ export const AtomKeys = {
   apiGetCommunityCourses: 'apiGetCommunityCourses',
 
   /* Community Board Screen */
+  // Get Social Feed Categories
   apiGetSocialFeedCategoriesLoading: 'apiGetSocialFeedCategoriesLoading',
   apiGetSocialFeedCategories: 'apiGetSocialFeedCategories',
 
+  // Create Social Feed Category
   apiCreateSocialFeedCategoryLoading: 'apiCreateSocialFeedCategoryLoading',
   apiCreateSocialFeedCategory: 'apiCreateSocialFeedCategory',
 
+  // Update Social Feed Category
   apiUpdateSocialFeedCategoryLoading: 'apiUpdateSocialFeedCategoryLoading',
   apiUpdateSocialFeedCategory: 'apiUpdateSocialFeedCategory',
 
+  // Delete Social Feed Category
   apiDeleteSocialFeedCategoryLoading: 'apiDeleteSocialFeedCategoryLoading',
   apiDeleteSocialFeedCategory: 'apiDeleteSocialFeedCategory',
 
+  // Get Social Feeds
   apiGetSocialFeedsLoading: 'apiGetSocialFeedsLoading',
   apiGetSocialFeeds: 'apiGetSocialFeeds',
 
+  // Create Social Feed
   apiCreateSocialFeedLoading: 'apiCreateSocialFeedLoading',
   apiCreateSocialFeed: 'apiCreateSocialFeed',
+
+  // Update Social Feed
   apiUpdateSocialFeedLoading: 'apiUpdateSocialFeedLoading',
   apiUpdateSocialFeed: 'apiUpdateSocialFeed',
+
+  // Delete Social Feed
   apiDeleteSocialFeedLoading: 'apiDeleteSocialFeedLoading',
   apiDeleteSocialFeed: 'apiDeleteSocialFeed',
+
+  // Vote on Polls Post
   apiVoteOnPollLoading: 'apiVoteOnPollLoading',
   apiVoteOnPoll: 'apiVoteOnPoll',
+
+  // Like Post
+  apiLikePostLoading: 'apiLikePostLoading',
+  apiLikePost: 'apiLikePost',
+
+  // Refresh Social Feeds
   refreshSocialFeeds: 'refreshSocialFeeds',
 };

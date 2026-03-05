@@ -183,6 +183,14 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiVoteOnPoll),
   );
 
+  // Like Post Apis
+  const [apiLikePostLoading, setApiLikePostLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiLikePostLoading),
+  );
+  const [apiLikePost, setApiLikePost] = useAtom(
+    objectAtomFamily(AtomKeys.apiLikePost),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -582,6 +590,27 @@ const useUserApi = () => {
     }
   }
 
+  // Like Post
+  async function likePost(postId: string) {
+    try {
+      setApiLikePostLoading(true);
+      const res: any = await api.post(
+        `${ApiEndPoints.socialFeeds}/posts/${postId}/like`,
+        undefined,
+      );
+      console.log('🚀 ~ likePost ~ res:', res);
+      setApiLikePost(res);
+      setApiLikePostLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error liking post:', error);
+      ToastModule.errorTop({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiLikePostLoading(false);
+    }
+  }
+
   return {
     // Auth Apis
     getUserUnifiedLogin,
@@ -678,6 +707,11 @@ const useUserApi = () => {
     voteOnPoll,
     apiVoteOnPollLoading,
     apiVoteOnPoll,
+
+    // Like Post
+    likePost,
+    apiLikePostLoading,
+    apiLikePost,
   };
 };
 

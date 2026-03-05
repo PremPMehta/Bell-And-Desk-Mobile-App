@@ -48,6 +48,8 @@ const PostItem = ({ post }: Props) => {
   const [, setEditingPost] = useAtom(editingPostAtom);
   const [categories] = useAtom(communityCategoriesAtom);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [localIsLiked, setLocalIsLiked] = useState(post.isLiked);
+  const [localLikesCount, setLocalLikesCount] = useState(post.likes);
   const contentLimit = 150;
 
   const categoryName = categories.find(c => c.id === post.categoryId)?.name;
@@ -88,8 +90,18 @@ const PostItem = ({ post }: Props) => {
     setLocalPollData(post.pollData);
   }, [post.pollData]);
 
-  const { deleteSocialFeedPost, voteOnPoll, apiVoteOnPollLoading } =
-    useUserApi();
+  // Sync like status and count from props
+  useEffect(() => {
+    setLocalIsLiked(post.isLiked);
+    setLocalLikesCount(post.likes);
+  }, [post.isLiked, post.likes]);
+
+  const {
+    deleteSocialFeedPost,
+    voteOnPoll,
+    apiVoteOnPollLoading,
+    likePost,
+  } = useUserApi();
   const [refreshSocialFeeds, setRefreshSocialFeeds] = useAtom(
     refreshSocialFeedsAtom,
   );
@@ -252,19 +264,65 @@ const PostItem = ({ post }: Props) => {
     );
   };
 
-  const handleLike = () => {
-    const updatedPosts = posts.map(p => {
+  const handleLike = async () => {
+    const previousPosts = [...posts];
+    const prevLiked = localIsLiked;
+    const prevCount = localLikesCount;
+
+    // --- Optimistic Update Local ---
+    const newIsLiked = !localIsLiked;
+    const newLikesCount = newIsLiked
+      ? localLikesCount + 1
+      : Math.max(0, localLikesCount - 1);
+
+    setLocalIsLiked(newIsLiked);
+    setLocalLikesCount(newLikesCount);
+
+    // --- Optimistic Update Global (postsAtom) ---
+    const updatedPosts = (posts as Post[]).map(p => {
       if (p.id === post.id) {
-        const isLiked = !p.isLiked;
         return {
           ...p,
-          isLiked,
-          likes: isLiked ? p.likes + 1 : Math.max(0, p.likes - 1),
+          isLiked: newIsLiked,
+          likes: newLikesCount,
         };
       }
       return p;
     });
     setPosts(updatedPosts);
+
+    // --- API Call in Background ---
+    const res = await likePost(post.id);
+
+    if (res?.success) {
+      // If server returns updated likes count/status, update again to be exact
+      // Assuming res.data contains updated post or at least the like status and count
+      if (res.data) {
+        const serverLiked = res.data.isLiked;
+        const serverCount = res.data.likes;
+
+        if (serverLiked !== undefined) setLocalIsLiked(serverLiked);
+        if (serverCount !== undefined) setLocalLikesCount(serverCount);
+
+        // Update atom again with actual server values
+        setPosts(prev =>
+          (prev as Post[]).map(p =>
+            p.id === post.id
+              ? {
+                ...p,
+                isLiked: serverLiked ?? p.isLiked,
+                likes: serverCount ?? p.likes,
+              }
+              : p,
+          ),
+        );
+      }
+    } else {
+      // Revert local and global if API call fails
+      setLocalIsLiked(prevLiked);
+      setLocalLikesCount(prevCount);
+      setPosts(previousPosts);
+    }
   };
 
   const [isImageViewVisible, setIsImageViewVisible] = useState(false);
@@ -560,16 +618,16 @@ const PostItem = ({ post }: Props) => {
           <Icon
             name="ThumbsUp"
             size={18}
-            color={post.isLiked ? COLORS.primary : COLORS.white}
-            fill={post.isLiked ? COLORS.primary : 'transparent'}
+            color={localIsLiked ? COLORS.primary : COLORS.white}
+            fill={localIsLiked ? COLORS.primary : 'transparent'}
           />
           <Text
             style={[
               styles.footerText,
-              post.isLiked && { color: COLORS.primary },
+              localIsLiked && { color: COLORS.primary },
             ]}
           >
-            {post.likes}
+            {localLikesCount}
           </Text>
         </TouchableOpacity>
       </View>
