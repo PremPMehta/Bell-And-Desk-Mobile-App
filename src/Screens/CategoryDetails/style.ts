@@ -180,17 +180,24 @@ const styles = StyleSheet.create({
     zIndex: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: ms(6),
+    paddingHorizontal: ms(10),
   },
   backButton: {
-    width: ms(40),
-    height: ms(40),
+    width: ms(36),
+    height: ms(36),
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: ms(18),
+    zIndex: 11,
   },
   headerTitle: {
     ...THEME.fontStyle.h3Bold,
-    marginLeft: Platform.OS === 'ios' ? ms(84) : ms(24),
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: ms(12),
+    textAlign: 'center',
+    paddingHorizontal: ms(60),
   },
 });
 

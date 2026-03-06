@@ -12,8 +12,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: ms(16),
   },
   header: {
-    marginTop: ms(16),
-    marginBottom: ms(16),
+    marginTop: ms(10),
   },
   title: {
     ...THEME.fontStyle.h2Bold,
@@ -48,6 +47,25 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: ms(16),
     paddingBottom: ms(40),
+  },
+  emptyStateCard: {
+    padding: ms(32),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: ms(60),
+  },
+  emptyStateTitle: {
+    ...THEME.fontStyle.h3Bold,
+    color: COLORS.white,
+    marginTop: ms(24),
+    textAlign: 'center',
+  },
+  emptyStateSubtitle: {
+    ...THEME.fontStyle.h5Regular,
+    color: COLORS.placeholder,
+    marginTop: ms(12),
+    textAlign: 'center',
+    lineHeight: ms(20),
   },
 });
 

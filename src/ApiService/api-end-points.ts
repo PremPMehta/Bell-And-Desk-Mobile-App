@@ -30,4 +30,7 @@ export const ApiEndPoints = {
 
   socialFeedCategories: 'social-feed/categories',
   socialFeeds: 'social-feed',
+  communityMembers: 'communities/:communityId/members',
+  communityMembersExport: 'communities/:communityId/members/export',
+  communityAccessRequests: 'communities/:communityId/access-requests',
 };

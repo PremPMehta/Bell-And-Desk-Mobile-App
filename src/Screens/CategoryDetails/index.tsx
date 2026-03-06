@@ -22,6 +22,7 @@ import { Config } from '@/Config';
 import { useRequireAuth } from '@/Hooks/Utils/use-require-auth';
 import WebView from 'react-native-webview';
 import CategoryDetailsSkeleton from '@/Components/Core/Skeleton/CategoryDetailsSkeleton';
+import { useMemo } from 'react';
 
 const CategoryDetails = () => {
   const navigation = useNavigation();
@@ -58,9 +59,9 @@ const CategoryDetails = () => {
   const mediaList =
     communityData?.introImages?.length > 0
       ? communityData.introImages.map((m: any) => ({
-          type: m?.type === 'video' ? 'video' : 'image',
-          uri: m?.url || m?.uri,
-        }))
+        type: m?.type === 'video' ? 'video' : 'image',
+        uri: m?.url || m?.uri,
+      }))
       : [{ type: 'image', uri: 'https://picsum.photos/800/900?random=1' }];
 
   const activeItem = mediaList[activeIndex] || mediaList[0];
@@ -76,6 +77,74 @@ const CategoryDetails = () => {
     outputRange: [0, 0, 1],
     extrapolate: 'clamp',
   });
+
+  const backButtonBgColor = scrollY.interpolate({
+    inputRange: [0, 80],
+    outputRange: ['rgba(0,0,0,0.4)', 'transparent'],
+    extrapolate: 'clamp',
+  });
+
+  const welcomeMessageHtml = useMemo(() => {
+    const htmlContent = communityData?.welcomeMessage || '';
+    return {
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+            <style>
+              body, html {
+                margin: 0;
+                padding: 0;
+                background-color: #000;
+                color: #fff;
+                font-family: -apple-system, system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
+                overflow: hidden;
+              }
+              img {
+                max-width: 100%;
+                height: auto;
+                display: block;
+              }
+              * {
+                box-sizing: border-box;
+              }
+            </style>
+          </head>
+          <body>
+            <div id="content-wrapper">
+              ${htmlContent}
+            </div>
+            <script>
+              var lastHeight = 0;
+              function sendHeight() {
+                var wrapper = document.getElementById('content-wrapper');
+                if (!wrapper) return;
+                var height = wrapper.offsetHeight;
+                if (Math.abs(height - lastHeight) > 2) {
+                  lastHeight = height;
+                  window.ReactNativeWebView.postMessage(height.toString());
+                }
+              }
+
+              window.onload = function() {
+                sendHeight();
+                if (window.ResizeObserver) {
+                  const resizeObserver = new ResizeObserver(() => {
+                    sendHeight();
+                  });
+                  resizeObserver.observe(document.getElementById('content-wrapper'));
+                }
+              };
+              
+              setTimeout(sendHeight, 500);
+              setTimeout(sendHeight, 1500);
+            </script>
+          </body>
+        </html>
+      `,
+    };
+  }, [communityData?.welcomeMessage]);
 
   if (apiGetCommunitiesSlugLoading && !communityData?.name) {
     return <CategoryDetailsSkeleton />;
@@ -98,17 +167,26 @@ const CategoryDetails = () => {
           },
         ]}
       >
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        <Animated.View
+          style={[styles.backButton, { backgroundColor: backButtonBgColor }]}
         >
-          <Icon
-            name={backIcon}
-            color={COLORS.white}
-            size={Platform.OS === 'ios' ? 30 : 24}
-          />
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={{
+              width: '100%',
+              height: '100%',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Icon
+              name={backIcon}
+              color={COLORS.white}
+              size={Platform.OS === 'ios' ? 30 : 24}
+            />
+          </TouchableOpacity>
+        </Animated.View>
         <Animated.Text
           style={[
             styles.headerTitle,
@@ -292,53 +370,22 @@ const CategoryDetails = () => {
             <View style={{ marginTop: 20 }}>
               {/<[a-z/][\s\S]*?>/i.test(communityData.welcomeMessage) ? (
                 <WebView
+                  key={`webview-${slug}`}
                   originWhitelist={['*']}
                   scrollEnabled={false}
-                  nestedScrollEnabled
+                  nestedScrollEnabled={false}
                   showsVerticalScrollIndicator={false}
+                  overScrollMode="never"
+                  onShouldStartLoadWithRequest={() => true}
                   style={{
                     width: '100%',
                     height: webHeight,
                     backgroundColor: 'black',
                   }}
-                  source={{
-                    html: `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <style>
-                body {
-                  margin: 0;
-                  padding: 0;
-                  background-color: #000;
-                  color: #fff;
-                  font-family: -apple-system, system-ui;
-                }
-                img {
-                  max-width: 100%;
-                  height: auto;
-                }
-              </style>
-            </head>
-            <body>
-              ${communityData.welcomeMessage}
-              <script>
-                function sendHeight() {
-                  window.ReactNativeWebView.postMessage(
-                    document.body.scrollHeight
-                  );
-                }
-                window.onload = sendHeight;
-                setTimeout(sendHeight, 500);
-              </script>
-            </body>
-          </html>
-        `,
-                  }}
+                  source={welcomeMessageHtml}
                   onMessage={event => {
                     const height = Number(event.nativeEvent.data);
-                    if (height > 0) {
+                    if (height > 0 && Math.abs(height - webHeight) > 5) {
                       setWebHeight(height);
                     }
                   }}

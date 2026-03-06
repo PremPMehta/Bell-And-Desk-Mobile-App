@@ -311,6 +311,7 @@ export const MEMBER_FILTER_TABS = [
   'Banned',
   'Subscribers',
   'Pending Approval',
+  'Left',
 ];
 
 export const MOCK_MEMBERS = [

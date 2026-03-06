@@ -44,7 +44,7 @@ const CommunityMenuTabsContent = ({
     case 'board':
       return <CommunityBoard communityId={communityId} {...scrollProps} />;
     case 'members':
-      return <CommunityMembers {...scrollProps} />;
+      return <CommunityMembers communityId={communityId} {...scrollProps} />;
     case 'about':
       return <CommunityAbout {...scrollProps} />;
     case 'settings':

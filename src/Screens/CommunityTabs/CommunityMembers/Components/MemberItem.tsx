@@ -14,6 +14,8 @@ interface MemberItemProps {
   profileImage?: string; // Placeholder for now, assume avatar logic later if needed
   onBlockPress?: () => void;
   type: 'Free' | 'Paid';
+  isSubscribed: boolean;
+  plan: string;
 }
 
 const MemberItem: React.FC<MemberItemProps> = ({
@@ -23,6 +25,8 @@ const MemberItem: React.FC<MemberItemProps> = ({
   role,
   onBlockPress,
   type,
+  isSubscribed,
+  plan,
 }) => {
   return (
     <View style={styles.container}>
@@ -65,6 +69,22 @@ const MemberItem: React.FC<MemberItemProps> = ({
                 />
                 <Text style={styles.badgeText}>{type}</Text>
               </>
+            </View>
+          )}
+          {plan && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{plan}</Text>
+            </View>
+          )}
+          {isSubscribed && (
+            <View style={[styles.badge, styles.subscribedStyle]}>
+              <Icon
+                name="Star"
+                size={12}
+                fill={COLORS.white}
+                color={COLORS.white}
+              />
+              <Text style={styles.badgeText}>Subscribed</Text>
             </View>
           )}
           {role === 'Owner' && (
@@ -166,9 +186,15 @@ const styles = StyleSheet.create({
   badgeText: {
     ...THEME.fontStyle.h7Bold,
     color: COLORS.white,
+    textTransform: 'capitalize',
   },
   ownerStyle: {
     marginLeft: ms(8),
     backgroundColor: COLORS.primary,
+  },
+  subscribedStyle: {
+    marginLeft: ms(8),
+    backgroundColor: COLORS.green,
+    gap: ms(4),
   },
 });

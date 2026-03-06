@@ -14,6 +14,7 @@ import { useAtom, useSetAtom } from 'jotai';
 const useUserApi = () => {
   const navigation = useNavigation();
   const setUserToken = useSetAtom(userTokenAtom);
+  const [userToken] = useAtom(userTokenAtom);
   const setUser = useSetAtom(userAtom);
 
   // User Unified Login Apis
@@ -182,6 +183,13 @@ const useUserApi = () => {
   const [apiVoteOnPoll, setApiVoteOnPoll] = useAtom(
     objectAtomFamily(AtomKeys.apiVoteOnPoll),
   );
+  // Export Community Members Apis
+  const [
+    apiExportCommunityMembersLoading,
+    setApiExportCommunityMembersLoading,
+  ] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiExportCommunityMembersLoading),
+  );
 
   // Like Post Apis
   const [apiLikePostLoading, setApiLikePostLoading] = useAtom(
@@ -190,6 +198,24 @@ const useUserApi = () => {
   const [apiLikePost, setApiLikePost] = useAtom(
     objectAtomFamily(AtomKeys.apiLikePost),
   );
+
+  // Get Community Members Apis
+  const [apiGetCommunityMembersLoading, setApiGetCommunityMembersLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiGetCommunityMembersLoading),
+    );
+  const [apiGetCommunityMembers, setApiGetCommunityMembers] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetCommunityMembers),
+  );
+  // Get Community Access Requests Apis
+  const [
+    apiGetCommunityAccessRequestsLoading,
+    setApiGetCommunityAccessRequestsLoading,
+  ] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetCommunityAccessRequestsLoading),
+  );
+  const [apiGetCommunityAccessRequests, setApiGetCommunityAccessRequests] =
+    useAtom(objectAtomFamily(AtomKeys.apiGetCommunityAccessRequests));
 
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
@@ -611,6 +637,73 @@ const useUserApi = () => {
     }
   }
 
+  // Get Community Members
+  async function getCommunityMembers(communityId: string, query: string) {
+    try {
+      setApiGetCommunityMembersLoading(true);
+      const url = ApiEndPoints.communityMembers.replace(
+        ':communityId',
+        communityId,
+      );
+      const members: any = await api.get(url + query);
+      setApiGetCommunityMembers(members);
+      setApiGetCommunityMembersLoading(false);
+      return members;
+    } catch (error: any) {
+      console.error('Error fetching community members info:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiGetCommunityMembersLoading(false);
+    }
+  }
+
+  // Get Community Access Requests
+  async function getCommunityAccessRequests(
+    communityId: string,
+    query: string,
+  ) {
+    try {
+      setApiGetCommunityAccessRequestsLoading(true);
+      const url = ApiEndPoints.communityAccessRequests.replace(
+        ':communityId',
+        communityId,
+      );
+      const requests: any = await api.get(url + query);
+      setApiGetCommunityAccessRequests(requests);
+      setApiGetCommunityAccessRequestsLoading(false);
+      return requests;
+    } catch (error: any) {
+      console.error('Error fetching community access requests info:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiGetCommunityAccessRequestsLoading(false);
+    }
+  }
+
+  // Export Community Members
+  async function exportCommunityMembers(communityId: string, query: string) {
+    try {
+      setApiExportCommunityMembersLoading(true);
+      const url = ApiEndPoints.communityMembersExport.replace(
+        ':communityId',
+        communityId,
+      );
+      const res: any = await api.get(url + query);
+      console.log('🚀 ~ exportCommunityMembers ~ res:', res);
+      setApiExportCommunityMembersLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error exporting community members:', error);
+      setApiExportCommunityMembersLoading(false);
+      ToastModule.errorTop({
+        msg: error.resError?.message || error.message,
+      });
+      return error;
+    }
+  }
+
   return {
     // Auth Apis
     getUserUnifiedLogin,
@@ -712,6 +805,19 @@ const useUserApi = () => {
     likePost,
     apiLikePostLoading,
     apiLikePost,
+
+    /* Community Members Screen Apis */
+    getCommunityMembers,
+    apiGetCommunityMembersLoading,
+    apiGetCommunityMembers,
+    exportCommunityMembers,
+    apiExportCommunityMembersLoading,
+    getCommunityAccessRequests,
+    apiGetCommunityAccessRequestsLoading,
+    apiGetCommunityAccessRequests,
+
+    // Auth Token for external downloads
+    userToken,
   };
 };
 

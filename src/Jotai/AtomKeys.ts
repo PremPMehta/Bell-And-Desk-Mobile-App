@@ -89,4 +89,11 @@ export const AtomKeys = {
 
   // Refresh Social Feeds
   refreshSocialFeeds: 'refreshSocialFeeds',
+
+  // Community Members
+  apiGetCommunityMembersLoading: 'apiGetCommunityMembersLoading',
+  apiGetCommunityMembers: 'apiGetCommunityMembers',
+  apiExportCommunityMembersLoading: 'apiExportCommunityMembersLoading',
+  apiGetCommunityAccessRequestsLoading: 'apiGetCommunityAccessRequestsLoading',
+  apiGetCommunityAccessRequests: 'apiGetCommunityAccessRequests',
 };
