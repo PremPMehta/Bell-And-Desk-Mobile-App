@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
   videoSmallIcon: {
     position: 'absolute',
     alignSelf: 'center',
-    backgroundColor: COLORS.primary,
+    // backgroundColor: COLORS.primary,
     padding: ms(5),
     borderRadius: ms(50),
   },

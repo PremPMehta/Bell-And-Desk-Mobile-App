@@ -183,6 +183,7 @@ const useUserApi = () => {
   const [apiVoteOnPoll, setApiVoteOnPoll] = useAtom(
     objectAtomFamily(AtomKeys.apiVoteOnPoll),
   );
+
   // Export Community Members Apis
   const [
     apiExportCommunityMembersLoading,
@@ -207,12 +208,15 @@ const useUserApi = () => {
   const [apiGetCommunityMembers, setApiGetCommunityMembers] = useAtom(
     objectAtomFamily(AtomKeys.apiGetCommunityMembers),
   );
+
   // Get Community Access Requests Apis
   const [
     apiGetCommunityAccessRequestsLoading,
     setApiGetCommunityAccessRequestsLoading,
   ] = useAtom(
-    booleanDefaultFalseAtomFamily(AtomKeys.apiGetCommunityAccessRequestsLoading),
+    booleanDefaultFalseAtomFamily(
+      AtomKeys.apiGetCommunityAccessRequestsLoading,
+    ),
   );
   const [apiGetCommunityAccessRequests, setApiGetCommunityAccessRequests] =
     useAtom(objectAtomFamily(AtomKeys.apiGetCommunityAccessRequests));
@@ -807,11 +811,16 @@ const useUserApi = () => {
     apiLikePost,
 
     /* Community Members Screen Apis */
+    // Get Community Members
     getCommunityMembers,
     apiGetCommunityMembersLoading,
     apiGetCommunityMembers,
+
+    // Export Community Members
     exportCommunityMembers,
     apiExportCommunityMembersLoading,
+
+    // Get Community Access Requests
     getCommunityAccessRequests,
     apiGetCommunityAccessRequestsLoading,
     apiGetCommunityAccessRequests,

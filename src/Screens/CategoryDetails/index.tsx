@@ -1,5 +1,11 @@
 import Icon from '@/Components/Core/Icons';
-import React, { useState, useRef, useEffect } from 'react';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+} from 'react';
 import {
   View,
   Text,
@@ -15,19 +21,24 @@ import styles from './style';
 import { COLORS } from '@/Assets/Theme/colors';
 import { useNavigation } from '@/Hooks/Utils/use-navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { vs, width } from '@/Assets/Theme/fontStyle';
+import { vs } from '@/Assets/Theme/fontStyle';
 import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 import { useRoute } from '@react-navigation/native';
 import { Config } from '@/Config';
 import { useRequireAuth } from '@/Hooks/Utils/use-require-auth';
 import WebView from 'react-native-webview';
 import CategoryDetailsSkeleton from '@/Components/Core/Skeleton/CategoryDetailsSkeleton';
-import { useMemo } from 'react';
+import { useSetAtom } from 'jotai';
+import { objectAtomFamily } from '@/Jotai/Atoms';
+import { AtomKeys } from '@/Jotai/AtomKeys';
+import Clipboard from '@react-native-clipboard/clipboard';
+import ToastModule from '@/Components/Core/Toast';
 
 const CategoryDetails = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
   const { slug } = route.params || {};
+  console.log('🚀 ~ CategoryDetails ~ slug:', slug);
 
   const {
     getCommunitiesSlug,
@@ -35,36 +46,158 @@ const CategoryDetails = () => {
     apiGetCommunitiesSlug,
   } = useUserApi();
   const { requireAuth } = useRequireAuth();
-  const [webHeight, setWebHeight] = useState(600);
 
-  const communityData = apiGetCommunitiesSlug?.data?.community || {};
-  console.log('🚀 ~ CategoryDetails ~ communityData:', communityData);
+  // Directly access the setter for the slug atom to clear stale data
+  const clearCommunitiesSlugAtom = useSetAtom(
+    objectAtomFamily(AtomKeys.apiGetCommunitiesSlug),
+  );
+
+  // Track which slug we last fetched to avoid redundant re-fetches
+  const lastFetchedSlugRef = useRef<string | null>(null);
+  // Guard against WebView height update loop
+  const isUpdatingHeightRef = useRef(false);
+
+  // WebView height — start at 1 (invisible) until content reports its actual height
+  const [webHeight, setWebHeight] = useState(1);
 
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
   const [activeIndex, setActiveIndex] = useState(0);
-  // const isStaging = __DEV__;
+
   const isStaging = Config.APP_ENV === 'staging';
-  console.log('🚀 ~ CategoryDetails ~ isStaging:', isStaging);
   const copyUrl = isStaging ? Config.STAGING_URL : Config.LIVE_URL;
   const backIcon = Platform.OS === 'ios' ? 'ChevronLeft' : 'ArrowLeft';
 
   useEffect(() => {
-    if (slug) {
-      const query = `/${slug}`;
-      getCommunitiesSlug(query);
-    }
+    if (!slug) return;
+
+    // Avoid re-fetching the same slug (prevents redundant API calls & re-renders)
+    if (lastFetchedSlugRef.current === slug) return;
+    lastFetchedSlugRef.current = slug;
+
+    // 1. Reset WebView height for the incoming community
+    setWebHeight(1);
+    isUpdatingHeightRef.current = false;
+
+    // 2. Clear stale atom data from the previously-viewed community so we never
+    //    show old communityData while the new request is in-flight
+    clearCommunitiesSlugAtom(null as any);
+
+    // 3. Fetch fresh data for the current slug
+    getCommunitiesSlug(`/${slug}`);
   }, [slug]);
 
-  const mediaList =
-    communityData?.introImages?.length > 0
-      ? communityData.introImages.map((m: any) => ({
-        type: m?.type === 'video' ? 'video' : 'image',
-        uri: m?.url || m?.uri,
-      }))
+  // Derive community data — only use it when it belongs to the current slug
+  const communityData = useMemo(() => {
+    return apiGetCommunitiesSlug?.data?.community || {};
+  }, [apiGetCommunitiesSlug]);
+
+  console.log('🚀 ~ CategoryDetails ~ communityData:', communityData);
+
+  const getVideoThumbnail = (url: string) => {
+    if (!url) return null;
+
+    // YouTube
+    const ytMatch = url.match(
+      /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+    );
+    if (ytMatch) {
+      return `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;
+    }
+
+    // Vimeo
+    const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?([0-9]+)/);
+    if (vimeoMatch) {
+      // Vimeo requires API for thumbnail normally, fallback placeholder
+      return `https://vumbnail.com/${vimeoMatch[1]}.jpg`;
+    }
+
+    return null;
+  };
+
+  // Build media list: intro videos first (from introVideoLinks), then intro images
+  const mediaList = useMemo(() => {
+    const videos: any[] = (communityData?.introVideoLinks || []).map(
+      (v: any) => ({
+        type: 'video',
+        uri: v?.url || '',
+        platform: v?.platform || '', // e.g. 'vimeo', 'youtube'
+        title: v?.title || '',
+        videoThumbnail: getVideoThumbnail(v?.url || ''),
+      }),
+    );
+
+    const images: any[] = (communityData?.introImages || []).map((m: any) => ({
+      type: 'image',
+      uri: m?.url || m?.uri || '',
+    }));
+
+    const combined = [...videos, ...images];
+    // Fallback placeholder if nothing from the API
+    return combined.length > 0
+      ? combined
       : [{ type: 'image', uri: 'https://picsum.photos/800/900?random=1' }];
+  }, [communityData?.introVideoLinks, communityData?.introImages]);
 
   const activeItem = mediaList[activeIndex] || mediaList[0];
+
+  // Build an embeddable content for the active video item
+  const videoSource = useMemo(() => {
+    if (activeItem?.type !== 'video' || !activeItem?.uri) return null;
+    const rawUrl: string = activeItem.uri;
+
+    // Vimeo: standard embed URL logic
+    const vimeoMatch = rawUrl.match(/vimeo\.com\/(?:video\/)?([0-9]+)/);
+    if (vimeoMatch) {
+      return {
+        uri: `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=0&muted=0&controls=1`,
+      };
+    }
+
+    const ytMatch = rawUrl.match(
+      /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+    );
+    if (ytMatch) {
+      // Use local HTML injection with ReferrerPolicy to satisfy YouTube's strict verification
+      const videoId = ytMatch[1];
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              body, html { margin: 0; padding: 0; background-color: black; width: 100%; height: 100%; overflow: hidden; }
+              .video-container { position: relative; width: 100%; height: 100%; }
+              iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+            </style>
+          </head>
+          <body>
+            <div class="video-container">
+              <iframe 
+                src="https://www.youtube.com/embed/${videoId}?rel=0&autoplay=0&controls=1&playsinline=1" 
+                frameborder="0" 
+                allow="autoplay; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen
+                referrerpolicy="strict-origin-when-cross-origin">
+              </iframe>
+            </div>
+          </body>
+        </html>
+      `;
+      return {
+        html,
+        baseUrl: 'https://www.youtube.com',
+        headers: { Referer: 'https://www.youtube.com' },
+      };
+    }
+
+    return { uri: rawUrl };
+  }, [activeItem]);
+
+  const handleCopyUrl = (url: string) => {
+    Clipboard.setString(url);
+    ToastModule.successTop({ msg: 'Copied to Clipboard' });
+  };
 
   const headerBgColor = scrollY.interpolate({
     inputRange: [0, 100],
@@ -84,75 +217,143 @@ const CategoryDetails = () => {
     extrapolate: 'clamp',
   });
 
+  // Build WebView HTML only when welcomeMessage changes — never re-generated mid-render
   const welcomeMessageHtml = useMemo(() => {
     const htmlContent = communityData?.welcomeMessage || '';
+    if (!htmlContent) return null;
     return {
-      html: `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-            <style>
-              body, html {
-                margin: 0;
-                padding: 0;
-                background-color: #000;
-                color: #fff;
-                font-family: -apple-system, system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
-                overflow: hidden;
-              }
-              img {
-                max-width: 100%;
-                height: auto;
-                display: block;
-              }
-              * {
-                box-sizing: border-box;
-              }
-            </style>
-          </head>
-          <body>
-            <div id="content-wrapper">
-              ${htmlContent}
-            </div>
-            <script>
-              var lastHeight = 0;
-              function sendHeight() {
-                var wrapper = document.getElementById('content-wrapper');
-                if (!wrapper) return;
-                var height = wrapper.offsetHeight;
-                if (Math.abs(height - lastHeight) > 2) {
-                  lastHeight = height;
-                  window.ReactNativeWebView.postMessage(height.toString());
-                }
-              }
+      html: `<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <style>
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background-color: #000 !important;
+        color: #fff;
+        font-family: -apple-system, system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
+        /* CRITICAL: do NOT set overflow:hidden here — it clips content.
+           The WebView itself has scrollEnabled=false so no double-scroll. */
+        overflow-x: hidden;
+        width: 100%;
+      }
 
-              window.onload = function() {
-                sendHeight();
-                if (window.ResizeObserver) {
-                  const resizeObserver = new ResizeObserver(() => {
-                    sendHeight();
-                  });
-                  resizeObserver.observe(document.getElementById('content-wrapper'));
-                }
-              };
-              
-              setTimeout(sendHeight, 500);
-              setTimeout(sendHeight, 1500);
-            </script>
-          </body>
-        </html>
-      `,
+      /* ── Override vh-based min-heights from the server HTML ──
+         Sections use min-height:100vh which in a WebView resolves to the
+         WebView frame height, not the page height. Force them to auto so
+         the content determines its own size. */
+      * {
+        min-height: 0 !important;
+        box-sizing: border-box;
+      }
+
+      /* Keep images responsive */
+      img { max-width: 100% !important; height: auto !important; display: block; }
+
+      /* Prevent horizontal overflow from fixed widths */
+      section, div { max-width: 100% !important; }
+
+      /* Allow grids to collapse to single column on mobile */
+      [style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+      }
+
+      /* Tone down huge font sizes for mobile */
+      h1 { font-size: 2rem !important; }
+      h2 { font-size: 1.6rem !important; }
+      h3 { font-size: 1.25rem !important; }
+
+      /* Reduce excessive padding/margin from the desktop layout */
+      section {
+        padding-top: 40px !important;
+        padding-bottom: 40px !important;
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+      }
+
+      /* Flex wrap for CTA button groups */
+      [style*="display: flex"] {
+        flex-wrap: wrap !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="cw">${htmlContent}</div>
+    <script>
+      // Report the full scrollable height to React Native.
+      // We use document.body.scrollHeight (not getBoundingClientRect) because
+      // getBoundingClientRect only returns the *visible* area when content
+      // uses min-height or overflow constraints.
+      var lastReported = 0;
+      var reportCount = 0;
+      var MAX_REPORTS = 6;
+
+      function reportHeight() {
+        if (reportCount >= MAX_REPORTS) return;
+
+        // scrollHeight always reflects the full content height regardless
+        // of CSS overflow settings.
+        var height = Math.max(
+          document.body.scrollHeight,
+          document.documentElement.scrollHeight,
+          document.getElementById('cw') ? document.getElementById('cw').scrollHeight : 0
+        );
+
+        if (height > 0 && Math.abs(height - lastReported) > 10) {
+          lastReported = height;
+          reportCount++;
+          window.ReactNativeWebView.postMessage(String(height));
+        }
+      }
+
+      // Fire at multiple points: immediate, after styles applied, after images loaded
+      reportHeight();
+      setTimeout(reportHeight, 100);
+      setTimeout(reportHeight, 400);
+      setTimeout(reportHeight, 800);
+      setTimeout(reportHeight, 1500);
+
+      window.addEventListener('load', reportHeight);
+
+      // Watch for images that load late and change the layout height
+      document.querySelectorAll('img').forEach(function(img) {
+        img.addEventListener('load', function() { setTimeout(reportHeight, 100); });
+        img.addEventListener('error', function() { setTimeout(reportHeight, 100); });
+      });
+    </script>
+  </body>
+</html>`,
     };
   }, [communityData?.welcomeMessage]);
 
-  if (apiGetCommunitiesSlugLoading && !communityData?.name) {
-    return <CategoryDetailsSkeleton />;
-  }
+  // onMessage handler — the JS side already deduplicates (max 6 reports, >10px change).
+  // We accept every meaningful update here so later reports (after images load) can
+  // still resize the WebView to the correct final height.
+  const handleWebViewMessage = useCallback(
+    (event: any) => {
+      const height = Number(event.nativeEvent.data);
+      if (height > 0 && Math.abs(height - webHeight) > 5) {
+        setWebHeight(height + 16); // small bottom padding
+      }
+    },
+    [webHeight],
+  );
 
   const handleJoinNow = () => {
     requireAuth();
   };
+
+  // Show skeleton while we're loading the current slug's community data
+  const isFetchingCurrent =
+    apiGetCommunitiesSlugLoading || !communityData?.name;
+  if (isFetchingCurrent && lastFetchedSlugRef.current === slug) {
+    return <CategoryDetailsSkeleton />;
+  }
+
+  const hasHtml =
+    communityData?.welcomeMessage &&
+    /<[a-z/][\s\S]*?>/i.test(communityData.welcomeMessage);
 
   return (
     <View style={styles.container}>
@@ -209,23 +410,28 @@ const CategoryDetails = () => {
       >
         {/* ---------------------- HEADER MEDIA ---------------------- */}
         <View style={styles.bannerContainer}>
-          {activeItem?.type === 'image' ? (
-            <Image
-              source={{ uri: activeItem.uri }}
-              style={styles.bannerImage}
+          {activeItem?.type === 'video' && videoSource ? (
+            /* Video banner — use an iframe WebView for vimeo/youtube/external URLs */
+            <WebView
+              key={`video-banner-${activeIndex}`}
+              source={videoSource}
+              style={[styles.bannerImage, { backgroundColor: '#000' }]}
+              allowsFullscreenVideo
+              allowsInlineMediaPlayback
+              mediaPlaybackRequiresUserAction={false}
+              javaScriptEnabled
+              domStorageEnabled={true}
+              originWhitelist={['*']}
+              mixedContentMode="always"
+              scrollEnabled={false}
+              nestedScrollEnabled={false}
+              overScrollMode="never"
             />
           ) : (
             <Image
-              source={{ uri: 'https://picsum.photos/800/900?blur=3' }}
+              source={{ uri: activeItem?.uri }}
               style={styles.bannerImage}
             />
-          )}
-
-          {/* Play Icon only for video */}
-          {activeItem?.type === 'video' && (
-            <View style={styles.playButton}>
-              <Icon name="CirclePlay" color={COLORS.white} size={40} />
-            </View>
           )}
 
           {/* GRADIENT SHADOW AT BOTTOM */}
@@ -251,20 +457,48 @@ const CategoryDetails = () => {
                 activeIndex === index && styles.activeThumb,
               ]}
             >
-              <Image
-                source={{
-                  uri:
-                    item.uri?.includes('mp4') || item.type === 'video'
-                      ? 'https://picsum.photos/200/300?blur=2'
-                      : item.uri,
-                }}
-                style={styles.thumbnail}
-              />
-
-              {item.type === 'video' && (
-                <View style={styles.videoSmallIcon}>
-                  <Icon name="CirclePlay" color={COLORS.white} size={24} />
-                </View>
+              {item.type === 'video' ? (
+                <>
+                  {item.videoThumbnail ? (
+                    <Image
+                      source={{ uri: item.videoThumbnail }}
+                      style={styles.thumbnail}
+                    />
+                  ) : (
+                    <View
+                      style={[
+                        styles.thumbnail,
+                        {
+                          backgroundColor: '#111',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                        },
+                      ]}
+                    >
+                      <Icon name="CirclePlay" color={COLORS.white} size={28} />
+                      {item.title ? (
+                        <Text
+                          numberOfLines={2}
+                          style={{
+                            color: COLORS.white,
+                            fontSize: 9,
+                            textAlign: 'center',
+                            marginTop: 4,
+                            paddingHorizontal: 4,
+                          }}
+                        >
+                          {item.title}
+                        </Text>
+                      ) : null}
+                    </View>
+                  )}
+                  <View style={styles.videoSmallIcon}>
+                    <Icon name="CirclePlay" size={24} color={COLORS.white} />
+                  </View>
+                </>
+              ) : (
+                /* Image thumbnail */
+                <Image source={{ uri: item.uri }} style={styles.thumbnail} />
               )}
             </TouchableOpacity>
           ))}
@@ -321,13 +555,15 @@ const CategoryDetails = () => {
 
           {slug && (
             <View style={styles.linkRowWrapper}>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 onPress={() => Linking.openURL(`${copyUrl}${slug}`)}
                 style={styles.linkRow}
+              > */}
+              <Text style={styles.linkText}>{`${copyUrl}${slug}`}</Text>
+              {/* </TouchableOpacity> */}
+              <TouchableOpacity
+                onPress={() => handleCopyUrl(`${copyUrl}${slug}`)}
               >
-                <Text style={styles.linkText}>{`${copyUrl}${slug}`}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity>
                 <Icon name="Copy" color={COLORS.white} size={18} />
               </TouchableOpacity>
             </View>
@@ -366,9 +602,10 @@ const CategoryDetails = () => {
             ))}
           </View>
 
-          {communityData?.welcomeMessage && (
+          {/* Welcome Message */}
+          {communityData?.welcomeMessage ? (
             <View style={{ marginTop: 20 }}>
-              {/<[a-z/][\s\S]*?>/i.test(communityData.welcomeMessage) ? (
+              {hasHtml && welcomeMessageHtml ? (
                 <WebView
                   key={`webview-${slug}`}
                   originWhitelist={['*']}
@@ -376,19 +613,18 @@ const CategoryDetails = () => {
                   nestedScrollEnabled={false}
                   showsVerticalScrollIndicator={false}
                   overScrollMode="never"
+                  javaScriptEnabled={true}
+                  domStorageEnabled={false}
                   onShouldStartLoadWithRequest={() => true}
                   style={{
                     width: '100%',
                     height: webHeight,
                     backgroundColor: 'black',
+                    // Hide the WebView until the content reports its real height
+                    opacity: webHeight > 1 ? 1 : 0,
                   }}
                   source={welcomeMessageHtml}
-                  onMessage={event => {
-                    const height = Number(event.nativeEvent.data);
-                    if (height > 0 && Math.abs(height - webHeight) > 5) {
-                      setWebHeight(height);
-                    }
-                  }}
+                  onMessage={handleWebViewMessage}
                 />
               ) : (
                 <>
@@ -401,9 +637,7 @@ const CategoryDetails = () => {
                 </>
               )}
             </View>
-          )}
-
-          {!communityData?.welcomeMessage && (
+          ) : (
             <Text style={styles.subText}>Welcome to our community!</Text>
           )}
 

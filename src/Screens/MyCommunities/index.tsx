@@ -30,10 +30,10 @@ const MyCommunities = () => {
   // Filter communities by search query (name or description)
   const filteredCommunities = searchQuery.trim()
     ? communities.filter(
-        c =>
-          c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
+      c =>
+        c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+    )
     : communities;
 
   const scrollY = useSharedValue(0);
@@ -119,6 +119,7 @@ const MyCommunities = () => {
         navigation.navigate('CommunityLayout', {
           title: item.name,
           communityId: item._id || item.id,
+          slug: item.subdomain,
         })
       }
       onSettingsPress={() => console.log('Settings Pressed', item.id)}

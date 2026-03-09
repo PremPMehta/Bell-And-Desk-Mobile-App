@@ -19,6 +19,7 @@ import React from 'react';
 interface Props {
   selectedTab: string;
   communityId?: string;
+  slug?: string;
   onScroll?: (...args: any[]) => void;
   scrollEventThrottle?: number;
 }
@@ -26,9 +27,12 @@ interface Props {
 const CommunityMenuTabsContent = ({
   selectedTab,
   communityId,
+  slug,
   onScroll,
   scrollEventThrottle,
 }: Props) => {
+  console.log('🚀 ~ CommunityMenuTabsContent ~ communityId:', communityId);
+  console.log('🚀 ~ CommunityMenuTabsContent ~ slug:', slug);
   const scrollProps = {
     onScroll,
     scrollEventThrottle,
@@ -46,7 +50,7 @@ const CommunityMenuTabsContent = ({
     case 'members':
       return <CommunityMembers communityId={communityId} {...scrollProps} />;
     case 'about':
-      return <CommunityAbout {...scrollProps} />;
+      return <CommunityAbout communityId={communityId} slug={slug} {...scrollProps} />;
     case 'settings':
       return <CommunitySettings {...scrollProps} />;
     default:

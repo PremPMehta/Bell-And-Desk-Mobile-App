@@ -17,7 +17,7 @@ const TAB_HEIGHT = 50; // Height of the tab bar
 const CommunityLayout = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
-  const { communityId } = route.params || {};
+  const { communityId, slug } = route.params || {};
   const [, setCurrentCommunityId] = useAtom(currentCommunityIdAtom);
 
   const [selectedTab, setSelectedTab] = useState('courses');
@@ -122,6 +122,7 @@ const CommunityLayout = () => {
           <CommunityMenuTabsContent
             selectedTab={selectedTab}
             communityId={communityId}
+            slug={slug}
             onScroll={handleScroll}
             scrollEventThrottle={16}
           />

@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { COLORS } from '@/Assets/Theme/colors';
-import { fontStyle, ms, vs, width } from '@/Assets/Theme/fontStyle';
+import { fontStyle, ms, sc, vs, width } from '@/Assets/Theme/fontStyle';
 
 const styles = StyleSheet.create({
   container: {
@@ -55,8 +55,8 @@ const styles = StyleSheet.create({
     width: '100%',
     height: vs(200),
     backgroundColor: COLORS.cardBG,
-    justifyContent: 'center',
-    alignItems: 'center',
+    // justifyContent: 'center',
+    // alignItems: 'center',
     marginBottom: vs(16),
   },
   playOverlay: {
@@ -73,21 +73,21 @@ const styles = StyleSheet.create({
     marginBottom: vs(16),
   },
   thumbnailItem: {
-    width: ms(100),
-    height: vs(50),
-    borderRadius: ms(8),
     marginRight: ms(10),
+    borderRadius: ms(6),
     overflow: 'hidden',
-    backgroundColor: COLORS.innerCardBG,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    position: 'relative',
+    justifyContent: 'center',
   },
   activeThumbnail: {
-    borderWidth: 2,
     borderColor: COLORS.primary,
   },
   thumbnailImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+    height: vs(50),
+    width: sc(90),
+    borderRadius: ms(5),
   },
   thumbnailPlayIcon: {
     position: 'absolute',
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   },
   communityLink: {
     ...fontStyle.h6Regular,
-    color: COLORS.subText,
+    color: COLORS.primary,
     marginRight: ms(5),
   },
   socialIconsRow: {
@@ -191,6 +191,11 @@ const styles = StyleSheet.create({
     color: COLORS.subText,
     lineHeight: vs(20),
     marginBottom: vs(15),
+  },
+  subText: {
+    ...fontStyle.h5Regular,
+    marginTop: ms(10),
+    lineHeight: ms(18),
   },
   bulletPointRow: {
     flexDirection: 'row',
