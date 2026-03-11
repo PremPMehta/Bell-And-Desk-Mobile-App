@@ -100,6 +100,14 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiGetCommunityCourses),
   );
 
+  // Get Course Details Apis
+  const [apiGetCourseDetailsLoading, setApiGetCourseDetailsLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetCourseDetailsLoading),
+  );
+  const [apiGetCourseDetails, setApiGetCourseDetails] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetCourseDetails),
+  );
+
   // Get Community Board Apis
   const [
     apiGetSocialFeedCategoriesLoading,
@@ -450,6 +458,27 @@ const useUserApi = () => {
     }
   }
 
+  // Get Course Details
+  async function getCourseDetails(courseId: string) {
+    try {
+      setApiGetCourseDetailsLoading(true);
+      const url = ApiEndPoints.courseDetails.replace(':courseId', courseId);
+      const courseDetails: any = await api.get(url);
+      setApiGetCourseDetails(courseDetails);
+      setApiGetCourseDetailsLoading(false);
+      return courseDetails;
+    } catch (error) {
+      console.error('Error fetching course details info:', error);
+      setApiGetCourseDetailsLoading(false);
+    }
+  }
+
+  // Clear Course Details State
+  function clearCourseDetails() {
+    setApiGetCourseDetails(null);
+    setApiGetCourseDetailsLoading(false);
+  }
+
   // Get Social Feed Categories for Community Board Screen
   async function getSocialFeedCategories(query: any) {
     try {
@@ -754,9 +783,17 @@ const useUserApi = () => {
     apiGetUserData,
 
     /* Community Courses Screen Apis */
+
+    // Get Courses
     getCommunityCourses,
     apiGetCommunityCoursesLoading,
     apiGetCommunityCourses,
+
+    // Get Course Details
+    getCourseDetails,
+    apiGetCourseDetailsLoading,
+    apiGetCourseDetails,
+    clearCourseDetails,
 
     /* Community Board Screen Apis */
 

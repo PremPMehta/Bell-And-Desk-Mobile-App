@@ -3,7 +3,7 @@ import {
   Text,
   Animated,
   TouchableOpacity,
-  ActivityIndicator,
+  Pressable,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import CoursesCard from '@/Components/Core/CoursesCard';
@@ -48,25 +48,31 @@ const CommunityCourses = ({
 
   const filteredCourses = searchQuery
     ? courses.filter(
-      (c: any) =>
-        c.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-    )
+        (c: any) =>
+          c.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          c.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
     : courses;
 
+  const handleCoursePress = (courseId: string) => {
+    navigation.navigate('CourseView', { courseId });
+  };
+
   const renderItem = ({ item }: { item: any }) => (
-    <CoursesCard
-      name={item.title}
-      description={item.description}
-      bannerImage={item.thumbnail}
-      category={item.category}
-      contentType={item.contentType}
-      targetAudience={item.targetAudience}
-      community={item.community}
-      onEyePress={() => { }}
-      onEditPress={() => { }}
-      onDeletePress={() => { }}
-    />
+    <Pressable onPress={() => handleCoursePress(item._id)}>
+      <CoursesCard
+        name={item.title}
+        description={item.description}
+        bannerImage={item.thumbnail}
+        category={item.category}
+        contentType={item.contentType}
+        targetAudience={item.targetAudience}
+        community={item.community}
+        onEyePress={() => handleCoursePress(item._id)}
+        onEditPress={() => {}}
+        onDeletePress={() => {}}
+      />
+    </Pressable>
   );
 
   const handleCreateCourse = () => {
@@ -101,7 +107,8 @@ const CommunityCourses = ({
           <Text style={styles.noCoursesSubtitle}>Create First Course</Text>
           <TouchableOpacity
             style={styles.createFirstCourseButton}
-            onPress={handleCreateCourse}>
+            onPress={handleCreateCourse}
+          >
             <Icon name="Plus" size={20} color={COLORS.white} />
             <Text style={styles.createFirstCourseButtonText}>
               Create First Course

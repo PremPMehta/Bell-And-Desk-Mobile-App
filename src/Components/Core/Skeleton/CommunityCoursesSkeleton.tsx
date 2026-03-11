@@ -56,6 +56,22 @@ const CommunityCoursesSkeleton = () => {
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.container}
     >
+      {/* Search and Create Button Row */}
+      <View style={styles.headerRow}>
+        <Skeleton
+          height={ms(45)}
+          width="70%"
+          borderRadius={ms(20)}
+          style={styles.searchBar}
+        />
+        <Skeleton
+          height={ms(45)}
+          width={ms(90)}
+          borderRadius={ms(25)}
+          style={styles.createBtn}
+        />
+      </View>
+
       {[1, 2, 3].map(i => renderSkeletonCard(i))}
     </ScrollView>
   );
@@ -101,6 +117,18 @@ const styles = StyleSheet.create({
   communityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: ms(16),
+  },
+  searchBar: {
+    // flex: 1,
+  },
+  createBtn: {
+    // marginLeft: ms(12),
   },
 });
 

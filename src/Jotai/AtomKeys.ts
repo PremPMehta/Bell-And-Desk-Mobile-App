@@ -46,6 +46,9 @@ export const AtomKeys = {
   apiGetCommunityCoursesLoading: 'apiGetCommunityCoursesLoading',
   apiGetCommunityCourses: 'apiGetCommunityCourses',
 
+  apiGetCourseDetailsLoading: 'apiGetCourseDetailsLoading',
+  apiGetCourseDetails: 'apiGetCourseDetails',
+
   /* Community Board Screen */
   // Get Social Feed Categories
   apiGetSocialFeedCategoriesLoading: 'apiGetSocialFeedCategoriesLoading',

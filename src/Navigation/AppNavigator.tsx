@@ -18,6 +18,7 @@ import FAQ from '@/Screens/FAQ';
 import LanguageSelection from '@/Screens/LanguageSelection';
 import CategoryDetails from '@/Screens/CategoryDetails';
 import CreateCourses from '@/Screens/CommunityTabs/Courses/CreateCourses';
+import CourseView from '@/Screens/CourseView';
 
 export type StackNavigationProp<T> = any;
 export type RootStackParamList = {
@@ -107,6 +108,16 @@ const AppNavigator = () => {
             ...getDefaultStackHeaderOptions(),
             headerShown: false,
             title: 'Category Details',
+          }}
+        />
+
+        <MainStack.Screen
+          name="CourseView"
+          component={CourseView}
+          options={{
+            ...getDefaultStackHeaderOptions(),
+            headerShown: false,
+            title: 'Course View',
           }}
         />
 

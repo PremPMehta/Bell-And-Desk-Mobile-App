@@ -25,6 +25,7 @@ export const ApiEndPoints = {
   /* Community Courses Screen */
 
   communityCourses: 'courses',
+  courseDetails: 'courses/:courseId',
 
   /* Community Board Screen */
 
