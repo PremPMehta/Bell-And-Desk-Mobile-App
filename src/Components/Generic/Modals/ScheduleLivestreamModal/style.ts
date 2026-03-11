@@ -37,6 +37,31 @@ export default StyleSheet.create({
     color: COLORS.gray,
     marginBottom: mvs(8),
   },
+  sectionTitle: {
+    ...fontStyle.h5Bold,
+    color: COLORS.white,
+    marginTop: mvs(8),
+    marginBottom: mvs(12),
+  },
+  sectionSubHeader: {
+    ...fontStyle.h6Regular,
+    color: COLORS.gray,
+    marginBottom: mvs(16),
+  },
+  radioGroup: {
+    marginBottom: mvs(20),
+  },
+  radioItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: mvs(8),
+    marginLeft: -ms(8), // Adjust for RadioButton padding
+  },
+  radioLabel: {
+    ...fontStyle.h5Regular,
+    color: COLORS.white,
+    marginLeft: ms(4),
+  },
   inputStyle: {
     marginBottom: mvs(16),
   },

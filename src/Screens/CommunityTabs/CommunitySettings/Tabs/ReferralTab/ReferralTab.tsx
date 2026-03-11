@@ -1,6 +1,7 @@
-import { View, Text, Switch, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, Switch, TouchableOpacity, Alert, Platform } from 'react-native';
 import React, { useState } from 'react';
 import { RadioButton } from 'react-native-paper';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import styles from './style';
 import { COLORS } from '@/Assets/Theme/colors';
 import TextInputField from '@/Components/Core/TextInputField';
@@ -322,7 +323,7 @@ const ReferralTab = () => {
         </View>
       </View>
 
-      <TouchableOpacity onPress={() => {}} style={styles.saveButtonContainer}>
+      <TouchableOpacity onPress={() => { }} style={styles.saveButtonContainer}>
         <Text style={styles.saveButton}>Save Settings</Text>
       </TouchableOpacity>
 

@@ -17,6 +17,16 @@ const CommonListModal = ({
   dropDownData,
   dropDownSelectedValue,
   onDropDownSelect,
+}: {
+  textInputLabel?: any;
+  textInputValue?: any;
+  placeholder?: any;
+  touched?: any;
+  error?: any;
+  type?: any;
+  dropDownData?: any;
+  dropDownSelectedValue?: any;
+  onDropDownSelect?: any;
 }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
 

@@ -162,6 +162,51 @@ const styles = StyleSheet.create({
     ...THEME.fontStyle.h5Bold,
     color: COLORS.white,
   },
+
+  /* --- Payment Pending Card --- */
+  paymentPendingCard: {
+    marginVertical: ms(12),
+    borderRadius: ms(12),
+    borderWidth: 1,
+    borderColor: '#FFB800',
+    backgroundColor: COLORS.newModalBG,
+    padding: ms(16),
+    overflow: 'hidden',
+  },
+
+  paymentPendingTitle: {
+    ...THEME.fontStyle.h4Bold,
+    color: '#FFB800',
+    marginBottom: ms(8),
+  },
+
+  paymentPendingSubtitle: {
+    ...THEME.fontStyle.h5Regular,
+    color: COLORS.white,
+    lineHeight: ms(20),
+    marginBottom: ms(24),
+    opacity: 0.9,
+  },
+
+  paymentPendingHighlight: {
+    ...THEME.fontStyle.h5Bold,
+    color: COLORS.white,
+  },
+
+  completePaymentBtn: {
+    backgroundColor: COLORS.gold,
+    borderRadius: ms(26),
+    paddingVertical: ms(10),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: ms(8),
+  },
+
+  completePaymentBtnText: {
+    ...THEME.fontStyle.h5Bold,
+    color: COLORS.white,
+  },
 });
 
 export default styles;

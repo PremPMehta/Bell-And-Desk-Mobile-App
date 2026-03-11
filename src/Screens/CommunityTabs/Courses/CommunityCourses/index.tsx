@@ -48,10 +48,10 @@ const CommunityCourses = ({
 
   const filteredCourses = searchQuery
     ? courses.filter(
-        (c: any) =>
-          c.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
+      (c: any) =>
+        c.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+    )
     : courses;
 
   const renderItem = ({ item }: { item: any }) => (
@@ -63,9 +63,9 @@ const CommunityCourses = ({
       contentType={item.contentType}
       targetAudience={item.targetAudience}
       community={item.community}
-      onEyePress={() => {}}
-      onEditPress={() => {}}
-      onDeletePress={() => {}}
+      onEyePress={() => { }}
+      onEditPress={() => { }}
+      onDeletePress={() => { }}
     />
   );
 
@@ -78,22 +78,36 @@ const CommunityCourses = ({
       {/* <Text style={{ color: 'white' }}>CommunityCourses</Text> */}
 
       {/* SEARCH */}
-      <View style={styles.searchContainer}>
-        <SearchBar
-          value={searchQuery}
-          onChangeText={onChangeSearch}
-          placeholder="Search through your courses..."
-          searchInputStyle={styles.searchInputStyle}
-        />
-        {/* <Text>Hello</Text> */}
-        <TouchableOpacity style={styles.create} onPress={handleCreateCourse}>
-          <Icon name="CirclePlus" size={12} color={COLORS.white} />
-          <Text style={styles.createTxt}>Create</Text>
-        </TouchableOpacity>
-      </View>
+      {courses.length > 0 && (
+        <View style={styles.searchContainer}>
+          <SearchBar
+            value={searchQuery}
+            onChangeText={onChangeSearch}
+            placeholder="Search through your courses..."
+            searchInputStyle={styles.searchInputStyle}
+          />
+          <TouchableOpacity style={styles.create} onPress={handleCreateCourse}>
+            <Icon name="CirclePlus" size={12} color={COLORS.white} />
+            <Text style={styles.createTxt}>Create</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {apiGetCommunityCoursesLoading && courses.length === 0 ? (
         <CommunityCoursesSkeleton />
+      ) : courses.length === 0 ? (
+        <View style={styles.emptyStateContainer}>
+          <Text style={styles.noCoursesTitle}>No courses found</Text>
+          <Text style={styles.noCoursesSubtitle}>Create First Course</Text>
+          <TouchableOpacity
+            style={styles.createFirstCourseButton}
+            onPress={handleCreateCourse}>
+            <Icon name="Plus" size={20} color={COLORS.white} />
+            <Text style={styles.createFirstCourseButtonText}>
+              Create First Course
+            </Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <Animated.FlatList
           data={filteredCourses}

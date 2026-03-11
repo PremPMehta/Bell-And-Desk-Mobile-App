@@ -23,6 +23,7 @@ export const COLORS = {
   vimeo: '#1ab7ea',
   referral: '#181833',
   transparent: 'transparent',
+  gold: '#D48D0B',
 
   // PRIMARY COLORS
   primary: '#1B7CFF',

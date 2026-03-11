@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  Linking,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedScrollHandler,
@@ -26,14 +32,15 @@ const MyCommunities = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [communities, setCommunities] = useState<any[]>([]);
   const [planEntitlements, setPlanEntitlements] = useState<any[]>([]);
+  const [reservations, setReservations] = useState<any[]>([]);
 
   // Filter communities by search query (name or description)
   const filteredCommunities = searchQuery.trim()
     ? communities.filter(
-      c =>
-        c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-    )
+        c =>
+          c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          c.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
     : communities;
 
   const scrollY = useSharedValue(0);
@@ -63,6 +70,11 @@ const MyCommunities = () => {
       setPlanEntitlements(response.data.planEntitlements);
     } else {
       setPlanEntitlements([]);
+    }
+    if (response?.data?.reservations) {
+      setReservations(response.data.reservations);
+    } else {
+      setReservations([]);
     }
   };
 
@@ -189,6 +201,50 @@ const MyCommunities = () => {
     );
   };
 
+  const renderPaymentPendingBanner = () => {
+    if (reservations.length === 0 || searchQuery.trim().length > 0) return null;
+
+    return (
+      <>
+        {reservations.map((reservation, index) => (
+          <View
+            key={reservation?._id || index}
+            style={styles.paymentPendingCard}
+          >
+            <Text style={styles.paymentPendingTitle}>Payment Pending</Text>
+            <Text style={styles.paymentPendingSubtitle}>
+              Complete payment for{' '}
+              <Text style={styles.paymentPendingHighlight}>
+                /{reservation?.slug || reservation?.username || 'user'}
+              </Text>{' '}
+              to continue.
+            </Text>
+            <TouchableOpacity
+              style={styles.completePaymentBtn}
+              onPress={() => {
+                if (reservation?.stripeCheckoutSessionUrl) {
+                  Linking.openURL(reservation.stripeCheckoutSessionUrl);
+                }
+              }}
+            >
+              <Text style={styles.completePaymentBtnText}>
+                Complete Payment
+              </Text>
+              <Icon name="ArrowRight" size={18} color={COLORS.white} />
+            </TouchableOpacity>
+          </View>
+        ))}
+      </>
+    );
+  };
+
+  const ListHeader = () => (
+    <View>
+      {renderPaymentPendingBanner()}
+      {renderCreateCommunityBanner()}
+    </View>
+  );
+
   return (
     <View style={styles.mainContainer}>
       <AppHeader />
@@ -232,7 +288,7 @@ const MyCommunities = () => {
           data={filteredCommunities}
           renderItem={renderItem}
           keyExtractor={item => item.id}
-          ListHeaderComponent={renderCreateCommunityBanner}
+          ListHeaderComponent={ListHeader}
           contentContainerStyle={[
             styles.contentContainer,
             filteredCommunities.length === 0 && styles.emptyListContainer,

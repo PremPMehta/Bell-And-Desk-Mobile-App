@@ -4,11 +4,17 @@ import { ms, sc } from '@/Assets/Theme/fontStyle';
 import { StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
+  mainContainer: {
+    flex: 1,
+    backgroundColor: COLORS.cardBG,
+  },
+  scrollContent: {
+    paddingBottom: ms(40),
+  },
   container: {
     backgroundColor: COLORS.cardBG,
     marginTop: ms(16),
     padding: ms(12),
-    paddingBottom: ms(40),
     borderRadius: ms(8),
   },
   headerContainer: {

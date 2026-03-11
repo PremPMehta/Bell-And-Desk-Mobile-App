@@ -10,16 +10,23 @@ import React, { useState } from 'react';
 import Modal from 'react-native-modal';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { launchImageLibrary } from 'react-native-image-picker';
+import { RadioButton } from 'react-native-paper';
 import { COLORS } from '@/Assets/Theme/colors';
 import Icon from '@/Components/Core/Icons';
 import TextInputField from '@/Components/Core/TextInputField';
 import styles from './style';
+import CommonListModal from '../CommonListModal';
 
 interface ScheduleLivestreamModalProps {
   visible: boolean;
   onClose: () => void;
   onSubmit: (data: any) => void;
 }
+
+const STREAM_TYPE_DATA = [
+  { id: '1', value: 'Livestream' },
+  { id: '2', value: 'Conference' },
+];
 
 const ScheduleLivestreamModal: React.FC<ScheduleLivestreamModalProps> = ({
   visible,
@@ -36,6 +43,8 @@ const ScheduleLivestreamModal: React.FC<ScheduleLivestreamModalProps> = ({
   const [pickerMode, setPickerMode] = useState<'date' | 'time'>('date');
   const [maxViewers, setMaxViewers] = useState('');
   const [sendNotification, setSendNotification] = useState(true);
+  const [streamType, setStreamType] = useState('Livestream');
+  const [visibility, setVisibility] = useState('Public(Everyone)');
 
   const handleCancel = () => {
     setTitle('');
@@ -46,6 +55,8 @@ const ScheduleLivestreamModal: React.FC<ScheduleLivestreamModalProps> = ({
     setSendNotification(true);
     setShowDatePicker(false);
     setPickerMode('date');
+    setStreamType('Livestream');
+    setVisibility('Public(Everyone)');
     onClose();
   };
 
@@ -57,6 +68,8 @@ const ScheduleLivestreamModal: React.FC<ScheduleLivestreamModalProps> = ({
       scheduledDate,
       maxViewers,
       sendNotification,
+      streamType,
+      visibility,
     });
     handleCancel();
   };
@@ -190,6 +203,15 @@ const ScheduleLivestreamModal: React.FC<ScheduleLivestreamModalProps> = ({
             activeOutlineColor={COLORS.white}
           />
 
+          <CommonListModal
+            textInputLabel="Stream Type"
+            textInputValue={streamType}
+            placeholder="Select stream type"
+            dropDownData={STREAM_TYPE_DATA}
+            dropDownSelectedValue={streamType}
+            onDropDownSelect={item => setStreamType(item.value)}
+          />
+
           <View style={styles.thumbnailContainer}>
             <Text style={styles.thumbnailLabel}>Thumbnail *</Text>
             <View style={styles.uploadBox}>
@@ -281,6 +303,58 @@ const ScheduleLivestreamModal: React.FC<ScheduleLivestreamModalProps> = ({
             higher than 2. Billing is based on stream duration only, not viewer
             count.
           </Text>
+
+          <View style={{ marginTop: 20 }}>
+            <Text style={styles.sectionTitle}>Visibility Settings</Text>
+            <Text style={styles.sectionSubHeader}>Who can watch this stream?</Text>
+
+            <View style={styles.radioGroup}>
+              <TouchableOpacity
+                style={styles.radioItem}
+                onPress={() => setVisibility('Public(Everyone)')}
+                activeOpacity={0.8}
+              >
+                <RadioButton.Android
+                  value="Public(Everyone)"
+                  status={visibility === 'Public(Everyone)' ? 'checked' : 'unchecked'}
+                  onPress={() => setVisibility('Public(Everyone)')}
+                  color={COLORS.primary}
+                  uncheckedColor={COLORS.outlineGrey}
+                />
+                <Text style={styles.radioLabel}>Public(Everyone)</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.radioItem}
+                onPress={() => setVisibility('All Paid Members')}
+                activeOpacity={0.8}
+              >
+                <RadioButton.Android
+                  value="All Paid Members"
+                  status={visibility === 'All Paid Members' ? 'checked' : 'unchecked'}
+                  onPress={() => setVisibility('All Paid Members')}
+                  color={COLORS.primary}
+                  uncheckedColor={COLORS.outlineGrey}
+                />
+                <Text style={styles.radioLabel}>All Paid Members</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.radioItem}
+                onPress={() => setVisibility('Specific Plans')}
+                activeOpacity={0.8}
+              >
+                <RadioButton.Android
+                  value="Specific Plans"
+                  status={visibility === 'Specific Plans' ? 'checked' : 'unchecked'}
+                  onPress={() => setVisibility('Specific Plans')}
+                  color={COLORS.primary}
+                  uncheckedColor={COLORS.outlineGrey}
+                />
+                <Text style={styles.radioLabel}>Specific Plans</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
 
           <TouchableOpacity
             style={styles.checkboxContainer}

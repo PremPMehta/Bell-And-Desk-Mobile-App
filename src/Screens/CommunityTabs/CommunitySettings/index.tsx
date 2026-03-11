@@ -1,5 +1,6 @@
-import { View, Text, Animated } from 'react-native';
+import { View, Text, Animated, Platform } from 'react-native';
 import React, { useState } from 'react';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import styles from './style';
 import FilterTabs from '../CommunityMembers/Components/FilterTabs';
 import { SETTINGS_MENU_TABS } from '@/Constants/customData';
@@ -12,6 +13,10 @@ import BillingsTab from './Tabs/BillingsTab/BillingsTab';
 import ReferralTab from './Tabs/ReferralTab/ReferralTab';
 import ModeratorsTab from './Tabs/ModeratorsTab/ModeratorsTab';
 
+const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
+  KeyboardAwareScrollView,
+);
+
 interface Props {
   onScroll?: (...args: any[]) => void;
   scrollEventThrottle?: number;
@@ -21,10 +26,14 @@ const CommunitySettings = ({ onScroll, scrollEventThrottle }: Props) => {
   const [activeTab, setActiveTab] = useState('Payout');
 
   return (
-    <Animated.ScrollView
+    <AnimatedKeyboardAwareScrollView
       style={{ flex: 1 }}
       onScroll={onScroll}
       scrollEventThrottle={scrollEventThrottle}
+      enableOnAndroid={true}
+      extraScrollHeight={Platform.OS === 'ios' ? 70 : 150}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
     >
       <View style={styles.container}>
         <Text style={styles.title}>Settings</Text>
@@ -42,7 +51,7 @@ const CommunitySettings = ({ onScroll, scrollEventThrottle }: Props) => {
         {activeTab === 'Referrals' && <ReferralTab />}
         {activeTab === 'Moderators' && <ModeratorsTab />}
       </View>
-    </Animated.ScrollView>
+    </AnimatedKeyboardAwareScrollView>
   );
 };
 
