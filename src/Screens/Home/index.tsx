@@ -58,6 +58,7 @@ const Home = () => {
     null,
   );
   const [communities, setCommunities] = useState<any[]>([]);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const {
     getSiteSettings,
     apiGetSiteSettingsLoading,
@@ -65,7 +66,8 @@ const Home = () => {
     apiGetCommunitiesLoading,
   } = useUserApi();
   const { requireAuth, isLoggedIn } = useRequireAuth();
-  const isLoading = apiGetSiteSettingsLoading || apiGetCommunitiesLoading;
+  const isLoading =
+    isInitialLoading || apiGetSiteSettingsLoading || apiGetCommunitiesLoading;
   const isHavePlan = user?.planEntitlements?.length > 0;
 
   console.log('🚀 ~ Home ~ isLoggedIn:', isLoggedIn);
@@ -77,34 +79,39 @@ const Home = () => {
 
   const onChangeSearch = query => setSearchQuery(query);
 
-  // Fetch site settings only once on component mount
+  // Fetch site settings and communities on component mount
   useEffect(() => {
-    const fetchSiteSettings = async () => {
+    const initFetch = async () => {
       try {
-        const response = await getSiteSettings();
-
-        if (response?.success && response?.data) {
-          setSiteSettings(response.data);
-        }
-      } catch (error) {
-        console.error('Error fetching site settings:', error);
+        // Run both fetches in parallel
+        await Promise.all([
+          (async () => {
+            try {
+              const response = await getSiteSettings();
+              if (response?.success && response?.data) {
+                setSiteSettings(response.data);
+              }
+            } catch (error) {
+              console.error('Error fetching site settings:', error);
+            }
+          })(),
+          (async () => {
+            try {
+              const response = await getCommunities();
+              if (response?.success && response?.communities) {
+                setCommunities(response.communities);
+              }
+            } catch (error) {
+              console.error('Error fetching communities:', error);
+            }
+          })(),
+        ]);
+      } finally {
+        setIsInitialLoading(false);
       }
     };
 
-    fetchSiteSettings();
-
-    const fetchCommunities = async () => {
-      try {
-        const response = await getCommunities();
-        if (response?.success && response?.communities) {
-          setCommunities(response.communities);
-        }
-      } catch (error) {
-        console.error('Error fetching communities:', error);
-      }
-    };
-
-    fetchCommunities();
+    initFetch();
   }, []); // Only fetch once on mount
 
   // Conditionally select carousel data based on login status

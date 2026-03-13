@@ -1,5 +1,13 @@
-import { View, Text, Switch, TouchableOpacity, Alert, Platform } from 'react-native';
-import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  Switch,
+  TouchableOpacity,
+  Alert,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
+import React, { useState, useEffect } from 'react';
 import { RadioButton } from 'react-native-paper';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import styles from './style';
@@ -10,14 +18,23 @@ import PrimaryButton from '@/Components/Core/PrimaryButton';
 import Icon from '@/Components/Core/Icons';
 import UserSelectionModal from '@/Components/Generic/Modals/UserSelectionModal';
 import { THEME } from '@/Assets/Theme';
-
-const MOCK_USERS = Array.from({ length: 20 }, (_, i) => ({
-  id: (i + 1).toString(),
-  name: `User ${i + 1}`,
-  email: `user${i + 1}@example.com`,
-}));
+import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
+import { useAtom } from 'jotai';
+import { currentCommunityIdAtom } from '@/Jotai/Atoms';
+import ReferralTabSkeleton from '@/Components/Core/Skeleton/ReferralTabSkeleton';
 
 const ReferralTab = () => {
+  const [communityId] = useAtom(currentCommunityIdAtom);
+  const {
+    getReferralSettings,
+    apiGetReferralSettings,
+    apiGetReferralSettingsLoading,
+    getCommunityMembers,
+    apiGetCommunityMembers,
+    updateReferralSettings,
+    apiUpdateReferralSettingsLoading,
+  } = useUserApi();
+
   const [programEnabled, setProgramEnabled] = useState(false);
 
   // Commission Structure State
@@ -51,11 +68,63 @@ const ReferralTab = () => {
     'exception' | 'whitelist' | null
   >(null);
 
+  useEffect(() => {
+    if (communityId) {
+      getReferralSettings(communityId);
+      getCommunityMembers(communityId, '?search=&page=1&limit=100');
+    }
+  }, [communityId]);
+
+  useEffect(() => {
+    if (apiGetReferralSettings?.settings) {
+      const { settings } = apiGetReferralSettings;
+      setProgramEnabled(settings.isEnabled ?? false);
+      setCommissionPercentage(settings.commissionPercentage?.toString() ?? '0');
+      setAccessControl(settings.accessType === 'whitelist' ? 'specific' : 'all');
+
+      if (settings.whitelistedUsers) {
+        setWhitelistMembers(
+          settings.whitelistedUsers.map((user: any) => ({
+            id: user._id || user.id,
+            name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+            email: user.email,
+          })),
+        );
+      }
+
+      if (settings.commissionOverrides) {
+        setExceptions(
+          settings.commissionOverrides.map((override: any) => ({
+            id: override.userId?._id || override.userId?.id || override.userId,
+            name: `${override.userId?.firstName || ''} ${
+              override.userId?.lastName || ''
+            }`.trim(),
+            email: override.userId?.email || '',
+            percentage: override.percentage?.toString() || '0',
+          })),
+        );
+      }
+    }
+  }, [apiGetReferralSettings]);
+
+  const isSettingsForCurrentCommunity = apiGetReferralSettings?.settings?.communityId === communityId;
+
+  // Only show skeleton if we don't have valid data for the current community.
+  // This prevents flickering during background refetches (like after saving).
+  if (!isSettingsForCurrentCommunity) {
+    return <ReferralTabSkeleton />;
+  }
+
   const handleUserSelect = (selectedIds: string[]) => {
+    const allMembers = apiGetCommunityMembers?.data?.members || [];
     const members = selectedIds
-      .map(id => MOCK_USERS.find(user => user.id === id))
-      .filter((user): user is (typeof MOCK_USERS)[0] => !!user)
-      .map(user => ({ id: user.id, name: user.name, email: user.email }));
+      .map(id => allMembers.find((user: any) => (user._id || user.id) === id))
+      .filter((user): user is any => !!user)
+      .map((user: any) => ({
+        id: user._id || user.id,
+        name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+        email: user.email,
+      }));
 
     if (activeSelectionType === 'exception') {
       setSelectedMembers(members);
@@ -121,6 +190,40 @@ const ReferralTab = () => {
     setActiveSelectionType('whitelist');
     setShowMemberModal(true);
   };
+  const handleSaveSettings = async () => {
+    if (!communityId) return;
+
+    if (
+      isNaN(Number(commissionPercentage)) ||
+      Number(commissionPercentage) < 0 ||
+      Number(commissionPercentage) > 100
+    ) {
+      Alert.alert(
+        'Invalid Commission',
+        'Please enter a valid commission percentage (0-100)',
+      );
+      return;
+    }
+
+    const payload = {
+      _id: apiGetReferralSettings?.settings?._id,
+      communityId: communityId,
+      isEnabled: programEnabled,
+      accessType: accessControl === 'specific' ? 'whitelist' : 'all',
+      commissionPercentage: Number(commissionPercentage),
+      whitelistedUsers: whitelistMembers.map(m => m.id),
+      commissionOverrides: exceptions.map(e => ({
+        userId: e.id,
+        percentage: Number(e.percentage),
+      })),
+    };
+
+    console.log('Saving Referral Settings Payload:', payload);
+    const res = await updateReferralSettings(communityId, payload);
+    if (res?.success) {
+      // Logic for success already handled in hook (Toast)
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -142,7 +245,10 @@ const ReferralTab = () => {
       </View>
 
       {/* Commission Structure */}
-      <View style={styles.sectionContainer}>
+      <View 
+        style={[styles.sectionContainer, !programEnabled && { opacity: 0.5 }]} 
+        pointerEvents={programEnabled ? 'auto' : 'none'}
+      >
         <Text style={styles.sectionTitle}>Commission Structure</Text>
         <TextInputField
           label="Commission Percentage"
@@ -167,7 +273,10 @@ const ReferralTab = () => {
       </View>
 
       {/* Access Control */}
-      <View style={styles.sectionContainer}>
+      <View 
+        style={[styles.sectionContainer, !programEnabled && { opacity: 0.5 }]} 
+        pointerEvents={programEnabled ? 'auto' : 'none'}
+      >
         <Text style={styles.sectionTitle}>Access Control</Text>
         <Text style={styles.sectionSubHeader}>
           Who can generate referral codes?
@@ -232,7 +341,10 @@ const ReferralTab = () => {
       </View>
 
       {/* Commission Exceptions */}
-      <View style={styles.sectionContainer}>
+      <View 
+        style={[styles.sectionContainer, !programEnabled && { opacity: 0.5 }]} 
+        pointerEvents={programEnabled ? 'auto' : 'none'}
+      >
         <Text style={styles.sectionTitle}>Commission Exceptions</Text>
         <Text style={styles.sectionSubHeader}>
           Set custom commission percentages for specific members (overrides
@@ -301,7 +413,7 @@ const ReferralTab = () => {
                 </View>
                 <View style={styles.exceptionUserInfo}>
                   <Text style={styles.exceptionUser}>{item.name}</Text>
-                  <Text style={styles.exceptionUser}>{item.email}</Text>
+                  <Text style={styles.exceptionSubUser}>{item.email}</Text>
                 </View>
                 <View
                   style={{
@@ -323,14 +435,32 @@ const ReferralTab = () => {
         </View>
       </View>
 
-      <TouchableOpacity onPress={() => { }} style={styles.saveButtonContainer}>
-        <Text style={styles.saveButton}>Save Settings</Text>
+      <TouchableOpacity
+        onPress={handleSaveSettings}
+        style={[
+          styles.saveButtonContainer,
+          apiUpdateReferralSettingsLoading && { opacity: 0.7 },
+        ]}
+        disabled={apiUpdateReferralSettingsLoading}
+      >
+        {apiUpdateReferralSettingsLoading ? (
+          <ActivityIndicator size="small" color={COLORS.white} />
+        ) : (
+          <Text style={styles.saveButton}>Save Settings</Text>
+        )}
       </TouchableOpacity>
 
       <UserSelectionModal
         visible={showMemberModal}
         onClose={() => setShowMemberModal(false)}
         onSelect={handleUserSelect}
+        users={(apiGetCommunityMembers?.data?.members || []).map(
+          (user: any) => ({
+            id: user._id || user.id,
+            name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+            email: user.email,
+          }),
+        )}
         initialSelectedIds={
           activeSelectionType === 'whitelist'
             ? whitelistMembers.map(m => m.id)

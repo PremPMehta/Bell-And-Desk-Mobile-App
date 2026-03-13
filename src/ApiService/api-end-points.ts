@@ -43,4 +43,7 @@ export const ApiEndPoints = {
   addModerator: 'community-moderators',
   deleteModerator: 'community-moderators/:moderatorId',
   updateModerator: 'community-moderators/:moderatorId',
+
+  // Referral Settings
+  referralSettings: 'referrals/admin/settings/:communityId',
 };

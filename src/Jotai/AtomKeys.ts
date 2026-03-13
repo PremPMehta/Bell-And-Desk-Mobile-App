@@ -109,4 +109,9 @@ export const AtomKeys = {
   apiDeleteModerator: 'apiDeleteModerator',
   apiUpdateModeratorLoading: 'apiUpdateModeratorLoading',
   apiUpdateModerator: 'apiUpdateModerator',
+
+  // Referral Settings
+  apiGetReferralSettingsLoading: 'apiGetReferralSettingsLoading',
+  apiGetReferralSettings: 'apiGetReferralSettings',
+  apiUpdateReferralSettingsLoading: 'apiUpdateReferralSettingsLoading',
 };

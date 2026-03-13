@@ -273,6 +273,21 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiUpdateModerator),
   );
 
+  // Referral Settings Apis
+  const [apiGetReferralSettingsLoading, setApiGetReferralSettingsLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiGetReferralSettingsLoading),
+    );
+  const [apiGetReferralSettings, setApiGetReferralSettings] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetReferralSettings),
+  );
+  const [
+    apiUpdateReferralSettingsLoading,
+    setApiUpdateReferralSettingsLoading,
+  ] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiUpdateReferralSettingsLoading),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -902,6 +917,54 @@ const useUserApi = () => {
     }
   }
 
+  // Get Referral Settings
+  async function getReferralSettings(communityId: string) {
+    try {
+      setApiGetReferralSettingsLoading(true);
+      const url = ApiEndPoints.referralSettings.replace(
+        ':communityId',
+        communityId,
+      );
+      const res: any = await api.get(url);
+      setApiGetReferralSettings(res);
+      setApiGetReferralSettingsLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching referral settings:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiGetReferralSettingsLoading(false);
+    }
+  }
+
+  // Update Referral Settings
+  async function updateReferralSettings(communityId: string, body: any) {
+    try {
+      setApiUpdateReferralSettingsLoading(true);
+      const url = ApiEndPoints.referralSettings.replace(
+        ':communityId',
+        communityId,
+      );
+      const res: any = await api.post(url, body);
+
+      // Refetch the settings so that the UI gets the populated member objects (names, emails)
+      await getReferralSettings(communityId);
+
+      setApiUpdateReferralSettingsLoading(false);
+      ToastModule.successTop({
+        msg: res?.message || 'Referral settings updated successfully!',
+      });
+      return res;
+    } catch (error: any) {
+      console.error('Error updating referral settings:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiUpdateReferralSettingsLoading(false);
+    }
+  }
+
   return {
     // Auth Apis
     getUserUnifiedLogin,
@@ -1055,6 +1118,16 @@ const useUserApi = () => {
     updateModerator,
     apiUpdateModeratorLoading,
     apiUpdateModerator,
+
+    // Referrals Tab
+    // Get Referral Settings
+    getReferralSettings,
+    apiGetReferralSettingsLoading,
+    apiGetReferralSettings,
+
+    // Update Referral Settings
+    updateReferralSettings,
+    apiUpdateReferralSettingsLoading,
 
     // Auth Token for external downloads
     userToken,

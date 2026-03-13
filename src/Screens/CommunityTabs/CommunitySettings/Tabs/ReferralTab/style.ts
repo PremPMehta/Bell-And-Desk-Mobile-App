@@ -115,8 +115,8 @@ const styles = StyleSheet.create({
     marginTop: ms(12),
   },
   exceptionUserIcon: {
-    width: sc(32),
-    height: sc(32),
+    width: sc(28),
+    height: sc(28),
     borderRadius: ms(32),
     backgroundColor: COLORS.newInnerCardBG,
     alignItems: 'center',
@@ -128,6 +128,10 @@ const styles = StyleSheet.create({
   exceptionUser: {
     ...THEME.fontStyle.h5Bold,
     color: COLORS.white,
+  },
+  exceptionSubUser: {
+    ...THEME.fontStyle.h6Regular,
+    color: COLORS.subText,
   },
   exceptionValue: {
     ...THEME.fontStyle.h5Regular,

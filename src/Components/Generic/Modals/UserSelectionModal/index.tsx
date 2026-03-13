@@ -24,6 +24,7 @@ interface UserSelectionModalProps {
     onClose: () => void;
     onSelect: (selectedIds: string[]) => void;
     initialSelectedIds?: string[];
+    users?: User[];
 }
 
 const UserSelectionModal: React.FC<UserSelectionModalProps> = ({
@@ -31,17 +32,21 @@ const UserSelectionModal: React.FC<UserSelectionModalProps> = ({
     onClose,
     onSelect,
     initialSelectedIds = [],
+    users: initialUsers,
 }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedIds, setSelectedIds] = useState<string[]>(initialSelectedIds);
-    const [users, setUsers] = useState<User[]>(MOCK_USERS);
+    const [users, setUsers] = useState<User[]>(initialUsers || MOCK_USERS);
 
     useEffect(() => {
         if (visible) {
             setSelectedIds(initialSelectedIds);
             setSearchQuery('');
+            if (initialUsers) {
+                setUsers(initialUsers);
+            }
         }
-    }, [visible, initialSelectedIds]);
+    }, [visible, initialSelectedIds, initialUsers]);
 
     const filteredUsers = users.filter(
         (user) =>
