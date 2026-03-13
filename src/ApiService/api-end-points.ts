@@ -34,4 +34,13 @@ export const ApiEndPoints = {
   communityMembers: 'communities/:communityId/members',
   communityMembersExport: 'communities/:communityId/members/export',
   communityAccessRequests: 'communities/:communityId/access-requests',
+
+  /* Community Settings Screen */
+  // Moderators Tab
+  communityModerators: 'community-moderators/community/:communityId',
+  availableMembers:
+    'community-moderators/community/:communityId/available-members',
+  addModerator: 'community-moderators',
+  deleteModerator: 'community-moderators/:moderatorId',
+  updateModerator: 'community-moderators/:moderatorId',
 };

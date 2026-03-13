@@ -229,6 +229,50 @@ const useUserApi = () => {
   const [apiGetCommunityAccessRequests, setApiGetCommunityAccessRequests] =
     useAtom(objectAtomFamily(AtomKeys.apiGetCommunityAccessRequests));
 
+  // Get Community Moderators Apis
+  const [
+    apiGetCommunityModeratorsLoading,
+    setApiGetCommunityModeratorsLoading,
+  ] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetCommunityModeratorsLoading),
+  );
+  const [apiGetCommunityModerators, setApiGetCommunityModerators] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetCommunityModerators),
+  );
+
+  // Get Community Available Members Apis
+  const [apiGetAvailableMembersLoading, setApiGetAvailableMembersLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiGetAvailableMembersLoading),
+    );
+  const [apiGetAvailableMembers, setApiGetAvailableMembers] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetAvailableMembers),
+  );
+
+  // Add Moderator Apis
+  const [apiAddModeratorLoading, setApiAddModeratorLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiAddModeratorLoading),
+  );
+  const [apiAddModerator, setApiAddModerator] = useAtom(
+    objectAtomFamily(AtomKeys.apiAddModerator),
+  );
+
+  // Delete Moderator Apis
+  const [apiDeleteModeratorLoading, setApiDeleteModeratorLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiDeleteModeratorLoading),
+  );
+  const [apiDeleteModerator, setApiDeleteModerator] = useAtom(
+    objectAtomFamily(AtomKeys.apiDeleteModerator),
+  );
+
+  // Update Moderator Apis
+  const [apiUpdateModeratorLoading, setApiUpdateModeratorLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiUpdateModeratorLoading),
+  );
+  const [apiUpdateModerator, setApiUpdateModerator] = useAtom(
+    objectAtomFamily(AtomKeys.apiUpdateModerator),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -737,6 +781,127 @@ const useUserApi = () => {
     }
   }
 
+  // Get Community Moderators
+  async function getCommunityModerators(communityId: string) {
+    try {
+      setApiGetCommunityModeratorsLoading(true);
+      const url = ApiEndPoints.communityModerators.replace(
+        ':communityId',
+        communityId,
+      );
+      const res: any = await api.get(url);
+      setApiGetCommunityModerators(res);
+      setApiGetCommunityModeratorsLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching community moderators info:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiGetCommunityModeratorsLoading(false);
+    }
+  }
+
+  // Update Moderator
+  async function updateModerator(moderatorId: string, body: any) {
+    try {
+      setApiUpdateModeratorLoading(true);
+      const url = ApiEndPoints.updateModerator.replace(
+        ':moderatorId',
+        moderatorId,
+      );
+      const res: any = await api.put(url, body);
+      console.log('🚀 ~ updateModerator ~ res:', res);
+      ToastModule.successTop({
+        msg: res?.message || 'Moderator permissions updated successfully',
+      });
+      setApiUpdateModerator(res);
+      setApiUpdateModeratorLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error updating moderator:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiUpdateModeratorLoading(false);
+    }
+  }
+
+  // Clear Community Moderators Data
+  function clearCommunityModerators() {
+    setApiGetCommunityModerators(null);
+    setApiGetCommunityModeratorsLoading(false);
+  }
+
+  // Get Community Available Members
+  async function getAvailableMembers(communityId: string) {
+    try {
+      setApiGetAvailableMembersLoading(true);
+      const url = ApiEndPoints.availableMembers.replace(
+        ':communityId',
+        communityId,
+      );
+      const res: any = await api.get(url);
+      setApiGetAvailableMembers(res);
+      setApiGetAvailableMembersLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching available members info:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiGetAvailableMembersLoading(false);
+    }
+  }
+
+  // Clear Community Available Members Data
+  function clearAvailableMembers() {
+    setApiGetAvailableMembers(null);
+    setApiGetAvailableMembersLoading(false);
+  }
+
+  // Add Moderator
+  async function addModerator(body: any) {
+    try {
+      setApiAddModeratorLoading(true);
+      const res: any = await api.post(ApiEndPoints.addModerator, body);
+      setApiAddModerator(res);
+      setApiAddModeratorLoading(false);
+      ToastModule.successTop({
+        msg: res?.message || 'Moderator added successfully!',
+      });
+      return res;
+    } catch (error: any) {
+      console.error('Error adding moderator:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiAddModeratorLoading(false);
+    }
+  }
+
+  // Delete Moderator
+  async function deleteModerator(moderatorId: string) {
+    try {
+      setApiDeleteModeratorLoading(true);
+      const res: any = await api.delete(
+        ApiEndPoints.deleteModerator.replace(':moderatorId', moderatorId),
+      );
+      setApiDeleteModerator(res);
+      setApiDeleteModeratorLoading(false);
+      ToastModule.successTop({
+        msg: res?.message || 'Moderator removed successfully!',
+      });
+      return res;
+    } catch (error: any) {
+      console.error('Error deleting moderator:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiDeleteModeratorLoading(false);
+    }
+  }
+
   return {
     // Auth Apis
     getUserUnifiedLogin,
@@ -861,6 +1026,35 @@ const useUserApi = () => {
     getCommunityAccessRequests,
     apiGetCommunityAccessRequestsLoading,
     apiGetCommunityAccessRequests,
+
+    /* Community Settings Screen Apis */
+    // Moderators Tab
+    // Get Community Moderators
+    getCommunityModerators,
+    apiGetCommunityModeratorsLoading,
+    apiGetCommunityModerators,
+    clearCommunityModerators,
+
+    // Available Members
+    getAvailableMembers,
+    apiGetAvailableMembersLoading,
+    apiGetAvailableMembers,
+    clearAvailableMembers,
+
+    // Add Moderator
+    addModerator,
+    apiAddModeratorLoading,
+    apiAddModerator,
+
+    // Delete Moderator
+    deleteModerator,
+    apiDeleteModeratorLoading,
+    apiDeleteModerator,
+
+    // Update Moderator
+    updateModerator,
+    apiUpdateModeratorLoading,
+    apiUpdateModerator,
 
     // Auth Token for external downloads
     userToken,

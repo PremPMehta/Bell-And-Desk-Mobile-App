@@ -52,7 +52,7 @@ const CommunityMenuTabsContent = ({
     case 'about':
       return <CommunityAbout communityId={communityId} slug={slug} {...scrollProps} />;
     case 'settings':
-      return <CommunitySettings {...scrollProps} />;
+      return <CommunitySettings communityId={communityId} {...scrollProps} />;
     default:
       return null;
   }

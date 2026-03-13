@@ -176,6 +176,11 @@ const styles = StyleSheet.create({
     ...THEME.fontStyle.h5Regular,
     color: COLORS.white,
   },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: ms(16),
+  },
 });
 
 export default styles;

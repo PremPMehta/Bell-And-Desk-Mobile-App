@@ -438,7 +438,7 @@ export const MODERATOR_PERMISSIONS = [
     children: [
       { id: 'course_add', label: 'Add Course' },
       { id: 'course_edit', label: 'Edit Course' },
-      { id: 'course_update', label: 'Update Course' },
+      // { id: 'course_update', label: 'Update Course' },
       { id: 'course_delete', label: 'Delete Course' },
       { id: 'course_view_settings', label: 'View Course Settings' },
     ],
@@ -464,13 +464,23 @@ export const MODERATOR_PERMISSIONS = [
     ],
   },
   {
+    title: 'Blog',
+    id: 'blog',
+    children: [
+      { id: 'blog_create', label: 'Create Blog' },
+      { id: 'blog_edit', label: 'Edit Blog' },
+      { id: 'blog_delete', label: 'Delete Blog' },
+      { id: 'blog_view_only', label: 'View Blog Only' },
+    ],
+  },
+  {
     title: 'Board (Feed)',
     id: 'board',
     children: [
       { id: 'post_create', label: 'Create Post' },
       { id: 'post_comment', label: 'Comment' },
       { id: 'post_edit', label: 'Edit Post' },
-      { id: 'post_update', label: 'Update Post' },
+      // { id: 'post_update', label: 'Update Post' },
       { id: 'post_delete', label: 'Delete Post' },
     ],
   },
@@ -482,7 +492,7 @@ export const MODERATOR_PERMISSIONS = [
       { id: 'channel_member_add', label: 'Add Member to Channel' },
       { id: 'channel_member_remove', label: 'Remove Member from Channel' },
       { id: 'channel_edit', label: 'Edit Channel' },
-      { id: 'channel_update', label: 'Update Channel' },
+      // { id: 'channel_update', label: 'Update Channel' },
       { id: 'channel_delete', label: 'Delete Channel' },
     ],
   },
