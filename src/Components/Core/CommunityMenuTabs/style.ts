@@ -17,8 +17,8 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: 'row',
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#333',
+    // borderBottomWidth: 0.5,
+    // borderBottomColor: '#333',
     paddingHorizontal: ms(16),
     paddingRight: ms(40), // Add padding to avoid content being hidden by gradient
   },

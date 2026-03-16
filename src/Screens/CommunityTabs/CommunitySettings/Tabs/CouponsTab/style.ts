@@ -142,6 +142,84 @@ const styles = StyleSheet.create({
     ...THEME.fontStyle.h6Regular,
     color: COLORS.white,
   },
+
+  // Confirmation Modal Styles
+  modalContainer: {
+    margin: 0,
+    justifyContent: 'flex-end',
+  },
+  mainModalView: {
+    backgroundColor: COLORS.cardBG,
+    borderTopLeftRadius: ms(20),
+    borderTopRightRadius: ms(20),
+    paddingTop: ms(16),
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: ms(20),
+    paddingBottom: ms(16),
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  modalTitle: {
+    ...THEME.fontStyle.h3Bold,
+    color: COLORS.white,
+  },
+  modalBody: {
+    padding: ms(20),
+  },
+  modalMessage: {
+    ...THEME.fontStyle.h4Regular,
+    color: COLORS.white,
+    lineHeight: ms(22),
+  },
+  boldName: {
+    ...THEME.fontStyle.h4Bold,
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    padding: ms(20),
+    gap: ms(16),
+  },
+  modalCancelText: {
+    ...THEME.fontStyle.h5Regular,
+    color: COLORS.placeholder,
+  },
+  modalRemoveButton: {
+    backgroundColor: COLORS.red,
+    paddingHorizontal: ms(20),
+    paddingVertical: ms(10),
+    borderRadius: ms(8),
+  },
+  modalRemoveText: {
+    ...THEME.fontStyle.h5Bold,
+    color: COLORS.white,
+  },
+  historySubtitle: {
+    ...THEME.fontStyle.h4Bold,
+    color: COLORS.primary,
+    marginBottom: ms(16),
+  },
+  historyItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: ms(12),
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  historyUser: {
+    ...THEME.fontStyle.h5Regular,
+    color: COLORS.white,
+  },
+  historyDate: {
+    ...THEME.fontStyle.h6Regular,
+    color: COLORS.lightGray,
+  },
 });
 
 export default styles;

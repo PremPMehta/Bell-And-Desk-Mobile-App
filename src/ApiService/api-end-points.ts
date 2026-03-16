@@ -46,4 +46,8 @@ export const ApiEndPoints = {
 
   // Referral Settings
   referralSettings: 'referrals/admin/settings/:communityId',
+
+  // Coupons
+  coupons: 'coupons/:slug',
+  couponHistory: 'coupons/:slug/:couponId/history',
 };

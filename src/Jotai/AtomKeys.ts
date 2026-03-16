@@ -114,4 +114,16 @@ export const AtomKeys = {
   apiGetReferralSettingsLoading: 'apiGetReferralSettingsLoading',
   apiGetReferralSettings: 'apiGetReferralSettings',
   apiUpdateReferralSettingsLoading: 'apiUpdateReferralSettingsLoading',
+
+  // Coupons Apis
+  apiGetCouponsLoading: 'apiGetCouponsLoading',
+  apiGetCoupons: 'apiGetCoupons',
+  apiCreateCouponLoading: 'apiCreateCouponLoading',
+  apiCreateCoupon: 'apiCreateCoupon',
+  apiUpdateCouponLoading: 'apiUpdateCouponLoading',
+  apiUpdateCoupon: 'apiUpdateCoupon',
+  apiDeleteCouponLoading: 'apiDeleteCouponLoading',
+  apiDeleteCoupon: 'apiDeleteCoupon',
+  apiGetCouponHistoryLoading: 'apiGetCouponHistoryLoading',
+  apiGetCouponHistory: 'apiGetCouponHistory',
 };

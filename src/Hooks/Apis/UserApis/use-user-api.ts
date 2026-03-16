@@ -288,6 +288,46 @@ const useUserApi = () => {
     booleanDefaultFalseAtomFamily(AtomKeys.apiUpdateReferralSettingsLoading),
   );
 
+  // Coupons Apis
+  const [apiGetCouponsLoading, setApiGetCouponsLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetCouponsLoading),
+  );
+  const [apiGetCoupons, setApiGetCoupons] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetCoupons),
+  );
+
+  // Create Coupon Apis
+  const [apiCreateCouponLoading, setApiCreateCouponLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiCreateCouponLoading),
+  );
+  const [apiCreateCoupon, setApiCreateCoupon] = useAtom(
+    objectAtomFamily(AtomKeys.apiCreateCoupon),
+  );
+
+  // Update Coupon Apis
+  const [apiUpdateCouponLoading, setApiUpdateCouponLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiUpdateCouponLoading),
+  );
+  const [apiUpdateCoupon, setApiUpdateCoupon] = useAtom(
+    objectAtomFamily(AtomKeys.apiUpdateCoupon),
+  );
+
+  // Delete Coupon Apis
+  const [apiDeleteCouponLoading, setApiDeleteCouponLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiDeleteCouponLoading),
+  );
+  const [apiDeleteCoupon, setApiDeleteCoupon] = useAtom(
+    objectAtomFamily(AtomKeys.apiDeleteCoupon),
+  );
+
+  // Get Coupon History Apis
+  const [apiGetCouponHistoryLoading, setApiGetCouponHistoryLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetCouponHistoryLoading),
+  );
+  const [apiGetCouponHistory, setApiGetCouponHistory] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetCouponHistory),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -965,6 +1005,107 @@ const useUserApi = () => {
     }
   }
 
+  // Get Coupons
+  async function getCoupons(slug: string) {
+    try {
+      setApiGetCouponsLoading(true);
+      const url = ApiEndPoints.coupons.replace(':slug', slug);
+      const res: any = await api.get(url);
+      setApiGetCoupons(res);
+      setApiGetCouponsLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching coupons:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiGetCouponsLoading(false);
+    }
+  }
+
+  // Create Coupon
+  async function createCoupon(slug: string, body: any) {
+    try {
+      setApiCreateCouponLoading(true);
+      const url = ApiEndPoints.coupons.replace(':slug', slug);
+      const res: any = await api.post(url, body);
+      setApiCreateCoupon(res);
+      setApiCreateCouponLoading(false);
+      ToastModule.successTop({
+        msg: res?.message || 'Coupon created successfully',
+      });
+      return res;
+    } catch (error: any) {
+      console.error('Error creating coupon:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiCreateCouponLoading(false);
+    }
+  }
+
+  // Update Coupon
+  async function updateCoupon(slug: string, couponId: string, body: any) {
+    try {
+      setApiUpdateCouponLoading(true);
+      const url = `${ApiEndPoints.coupons.replace(':slug', slug)}/${couponId}`;
+      const res: any = await api.put(url, body);
+      setApiUpdateCoupon(res);
+      setApiUpdateCouponLoading(false);
+      ToastModule.successTop({
+        msg: res?.message || 'Coupon updated successfully',
+      });
+      return res;
+    } catch (error: any) {
+      console.error('Error updating coupon:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiUpdateCouponLoading(false);
+    }
+  }
+
+  // Delete Coupon
+  async function deleteCoupon(slug: string, couponId: string) {
+    try {
+      setApiDeleteCouponLoading(true);
+      const url = `${ApiEndPoints.coupons.replace(':slug', slug)}/${couponId}`;
+      const res: any = await api.delete(url);
+      setApiDeleteCoupon(res);
+      setApiDeleteCouponLoading(false);
+      ToastModule.successTop({
+        msg: res?.message || 'Coupon deleted successfully',
+      });
+      return res;
+    } catch (error: any) {
+      console.error('Error deleting coupon:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiDeleteCouponLoading(false);
+    }
+  }
+
+  // Get Coupon History
+  async function getCouponHistory(slug: string, couponId: string) {
+    try {
+      setApiGetCouponHistoryLoading(true);
+      const url = ApiEndPoints.couponHistory
+        .replace(':slug', slug)
+        .replace(':couponId', couponId);
+      const res: any = await api.get(url);
+      setApiGetCouponHistory(res);
+      setApiGetCouponHistoryLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching coupon history:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiGetCouponHistoryLoading(false);
+    }
+  }
+
   return {
     // Auth Apis
     getUserUnifiedLogin,
@@ -1128,6 +1269,31 @@ const useUserApi = () => {
     // Update Referral Settings
     updateReferralSettings,
     apiUpdateReferralSettingsLoading,
+
+    // Coupons
+    getCoupons,
+    apiGetCouponsLoading,
+    apiGetCoupons,
+
+    // Create Coupon
+    createCoupon,
+    apiCreateCouponLoading,
+    apiCreateCoupon,
+
+    // Update Coupon
+    updateCoupon,
+    apiUpdateCouponLoading,
+    apiUpdateCoupon,
+
+    // Delete Coupon
+    deleteCoupon,
+    apiDeleteCouponLoading,
+    apiDeleteCoupon,
+
+    // Coupon History
+    getCouponHistory,
+    apiGetCouponHistoryLoading,
+    apiGetCouponHistory,
 
     // Auth Token for external downloads
     userToken,

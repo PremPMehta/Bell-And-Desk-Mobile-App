@@ -19,12 +19,14 @@ const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
 
 interface Props {
   communityId?: string;
+  slug?: string;
   onScroll?: (...args: any[]) => void;
   scrollEventThrottle?: number;
 }
 
 const CommunitySettings = ({
   communityId,
+  slug,
   onScroll,
   scrollEventThrottle,
 }: Props) => {
@@ -51,7 +53,7 @@ const CommunitySettings = ({
         {activeTab === 'Member Transactions' && <MemberTransactionsTab />}
         {activeTab === 'Access Requests' && <AccessRequestsTab />}
         {activeTab === 'Subscription' && <SubscriptionTab />}
-        {activeTab === 'Coupons' && <CouponsTab />}
+        {activeTab === 'Coupons' && <CouponsTab slug={slug} communityId={communityId} />}
         {activeTab === 'Billings' && <BillingsTab />}
         {activeTab === 'Referrals' && <ReferralTab />}
         {activeTab === 'Moderators' && <ModeratorsTab communityId={communityId} />}

@@ -9,33 +9,42 @@ import TextInputField from '@/Components/Core/TextInputField';
 import CommonListModal from '@/Components/Generic/Modals/CommonListModal';
 import UserSelectionModal from '@/Components/Generic/Modals/UserSelectionModal';
 import styles from './style';
+import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 
 interface AddCouponModalProps {
   visible: boolean;
   onClose: () => void;
-  onSubmit: (couponData: CouponData) => void;
+  onSubmit: (couponData: CouponData, couponId?: string) => void;
+  communityId?: string;
+  initialData?: any; // coupon object from API for edit mode
+  couponId?: string; // _id of coupon being edited
 }
 
 export interface CouponData {
-  couponName: string;
-  discountPercentage: string;
-  discountMonths: string;
+  name: string;
+  discountPercentage: number;
+  discountMonths: number;
   allowedUsers: 'all' | 'selected' | 'new';
-  startDate?: Date;
-  endDate?: Date;
+  startDate: Date | null;
+  endDate: Date | null;
   selectedUserIds?: string[];
-  visibilityDuration?: string;
-  autoIncludeNewUsers?: boolean;
-  registrationStartDate?: Date;
-  registrationEndDate?: Date;
-  showOnMemberSide?: boolean;
+  visibilityDurationMonths: string;
+  autoIncludeNewUsers: boolean;
+  newUserStartDate: Date | null;
+  newUserEndDate: Date | null;
+  visibleOnMemberSide: boolean;
 }
 
 const AddCouponModal: React.FC<AddCouponModalProps> = ({
   visible,
   onClose,
   onSubmit,
+  communityId,
+  initialData,
+  couponId,
 }) => {
+  const isEditMode = !!initialData;
+  const { getCommunityMembers, apiGetCommunityMembersLoading, apiGetCommunityMembers } = useUserApi();
   const [couponName, setCouponName] = useState('');
   const [discountPercentage, setDiscountPercentage] = useState('');
   const [discountMonths, setDiscountMonths] = useState('');
@@ -56,11 +65,68 @@ const AddCouponModal: React.FC<AddCouponModalProps> = ({
   const [registrationEndDate, setRegistrationEndDate] = useState<Date | undefined>(undefined);
   const [showRegStartDatePicker, setShowRegStartDatePicker] = useState(false);
   const [showRegEndDatePicker, setShowRegEndDatePicker] = useState(false);
-  const [showOnMemberSide, setShowOnMemberSide] = useState(false);
+  const [showOnMemberSide, setShowOnMemberSide] = useState(true);
+  const [fetchedUsers, setFetchedUsers] = useState<any[]>([]);
 
   const isAll = allowedUsers === 'all';
   const isSelected = allowedUsers === 'selected';
   const isNew = allowedUsers === 'new';
+
+  const fetchMembers = async () => {
+    if (communityId) {
+      const res = await getCommunityMembers(communityId, '?limit=1000&page=1');
+      if (res?.data?.members) {
+        const formattedUsers = res.data.members.map((member: any) => ({
+          id: member.id || member._id,
+          name: member.firstName && member.lastName ? `${member.firstName} ${member.lastName}` : member.firstName || 'Unknown',
+          email: member.email || '',
+        }));
+        setFetchedUsers(formattedUsers);
+      }
+    }
+  };
+
+  React.useEffect(() => {
+    if (isSelected && communityId && fetchedUsers.length === 0) {
+       fetchMembers();
+    }
+  }, [isSelected, communityId]);
+
+  // Prefill form data when in edit mode and modal opens
+  React.useEffect(() => {
+    if (visible && initialData) {
+      setCouponName(initialData.name || '');
+      setDiscountPercentage(String(initialData.discountPercentage || ''));
+      const months = initialData.discountMonths;
+      setDiscountMonths(months ? `${months} month${months > 1 ? 's' : ''}` : '');
+      setAllowedUsers(initialData.allowedUsers || 'all');
+      setStartDate(initialData.startDate ? new Date(initialData.startDate) : undefined);
+      setEndDate(initialData.endDate ? new Date(initialData.endDate) : undefined);
+      setSelectedUserIds(initialData.selectedUserIds || []);
+      setVisibilityDuration(initialData.visibilityDurationMonths ? String(initialData.visibilityDurationMonths) : '');
+      setAutoIncludeNewUsers(initialData.autoIncludeNewUsers || false);
+      setRegistrationStartDate(initialData.newUserStartDate ? new Date(initialData.newUserStartDate) : undefined);
+      setRegistrationEndDate(initialData.newUserEndDate ? new Date(initialData.newUserEndDate) : undefined);
+      setShowOnMemberSide(initialData.visibleOnMemberSide || false);
+    } else if (visible && !initialData) {
+      // Reset form for create mode
+      setCouponName('');
+      setDiscountPercentage('');
+      setDiscountMonths('');
+      setAllowedUsers('all');
+      setStartDate(undefined);
+      setEndDate(undefined);
+      setSelectedUserIds([]);
+      setVisibilityDuration('');
+      setAutoIncludeNewUsers(false);
+      setRegistrationStartDate(undefined);
+      setRegistrationEndDate(undefined);
+      setShowOnMemberSide(true);
+      setTouched({});
+      setErrors({});
+      setFetchedUsers([]);
+    }
+  }, [visible, initialData]);
 
   // Discount months options (1-12 months)
   const monthsOptions = Array.from({ length: 12 }, (_, i) => ({
@@ -83,7 +149,7 @@ const AddCouponModal: React.FC<AddCouponModalProps> = ({
     setRegistrationStartDate(undefined);
     setRegistrationStartDate(undefined);
     setRegistrationEndDate(undefined);
-    setShowOnMemberSide(false);
+    setShowOnMemberSide(true);
     setTouched({});
     setErrors({});
     onClose();
@@ -113,11 +179,11 @@ const AddCouponModal: React.FC<AddCouponModalProps> = ({
 
     if (allowedUsers === 'new') {
       if (!registrationStartDate) {
-        newErrors.registrationStartDate = 'Please select registration start date';
+        newErrors.newUserStartDate = 'Please select registration start date';
         isValid = false;
       }
       if (!registrationEndDate) {
-        newErrors.registrationEndDate = 'Please select registration end date';
+        newErrors.newUserEndDate = 'Please select registration end date';
         isValid = false;
       }
     }
@@ -131,27 +197,27 @@ const AddCouponModal: React.FC<AddCouponModalProps> = ({
       couponName: true,
       discountPercentage: true,
       discountMonths: true,
-      registrationStartDate: true,
-      registrationEndDate: true,
+      newUserStartDate: true,
+      newUserEndDate: true,
     });
 
     if (validate()) {
       const couponData: CouponData = {
-        couponName,
-        discountPercentage,
-        discountMonths,
+        name: couponName,
+        discountPercentage: Number(discountPercentage),
+        discountMonths: Number(discountMonths.split(' ')[0]),
         allowedUsers,
-        startDate,
-        endDate,
+        startDate: startDate || null,
+        endDate: endDate || null,
         selectedUserIds: allowedUsers === 'selected' ? selectedUserIds : undefined,
-        visibilityDuration: visibilityDuration || undefined,
+        visibilityDurationMonths: visibilityDuration || '',
         autoIncludeNewUsers,
-        registrationStartDate: allowedUsers === 'new' ? registrationStartDate : undefined,
-        registrationEndDate: allowedUsers === 'new' ? registrationEndDate : undefined,
-        showOnMemberSide,
+        newUserStartDate: allowedUsers === 'new' ? (registrationStartDate || null) : null,
+        newUserEndDate: allowedUsers === 'new' ? (registrationEndDate || null) : null,
+        visibleOnMemberSide: showOnMemberSide,
       };
 
-      onSubmit(couponData);
+      onSubmit(couponData, couponId);
       handleCancel();
     }
   };
@@ -215,7 +281,7 @@ const AddCouponModal: React.FC<AddCouponModalProps> = ({
       <View style={styles.mainModalView}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Add Coupon</Text>
+          <Text style={styles.title}>{isEditMode ? 'Edit Coupon' : 'Add Coupon'}</Text>
           <TouchableOpacity onPress={handleCancel}>
             <Icon name="X" size={24} color={COLORS.white} />
           </TouchableOpacity>
@@ -361,7 +427,7 @@ const AddCouponModal: React.FC<AddCouponModalProps> = ({
                   <Text style={styles.errorText}>{errors.selectedUsers}</Text>
                 )}
 
-                <Text style={styles.helperText}>Select one or more users (20 available)</Text>
+                <Text style={styles.helperText}>Select one or more users ({fetchedUsers.length > 0 ? fetchedUsers.length : '0'} available)</Text>
               </View>
 
               {/* Visibility Duration (Optional) */}
@@ -396,7 +462,16 @@ const AddCouponModal: React.FC<AddCouponModalProps> = ({
               {/* Auto Include Checkbox */}
               <TouchableOpacity
                 style={styles.checkboxContainer}
-                onPress={() => setAutoIncludeNewUsers(!autoIncludeNewUsers)}
+                onPress={() => {
+                  const newValue = !autoIncludeNewUsers;
+                  setAutoIncludeNewUsers(newValue);
+                  if (newValue) {
+                    setSelectedUserIds(fetchedUsers.map(user => user.id));
+                    setErrors(prev => ({ ...prev, selectedUsers: '' }));
+                  } else {
+                    setSelectedUserIds([]);
+                  }
+                }}
               >
                 <View style={[styles.checkbox, autoIncludeNewUsers && styles.checkboxSelected]}>
                   {autoIncludeNewUsers && <Icon name="Check" size={14} color={COLORS.white} />}
@@ -428,7 +503,7 @@ const AddCouponModal: React.FC<AddCouponModalProps> = ({
                   </Text>
                   <Icon name="Calendar" size={20} color={COLORS.outlineGrey} />
                 </TouchableOpacity>
-                {errors.registrationStartDate && <Text style={styles.errorText}>{errors.registrationStartDate}</Text>}
+                {errors.newUserStartDate && <Text style={styles.errorText}>{errors.newUserStartDate}</Text>}
                 <Text style={styles.helperText}>Users registered from this date onwards are eligible</Text>
               </View>
 
@@ -444,7 +519,7 @@ const AddCouponModal: React.FC<AddCouponModalProps> = ({
                   </Text>
                   <Icon name="Calendar" size={20} color={COLORS.outlineGrey} />
                 </TouchableOpacity>
-                {errors.registrationEndDate && <Text style={styles.errorText}>{errors.registrationEndDate}</Text>}
+                {errors.newUserEndDate && <Text style={styles.errorText}>{errors.newUserEndDate}</Text>}
                 <Text style={styles.helperText}>Users registered up to this date are eligible</Text>
               </View>
 
@@ -548,7 +623,7 @@ const AddCouponModal: React.FC<AddCouponModalProps> = ({
             <Text style={styles.cancelButtonText}>Cancel</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.createButton} onPress={handleCreate}>
-            <Text style={styles.createButtonText}>Create</Text>
+            <Text style={styles.createButtonText}>{isEditMode ? 'Update' : 'Create'}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -563,6 +638,7 @@ const AddCouponModal: React.FC<AddCouponModalProps> = ({
           }
         }}
         initialSelectedIds={selectedUserIds}
+        users={fetchedUsers.length > 0 ? fetchedUsers : undefined}
       />
     </Modal>
   );
