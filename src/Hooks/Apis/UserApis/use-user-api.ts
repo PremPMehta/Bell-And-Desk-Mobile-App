@@ -328,6 +328,26 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiGetCouponHistory),
   );
 
+  // Get Member Auto Approve
+  const [apiGetMemberAutoApproveLoading, setApiGetMemberAutoApproveLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiGetMemberAutoApproveLoading),
+    );
+  const [apiGetMemberAutoApprove, setApiGetMemberAutoApprove] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetMemberAutoApprove),
+  );
+
+  // Member Auto Approve Apis
+  const [
+    apiUpdateMemberAutoApproveLoading,
+    setApiUpdateMemberAutoApproveLoading,
+  ] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiUpdateMemberAutoApproveLoading),
+  );
+  const [apiUpdateMemberAutoApprove, setApiUpdateMemberAutoApprove] = useAtom(
+    objectAtomFamily(AtomKeys.apiUpdateMemberAutoApprove),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -1106,6 +1126,51 @@ const useUserApi = () => {
     }
   }
 
+  // Get Member Auto Approve
+  async function getMemberAutoApprove(slug: string) {
+    try {
+      setApiGetMemberAutoApproveLoading(true);
+      const url = ApiEndPoints.memberAutoApprove.replace(':slug', slug);
+      const res: any = await api.get(url);
+      setApiGetMemberAutoApprove(res);
+      setApiGetMemberAutoApproveLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching member auto approve setting:', error);
+      setApiGetMemberAutoApproveLoading(false);
+    }
+  }
+
+  // Clear Member Auto Approve State
+  function clearMemberAutoApproveState() {
+    setApiGetMemberAutoApprove({});
+    setApiGetMemberAutoApproveLoading(true);
+  }
+
+  // Member Auto Approve
+  async function updateMemberAutoApprove(
+    slug: string,
+    body: { autoApproveMembers: boolean },
+  ) {
+    try {
+      setApiUpdateMemberAutoApproveLoading(true);
+      const url = ApiEndPoints.memberAutoApprove.replace(':slug', slug);
+      const res: any = await api.post(url, body);
+      setApiUpdateMemberAutoApprove(res);
+      setApiUpdateMemberAutoApproveLoading(false);
+      ToastModule.successTop({
+        msg: res?.message,
+      });
+      return res;
+    } catch (error: any) {
+      console.error('Error updating member auto approve setting:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiUpdateMemberAutoApproveLoading(false);
+    }
+  }
+
   return {
     // Auth Apis
     getUserUnifiedLogin,
@@ -1294,6 +1359,18 @@ const useUserApi = () => {
     getCouponHistory,
     apiGetCouponHistoryLoading,
     apiGetCouponHistory,
+
+    // Access Requests Tab
+    // Member Auto Approve
+    getMemberAutoApprove,
+    apiGetMemberAutoApproveLoading,
+    apiGetMemberAutoApprove,
+    clearMemberAutoApproveState,
+
+    // Update Member Auto Approve
+    updateMemberAutoApprove,
+    apiUpdateMemberAutoApproveLoading,
+    apiUpdateMemberAutoApprove,
 
     // Auth Token for external downloads
     userToken,

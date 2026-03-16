@@ -50,4 +50,7 @@ export const ApiEndPoints = {
   // Coupons
   coupons: 'coupons/:slug',
   couponHistory: 'coupons/:slug/:couponId/history',
+
+  // Member Auto Approve
+  memberAutoApprove: 'communities/member-auto-approve/:slug',
 };

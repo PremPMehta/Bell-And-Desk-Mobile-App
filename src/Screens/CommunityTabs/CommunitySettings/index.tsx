@@ -51,7 +51,9 @@ const CommunitySettings = ({
         />
         {activeTab === 'Payout' && <PayoutTab />}
         {activeTab === 'Member Transactions' && <MemberTransactionsTab />}
-        {activeTab === 'Access Requests' && <AccessRequestsTab />}
+        {activeTab === 'Access Requests' && (
+          <AccessRequestsTab slug={slug} communityId={communityId} />
+        )}
         {activeTab === 'Subscription' && <SubscriptionTab />}
         {activeTab === 'Coupons' && <CouponsTab slug={slug} communityId={communityId} />}
         {activeTab === 'Billings' && <BillingsTab />}

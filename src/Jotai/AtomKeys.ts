@@ -126,4 +126,10 @@ export const AtomKeys = {
   apiDeleteCoupon: 'apiDeleteCoupon',
   apiGetCouponHistoryLoading: 'apiGetCouponHistoryLoading',
   apiGetCouponHistory: 'apiGetCouponHistory',
+
+  // Member Auto Approve
+  apiUpdateMemberAutoApproveLoading: 'apiUpdateMemberAutoApproveLoading',
+  apiUpdateMemberAutoApprove: 'apiUpdateMemberAutoApprove',
+  apiGetMemberAutoApproveLoading: 'apiGetMemberAutoApproveLoading',
+  apiGetMemberAutoApprove: 'apiGetMemberAutoApprove',
 };
