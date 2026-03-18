@@ -132,4 +132,8 @@ export const AtomKeys = {
   apiUpdateMemberAutoApprove: 'apiUpdateMemberAutoApprove',
   apiGetMemberAutoApproveLoading: 'apiGetMemberAutoApproveLoading',
   apiGetMemberAutoApprove: 'apiGetMemberAutoApprove',
+
+  // Member Transactions
+  apiGetMemberTransactionsLoading: 'apiGetMemberTransactionsLoading',
+  apiGetMemberTransactions: 'apiGetMemberTransactions',
 };

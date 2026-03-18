@@ -10,6 +10,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cardBG,
     borderRadius: ms(8),
   },
+  headerMainContainer: {
+    paddingBottom: ms(10),
+  },
   headerContainer: {
     marginBottom: ms(16),
   },
@@ -27,6 +30,9 @@ const styles = StyleSheet.create({
   },
   statsRow: {
     flexDirection: 'row',
+  },
+  statsMargin: {
+    marginTop: ms(10),
   },
   statsCard: {
     flex: 1,
@@ -68,6 +74,9 @@ const styles = StyleSheet.create({
   searchContainer: {
     marginBottom: ms(16),
   },
+  searchInput: {
+    height: ms(40),
+  },
   filterRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -98,6 +107,23 @@ const styles = StyleSheet.create({
     color: COLORS.white,
   },
   tableContainer: {},
+  noDataView: {
+    alignItems: 'center',
+    marginTop: ms(40),
+    paddingHorizontal: ms(20),
+  },
+  noDataHeader: {
+    ...THEME.fontStyle.h4Bold,
+    color: COLORS.lightGray,
+    textAlign: 'center',
+    marginTop: ms(20),
+  },
+  noDataSubHeader: {
+    ...THEME.fontStyle.h6Regular,
+    color: COLORS.subText,
+    textAlign: 'center',
+    marginTop: ms(5),
+  },
 
   //   Table Row
   tableRow: {
@@ -131,6 +157,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: ms(8),
   },
+  avatarImg: {
+    width: ms(32),
+    height: ms(32),
+    borderRadius: ms(16),
+  },
   avatarText: {
     ...THEME.fontStyle.h6Bold,
     color: COLORS.white,
@@ -156,7 +187,7 @@ const styles = StyleSheet.create({
     fontSize: ms(11),
   },
   statusBadge: {
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: COLORS.lightGray,
     borderRadius: ms(12),
     paddingHorizontal: ms(8),
@@ -166,9 +197,60 @@ const styles = StyleSheet.create({
     ...THEME.fontStyle.h7Regular,
     color: COLORS.white,
     fontSize: ms(10),
+    textTransform: 'capitalize',
   },
   space: {
     marginBottom: ms(20),
+  },
+
+  // Selection Modal
+  modalStyle: {
+    justifyContent: 'flex-end',
+    margin: 0,
+  },
+  modalContainer: {
+    backgroundColor: COLORS.cardBG,
+    padding: ms(20),
+    borderTopLeftRadius: ms(20),
+    borderTopRightRadius: ms(20),
+  },
+  modalTitle: {
+    ...THEME.fontStyle.h3Bold,
+    textAlign: 'center',
+    marginBottom: ms(20),
+  },
+  itemSelect: {
+    paddingVertical: ms(15),
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  itemTxt: {
+    ...THEME.fontStyle.h3Regular,
+    color: COLORS.white,
+  },
+
+  // Footer
+  loader: {
+    marginVertical: ms(20),
+  },
+  loadTouch: {
+    marginVertical: ms(20),
+    padding: ms(12),
+    alignItems: 'center',
+    backgroundColor: COLORS.innerCardBG,
+    borderRadius: ms(8),
+    borderWidth: 1,
+    borderColor: COLORS.outlineGrey,
+    marginHorizontal: ms(20),
+  },
+  loadTxt: {
+    ...THEME.fontStyle.h4Bold,
+  },
+  extSpc: {
+    height: ms(50),
   },
 });
 

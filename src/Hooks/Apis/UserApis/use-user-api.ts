@@ -348,6 +348,17 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiUpdateMemberAutoApprove),
   );
 
+  // Member Transactions Apis
+  const [
+    apiGetMemberTransactionsLoading,
+    setApiGetMemberTransactionsLoading,
+  ] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetMemberTransactionsLoading),
+  );
+  const [apiGetMemberTransactions, setApiGetMemberTransactions] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetMemberTransactions),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -1171,6 +1182,24 @@ const useUserApi = () => {
     }
   }
 
+  // Get Member Transactions
+  async function getMemberTransactions(slug: string, query: string) {
+    try {
+      setApiGetMemberTransactionsLoading(true);
+      const url = ApiEndPoints.memberTransactions.replace(':slug', slug);
+      const res: any = await api.get(url + query);
+      setApiGetMemberTransactions(res);
+      setApiGetMemberTransactionsLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching member transactions:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiGetMemberTransactionsLoading(false);
+    }
+  }
+
   return {
     // Auth Apis
     getUserUnifiedLogin,
@@ -1371,6 +1400,11 @@ const useUserApi = () => {
     updateMemberAutoApprove,
     apiUpdateMemberAutoApproveLoading,
     apiUpdateMemberAutoApprove,
+
+    // Member Transactions
+    getMemberTransactions,
+    apiGetMemberTransactionsLoading,
+    apiGetMemberTransactions,
 
     // Auth Token for external downloads
     userToken,

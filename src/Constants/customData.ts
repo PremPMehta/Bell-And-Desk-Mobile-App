@@ -627,3 +627,22 @@ export const LANGUAGES = [
   { code: 'en', name: 'English', nativeName: 'English' },
   { code: 'es', name: 'Spanish', nativeName: 'Español' },
 ];
+
+export const statusOptions = [
+  { label: 'All Status', value: 'all' },
+  { label: 'Succeeded', value: 'succeeded' },
+  { label: 'Pending', value: 'pending' },
+  { label: 'Failed', value: 'failed' },
+  { label: 'Refunded', value: 'refunded' },
+];
+
+export const sortOptions = [
+  { label: 'Date', value: 'createdAt' },
+  { label: 'Amount', value: 'amount' },
+  { label: 'Status', value: 'status' },
+];
+
+export const orderOptions = [
+  { label: 'Desc', value: 'desc' },
+  { label: 'Asc', value: 'asc' },
+];

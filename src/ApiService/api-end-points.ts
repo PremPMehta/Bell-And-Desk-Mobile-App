@@ -53,4 +53,7 @@ export const ApiEndPoints = {
 
   // Member Auto Approve
   memberAutoApprove: 'communities/member-auto-approve/:slug',
+
+  // Member Transactions
+  memberTransactions: 'transactions/community/:slug',
 };

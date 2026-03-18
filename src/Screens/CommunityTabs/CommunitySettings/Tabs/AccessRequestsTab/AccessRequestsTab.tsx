@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './style';
 import { COLORS } from '@/Assets/Theme/colors';
 import Icon from '@/Components/Core/Icons';
@@ -29,7 +29,7 @@ const AccessRequestsTab = ({ slug }: Props) => {
   const [accessRequestAcceptance, setAccessRequestAcceptance] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (slug) {
       setIsPageLoading(true);
       clearMemberAutoApproveState();
