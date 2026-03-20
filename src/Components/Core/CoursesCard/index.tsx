@@ -22,6 +22,8 @@ interface CoursesCardProps {
   onEyePress: () => void;
   onEditPress: () => void;
   onDeletePress: () => void;
+  role?: string;
+  isLocked?: boolean;
 }
 
 const CoursesCard: React.FC<CoursesCardProps> = ({
@@ -35,6 +37,8 @@ const CoursesCard: React.FC<CoursesCardProps> = ({
   onEyePress,
   onEditPress,
   onDeletePress,
+  role = 'member',
+  isLocked = false,
 }) => {
   const [imageError, setImageError] = useState(false);
 
@@ -45,18 +49,31 @@ const CoursesCard: React.FC<CoursesCardProps> = ({
     return { uri: bannerImage as string };
   };
 
+  const isOwner = role === 'owner';
+
   return (
     <View style={styles.cardContainer}>
       <View style={styles.actionContainer}>
-        <TouchableOpacity style={styles.eyeStyle} onPress={onEyePress}>
-          <Icon name="Eye" size={16} color={COLORS.primary} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.editStyle} onPress={onEditPress}>
-          <Icon name="Pencil" size={16} color={COLORS.primary} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.deleteStyle} onPress={onDeletePress}>
-          <Icon name="Trash2" size={16} color={COLORS.primary} />
-        </TouchableOpacity>
+        {!isLocked && (
+          <TouchableOpacity style={styles.eyeStyle} onPress={onEyePress}>
+            <Icon name="Eye" size={16} color={COLORS.primary} />
+          </TouchableOpacity>
+        )}
+        {isOwner && (
+          <>
+            <TouchableOpacity style={styles.editStyle} onPress={onEditPress}>
+              <Icon name="Pencil" size={16} color={COLORS.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.deleteStyle} onPress={onDeletePress}>
+              <Icon name="Trash2" size={16} color={COLORS.primary} />
+            </TouchableOpacity>
+          </>
+        )}
+        {isLocked && (
+          <View style={styles.lockStyle}>
+            <Icon name="Lock" size={16} color={COLORS.primary} />
+          </View>
+        )}
       </View>
 
       {/* Banner */}

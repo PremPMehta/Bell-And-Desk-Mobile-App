@@ -43,6 +43,12 @@ const styles = StyleSheet.create({
     padding: ms(6),
     borderRadius: ms(20),
   },
+  lockStyle: {
+    top: ms(42),
+    backgroundColor: COLORS.white,
+    padding: ms(6),
+    borderRadius: ms(20),
+  },
   contentContainer: {
     paddingHorizontal: ms(10),
     paddingVertical: ms(12),

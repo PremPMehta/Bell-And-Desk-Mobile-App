@@ -48,6 +48,10 @@ export const AtomKeys = {
 
   apiGetCourseDetailsLoading: 'apiGetCourseDetailsLoading',
   apiGetCourseDetails: 'apiGetCourseDetails',
+  apiCreateCourseLoading: 'apiCreateCourseLoading',
+  apiCreateCourse: 'apiCreateCourse',
+  apiDeleteCourseLoading: 'apiDeleteCourseLoading',
+  apiDeleteCourse: 'apiDeleteCourse',
 
   /* Community Board Screen */
   // Get Social Feed Categories

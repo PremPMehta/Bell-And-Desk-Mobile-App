@@ -108,6 +108,22 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiGetCourseDetails),
   );
 
+  // Create Course Apis
+  const [apiCreateCourseLoading, setApiCreateCourseLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiCreateCourseLoading),
+  );
+  const [apiCreateCourse, setApiCreateCourse] = useAtom(
+    objectAtomFamily(AtomKeys.apiCreateCourse),
+  );
+
+  // Delete Course Apis
+  const [apiDeleteCourseLoading, setApiDeleteCourseLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiDeleteCourseLoading),
+  );
+  const [apiDeleteCourse, setApiDeleteCourse] = useAtom(
+    objectAtomFamily(AtomKeys.apiDeleteCourse),
+  );
+
   // Get Community Board Apis
   const [
     apiGetSocialFeedCategoriesLoading,
@@ -349,12 +365,10 @@ const useUserApi = () => {
   );
 
   // Member Transactions Apis
-  const [
-    apiGetMemberTransactionsLoading,
-    setApiGetMemberTransactionsLoading,
-  ] = useAtom(
-    booleanDefaultFalseAtomFamily(AtomKeys.apiGetMemberTransactionsLoading),
-  );
+  const [apiGetMemberTransactionsLoading, setApiGetMemberTransactionsLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiGetMemberTransactionsLoading),
+    );
   const [apiGetMemberTransactions, setApiGetMemberTransactions] = useAtom(
     objectAtomFamily(AtomKeys.apiGetMemberTransactions),
   );
@@ -607,6 +621,47 @@ const useUserApi = () => {
   function clearCourseDetails() {
     setApiGetCourseDetails(null);
     setApiGetCourseDetailsLoading(false);
+  }
+
+  // Create Course
+  async function createCourse(body: any) {
+    try {
+      setApiCreateCourseLoading(true);
+      const res: any = await api.post(ApiEndPoints.communityCourses, body);
+      setApiCreateCourse(res);
+      setApiCreateCourseLoading(false);
+      ToastModule.successTop({
+        msg: res?.message || 'Course created successfully!',
+      });
+      return res;
+    } catch (error: any) {
+      console.error('Error creating course:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiCreateCourseLoading(false);
+    }
+  }
+
+  // Delete Course
+  async function deleteCourse(courseId: string) {
+    try {
+      setApiDeleteCourseLoading(true);
+      const url = ApiEndPoints.courseDetails.replace(':courseId', courseId);
+      const res: any = await api.delete(url);
+      setApiDeleteCourse(res);
+      setApiDeleteCourseLoading(false);
+      ToastModule.successTop({
+        msg: res?.message || 'Course deleted successfully!',
+      });
+      return res;
+    } catch (error: any) {
+      console.error('Error deleting course:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiDeleteCourseLoading(false);
+    }
   }
 
   // Get Social Feed Categories for Community Board Screen
@@ -1251,6 +1306,16 @@ const useUserApi = () => {
     getCommunityCourses,
     apiGetCommunityCoursesLoading,
     apiGetCommunityCourses,
+
+    // Create Course
+    createCourse,
+    apiCreateCourseLoading,
+    apiCreateCourse,
+
+    // Delete Course
+    deleteCourse,
+    apiDeleteCourseLoading,
+    apiDeleteCourse,
 
     // Get Course Details
     getCourseDetails,

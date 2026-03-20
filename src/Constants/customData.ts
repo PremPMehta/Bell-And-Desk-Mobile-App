@@ -294,14 +294,68 @@ export const TARGET_AUDIENCE_DATA = [
 ];
 
 export const CATEGORY_DATA = [
-  { id: '1', value: 'Technology' },
-  { id: '2', value: 'Business' },
-  { id: '3', value: 'Art' },
+  // { id: '1', value: 'Technology' },
+  // { id: '2', value: 'Business' },
+  // { id: '3', value: 'Art' },
+  { id: '1', value: 'Bitcoin, Ethereum, Altcoins' },
+  { id: '2', value: 'DeFi, NFTs, Web3' },
+  { id: '3', value: 'On-chain analysis & portfolio building' },
+  { id: '4', value: 'Currency pairs (major, minor, exotic)' },
+  { id: '5', value: 'Technical & fundamental analysis' },
+  { id: '6', value: 'Risk management strategies' },
+  { id: '7', value: 'Equity fundamentals & valuation' },
+  { id: '8', value: 'Technical charting & price action' },
+  { id: '9', value: 'Dividend & growth investing' },
+  { id: '10', value: 'Options basics (calls, puts, spreads)' },
+  { id: '11', value: 'Futures & hedging strategies' },
+  { id: '12', value: 'Advanced Greeks & risk modeling' },
+  { id: '13', value: 'Gold, silver, oil, agricultural products' },
+  { id: '14', value: 'Supply-demand cycles & geopolitical factors' },
+  { id: '15', value: 'Futures contracts' },
+  { id: '16', value: 'S&P 500, NASDAQ, Dow Jones' },
+  { id: '17', value: 'Global index tracking' },
+  { id: '18', value: 'Leveraged & inverse ETFs' },
+  { id: '19', value: 'Chart patterns, candlesticks, indicators' },
+  { id: '20', value: 'Trend following vs. contrarian setups' },
+  { id: '21', value: 'Algorithmic & automated trading' },
+  { id: '22', value: 'Economic indicators & central banks' },
+  { id: '23', value: 'Earnings, balance sheets, valuation models' },
+  { id: '24', value: 'Global macro & intermarket analysis' },
+  { id: '25', value: 'Position sizing & stop-loss rules' },
+  { id: '26', value: 'Emotional discipline in trading' },
+  { id: '27', value: 'Building sustainable trading systems' },
+  { id: '28', value: 'Automation, prompts, agents, and AI-powered businesses' },
+  {
+    id: '29',
+    value: 'Tokenization of real estate, art, and real-world finance',
+  },
+  { id: '30', value: 'On-chain governance, voting, participation' },
+  {
+    id: '31',
+    value: 'Smart contracts, Solidity, dApps, blockchain infrastructure',
+  },
+  { id: '32', value: 'Taxes, fiscal reporting, crypto compliance' },
+  { id: '33', value: 'Legal smart contracts, Web3 regulation' },
+  { id: '34', value: 'Education' },
+  { id: '35', value: 'Finance' },
+  { id: '36', value: 'Business' },
+  { id: '37', value: 'Self Improvement' },
+  { id: '38', value: 'Fitness' },
+  { id: '39', value: 'Health' },
+  { id: '40', value: 'Sports' },
+  { id: '41', value: 'Music' },
+  { id: '42', value: 'Food' },
+  { id: '43', value: 'Gaming' },
 ];
 
 export const COURSE_TYPE_DATA = [
   { id: '1', value: 'Free' },
   { id: '2', value: 'Paid' },
+];
+
+export const CONTENT_TYPE_DATA = [
+  { id: '1', value: 'Video Based' },
+  { id: '2', value: 'Text Based' },
 ];
 
 export const MEMBER_FILTER_TABS = [
