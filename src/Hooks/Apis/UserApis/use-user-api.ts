@@ -124,6 +124,14 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiDeleteCourse),
   );
 
+  // Update Course Apis
+  const [apiUpdateCourseLoading, setApiUpdateCourseLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiUpdateCourseLoading),
+  );
+  const [apiUpdateCourse, setApiUpdateCourse] = useAtom(
+    objectAtomFamily(AtomKeys.apiUpdateCourse),
+  );
+
   // Get Community Board Apis
   const [
     apiGetSocialFeedCategoriesLoading,
@@ -661,6 +669,27 @@ const useUserApi = () => {
         msg: error?.resError?.message || error?.message,
       });
       setApiDeleteCourseLoading(false);
+    }
+  }
+
+  // Update Course
+  async function updateCourse(id: string, body: any) {
+    try {
+      setApiUpdateCourseLoading(true);
+      const url = ApiEndPoints.courseDetails.replace(':courseId', id);
+      const res: any = await api.put(url, body);
+      setApiUpdateCourse(res);
+      setApiUpdateCourseLoading(false);
+      ToastModule.successTop({
+        msg: res?.message || 'Course updated successfully!',
+      });
+      return res;
+    } catch (error: any) {
+      console.error('Error updating course:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiUpdateCourseLoading(false);
     }
   }
 
@@ -1311,6 +1340,11 @@ const useUserApi = () => {
     createCourse,
     apiCreateCourseLoading,
     apiCreateCourse,
+
+    // Update Course
+    updateCourse,
+    apiUpdateCourseLoading,
+    apiUpdateCourse,
 
     // Delete Course
     deleteCourse,

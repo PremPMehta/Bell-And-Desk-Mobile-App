@@ -30,6 +30,7 @@ interface CreateCourseModalProps {
   communityId: string;
   onClose: () => void;
   onSave: (courseData: any) => void;
+  editCourseData?: any;
 }
 
 const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
@@ -37,18 +38,40 @@ const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
   communityId,
   onClose,
   onSave,
+  editCourseData,
 }) => {
   const [user] = useAtom(userAtom);
-  const { createCourse, apiCreateCourseLoading } = useUserApi();
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [targetAudience, setTargetAudience] = useState('');
-  const [category, setCategory] = useState('');
-  const [courseType, setCourseType] = useState('');
-  const [contentType, setContentType] = useState('');
-  const [thumbnail, setThumbnail] = useState<string | null>(null);
+  const {
+    createCourse,
+    apiCreateCourseLoading,
+    updateCourse,
+    apiUpdateCourseLoading,
+  } = useUserApi();
+  const [title, setTitle] = useState(editCourseData?.title || '');
+  const [description, setDescription] = useState(editCourseData?.description || '');
+  const [targetAudience, setTargetAudience] = useState(editCourseData?.targetAudience || '');
+  const [category, setCategory] = useState(editCourseData?.category || '');
+  const [courseType, setCourseType] = useState(
+    editCourseData?.isFree ? 'Free' : 'Paid',
+  );
+  const [contentType, setContentType] = useState(
+    editCourseData?.contentType === 'video' ? 'Video Based' : 'Text Based',
+  );
+  const [thumbnail, setThumbnail] = useState<string | null>(editCourseData?.thumbnail || null);
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  React.useEffect(() => {
+    if (editCourseData) {
+      setTitle(editCourseData.title || '');
+      setDescription(editCourseData.description || '');
+      setTargetAudience(editCourseData.targetAudience || '');
+      setCategory(editCourseData.category || '');
+      setCourseType(editCourseData.isFree === true ? 'Free' : 'Paid');
+      setContentType(editCourseData.contentType === 'video' ? 'Video Based' : 'Text Based');
+      setThumbnail(editCourseData.thumbnail || null);
+    }
+  }, [editCourseData]);
 
   const validate = () => {
     const newErrors: { [key: string]: string } = {};
@@ -71,21 +94,28 @@ const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
         title: title,
         description: description,
         category: category,
-        chapters: [],
+        chapters: editCourseData?.chapters || [],
         community: communityId,
         contentType: contentType === 'Video Based' ? 'video' : 'text',
+        courseType: courseType.toLowerCase(),
         instructor: (user as any)?._id || (user as any)?.id,
         isFree: courseType === 'Free',
-        learningOutcomes: [],
-        price: 0,
-        requirements: [],
-        status: 'draft',
-        tags: [],
+        learningOutcomes: editCourseData?.learningOutcomes || [],
+        price: editCourseData?.price || 0,
+        requirements: editCourseData?.requirements || [],
+        status: editCourseData?.status || 'draft',
+        tags: editCourseData?.tags || [],
         targetAudience: targetAudience,
         thumbnail: thumbnail || '',
       };
 
-      const res = await createCourse(payload);
+      let res;
+      if (editCourseData) {
+        res = await updateCourse(editCourseData._id || editCourseData.id, payload);
+      } else {
+        res = await createCourse(payload);
+      }
+
       if (res) {
         onSave(res.data || res);
         handleClose();
@@ -135,7 +165,9 @@ const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
     >
       <View style={styles.mainModalView}>
         <View style={styles.header}>
-          <Text style={styles.title}>Create Course</Text>
+          <Text style={styles.title}>
+            {editCourseData ? 'Edit Course' : 'Create Course'}
+          </Text>
           <TouchableOpacity onPress={handleClose}>
             <Icon name="X" size={24} color={COLORS.white} />
           </TouchableOpacity>
@@ -290,10 +322,12 @@ const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
             onPress={handleSave}
             disabled={apiCreateCourseLoading}
           >
-            {apiCreateCourseLoading ? (
+            {apiCreateCourseLoading || apiUpdateCourseLoading ? (
               <ActivityIndicator color={COLORS.white} size="small" />
             ) : (
-              <Text style={styles.saveButtonText}>Save</Text>
+              <Text style={styles.saveButtonText}>
+                {editCourseData ? 'Update Course' : 'Save'}
+              </Text>
             )}
           </TouchableOpacity>
         </View>

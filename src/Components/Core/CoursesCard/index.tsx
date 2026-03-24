@@ -10,6 +10,7 @@ import styles from './style';
 import Icon from '../Icons';
 import { COLORS } from '@/Assets/Theme/colors';
 import { AppImages } from '@/Assets/Images';
+import { getFullImageUrl } from '@/Utils/ImageUtils';
 
 interface CoursesCardProps {
   name: string;
@@ -46,7 +47,8 @@ const CoursesCard: React.FC<CoursesCardProps> = ({
     if (imageError || !bannerImage) {
       return AppImages.homeBanner;
     }
-    return { uri: bannerImage as string };
+    const fullUrl = getFullImageUrl(bannerImage as string);
+    return { uri: fullUrl };
   };
 
   const isOwner = role === 'owner';
@@ -64,7 +66,10 @@ const CoursesCard: React.FC<CoursesCardProps> = ({
             <TouchableOpacity style={styles.editStyle} onPress={onEditPress}>
               <Icon name="Pencil" size={16} color={COLORS.primary} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.deleteStyle} onPress={onDeletePress}>
+            <TouchableOpacity
+              style={styles.deleteStyle}
+              onPress={onDeletePress}
+            >
               <Icon name="Trash2" size={16} color={COLORS.primary} />
             </TouchableOpacity>
           </>
@@ -110,11 +115,17 @@ const CoursesCard: React.FC<CoursesCardProps> = ({
 
         {/* Community */}
         <View style={styles.buttonContainer}>
-          {/* <Image
-            source={AppImages.communityLogo}
+          <Image
+            source={
+              community?.logo
+                ? { uri: getFullImageUrl(community.logo) }
+                : AppImages.homeBanner
+            }
             style={styles.communityLogo}
-          /> */}
-          <Text style={styles.communityText}>{`By ${community?.name}`}</Text>
+          />
+          <Text style={styles.communityText}>{`By ${
+            community?.ownerName || community?.name || 'Community'
+          }`}</Text>
         </View>
       </View>
     </View>

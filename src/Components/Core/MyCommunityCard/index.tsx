@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import styles from './style';
 import { AppImages } from '@/Assets/Images';
+import { getFullImageUrl } from '@/Utils/ImageUtils';
 
 interface CommunityCardProps {
   name: string;
@@ -32,7 +33,7 @@ const MyCommunityCard: React.FC<CommunityCardProps> = ({
     if (imageError || !bannerImage) {
       return AppImages.homeBanner;
     }
-    return { uri: bannerImage as string };
+    return { uri: getFullImageUrl(bannerImage as string) };
   };
   return (
     <TouchableOpacity

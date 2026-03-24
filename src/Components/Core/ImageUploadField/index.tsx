@@ -4,6 +4,7 @@ import { COLORS } from '@/Assets/Theme/colors';
 import { ms } from '@/Assets/Theme/fontStyle';
 import { THEME } from '@/Assets/Theme';
 import Icon from '../Icons';
+import { getFullImageUrl } from '@/Utils/ImageUtils';
 
 interface ImageUploadFieldProps {
   type?: string;
@@ -43,7 +44,10 @@ const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
       >
         {imageUri ? (
           <>
-            <Image source={{ uri: imageUri }} style={styles.imagePreview} />
+            <Image
+              source={{ uri: getFullImageUrl(imageUri) || '' }}
+              style={styles.imagePreview}
+            />
             <TouchableOpacity
               style={styles.closeButton}
               onPress={onRemoveImgPress}

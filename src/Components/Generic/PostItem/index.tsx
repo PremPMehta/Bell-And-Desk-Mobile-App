@@ -23,6 +23,7 @@ import LinkPreview from '../LinkPreview';
 import { useAtom } from 'jotai';
 import { ms } from '@/Assets/Theme/fontStyle';
 import styles from './style';
+import { getFullImageUrl } from '@/Utils/ImageUtils';
 
 import Icon from '@/Components/Core/Icons';
 import { COLORS } from '@/Assets/Theme/colors';
@@ -96,12 +97,8 @@ const PostItem = ({ post }: Props) => {
     setLocalLikesCount(post.likes);
   }, [post.isLiked, post.likes]);
 
-  const {
-    deleteSocialFeedPost,
-    voteOnPoll,
-    apiVoteOnPollLoading,
-    likePost,
-  } = useUserApi();
+  const { deleteSocialFeedPost, voteOnPoll, apiVoteOnPollLoading, likePost } =
+    useUserApi();
   const [refreshSocialFeeds, setRefreshSocialFeeds] = useAtom(
     refreshSocialFeedsAtom,
   );
@@ -309,10 +306,10 @@ const PostItem = ({ post }: Props) => {
           (prev as Post[]).map(p =>
             p.id === post.id
               ? {
-                ...p,
-                isLiked: serverLiked ?? p.isLiked,
-                likes: serverCount ?? p.likes,
-              }
+                  ...p,
+                  isLiked: serverLiked ?? p.isLiked,
+                  likes: serverCount ?? p.likes,
+                }
               : p,
           ),
         );
@@ -330,15 +327,15 @@ const PostItem = ({ post }: Props) => {
 
   const images = post.media
     ? post.media
-      .filter(m => !m.type?.includes('video'))
-      .map(m => ({ uri: m.uri }))
+        .filter(m => !m.type?.includes('video'))
+        .map(m => ({ uri: getFullImageUrl(m.uri) || '' }))
     : [];
 
   const handleMediaPress = (media: any, index: number) => {
     if (media.type?.includes('video')) {
       setMediaPreview({
         visible: true,
-        uri: media.uri || '',
+        uri: getFullImageUrl(media.uri) || '',
         type: 'video',
       });
     } else {
@@ -400,7 +397,12 @@ const PostItem = ({ post }: Props) => {
               }}
             >
               <Image
-                source={{ uri: media.uri || media.thumbnail || media.thumbnailUrl }}
+                source={{
+                  uri:
+                    getFullImageUrl(
+                      media.uri || media.thumbnail || media.thumbnailUrl,
+                    ) || '',
+                }}
                 style={{ width: '100%', height: '100%', resizeMode: 'cover' }}
               />
               {media.type?.includes('video') && (
@@ -443,10 +445,13 @@ const PostItem = ({ post }: Props) => {
       <View style={styles.header}>
         {/* Same header code, not modifying this part explicitly but showing where context is */}
         <View style={styles.avatar}>
-          {post.author.avatar.startsWith('http') ? (
-            <Image source={{ uri: post.author.avatar }} style={styles.avatar} />
+          {post.author.avatar ? (
+            <Image
+              source={{ uri: getFullImageUrl(post.author.avatar) || '' }}
+              style={styles.avatar}
+            />
           ) : (
-            <Text style={styles.avatarText}>{post.author.avatar || 'U'}</Text>
+            <Text style={styles.avatarText}>{'U'}</Text>
           )}
         </View>
         <View style={styles.headerInfo}>
@@ -557,14 +562,19 @@ const PostItem = ({ post }: Props) => {
                   onPress={() => {
                     setMediaPreview({
                       visible: true,
-                      uri: video.url,
+                      uri: getFullImageUrl(video.url) || '',
                       type: 'video',
                     });
                   }}
                 >
                   {video.thumbnail || video.thumbnailUrl ? (
                     <Image
-                      source={{ uri: video.thumbnail || video.thumbnailUrl }}
+                      source={{
+                        uri:
+                          getFullImageUrl(
+                            video.thumbnail || video.thumbnailUrl,
+                          ) || '',
+                      }}
                       style={styles.nativeVideoThumbnail}
                     />
                   ) : (

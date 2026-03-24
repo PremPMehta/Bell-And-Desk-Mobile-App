@@ -16,6 +16,7 @@ import React, {
 } from 'react';
 import styles from './style';
 import Icon from '@/Components/Core/Icons';
+import { getFullImageUrl } from '@/Utils/ImageUtils';
 import { COLORS } from '@/Assets/Theme/colors';
 import { useNavigation } from '@/Hooks/Utils/use-navigation';
 import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
@@ -190,7 +191,7 @@ const CommunityAbout = ({
       return `https://vumbnail.com/${vimeoMatch[1]}.jpg`;
     }
 
-    return null;
+    return getFullImageUrl(url);
   };
 
   const mediaList = useMemo(() => {
@@ -335,7 +336,7 @@ const CommunityAbout = ({
           <View style={styles.avatar}>
             <Image
               source={{
-                uri: communityData?.logo,
+                uri: getFullImageUrl(communityData?.logo) || '',
               }}
               style={{ width: '100%', height: '100%', borderRadius: 100 }}
             />
@@ -370,7 +371,7 @@ const CommunityAbout = ({
           />
         ) : (
           <Image
-            source={{ uri: activeItem?.uri }}
+            source={{ uri: getFullImageUrl(activeItem?.uri) || '' }}
             style={{
               width: '100%',
               height: '100%',
@@ -443,7 +444,7 @@ const CommunityAbout = ({
                   </>
                 ) : (
                   <Image
-                    source={{ uri: item.uri }}
+                    source={{ uri: getFullImageUrl(item.uri) || '' }}
                     style={styles.thumbnailImage}
                   />
                 )}

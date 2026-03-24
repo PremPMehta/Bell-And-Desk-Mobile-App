@@ -45,6 +45,7 @@ const CommunityCoursesSkeleton = () => {
 
         {/* Community Info Skeleton */}
         <View style={styles.communityContainer}>
+          <Skeleton width={ms(30)} height={ms(30)} borderRadius={ms(30)} />
           <Skeleton width={ms(120)} height={ms(16)} />
         </View>
       </View>
@@ -117,6 +118,7 @@ const styles = StyleSheet.create({
   communityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: ms(8),
   },
   headerRow: {
     flexDirection: 'row',

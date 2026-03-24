@@ -33,7 +33,7 @@ export default StyleSheet.create({
     marginLeft: ms(12),
   },
   headerSubTitle: {
-    ...THEME.fontStyle.h5Bold,
+    ...THEME.fontStyle.h6Regular,
     marginLeft: ms(12),
     marginTop: vs(4),
   },

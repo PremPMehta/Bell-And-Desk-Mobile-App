@@ -44,16 +44,19 @@ const CommunityCourses = ({
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [editCourseData, setEditCourseData] = useState<any>(null);
 
   const courses = apiGetCommunityCourses?.courses || [];
   console.log('🚀 ~ CommunityCourses ~ courses:', courses);
 
-  const communityRole = React.useMemo(() => {
-    const community = (user as any)?.allCommunities?.find(
+  const communityDetails = React.useMemo(() => {
+    return (user as any)?.allCommunities?.find(
       (c: any) => c._id === communityId || c.id === communityId,
     );
-    return community?.role || 'member';
   }, [user, communityId]);
+
+  const communityRole = communityDetails?.role || 'member';
+  const communityName = communityDetails?.name || '';
 
   useEffect(() => {
     if (communityId) {
@@ -72,8 +75,16 @@ const CommunityCourses = ({
       )
     : courses;
 
-  const handleCoursePress = (courseId: string) => {
+  const handleViewCourse = (courseId: string) => {
     navigation.navigate('CourseView', { courseId });
+  };
+
+  const handleEditCourse = (course: any) => {
+    navigation.navigate('EditCourse', {
+      courseData: course,
+      communityName,
+      communityId,
+    });
   };
 
   const renderItem = ({ item }: { item: any }) => {
@@ -83,7 +94,7 @@ const CommunityCourses = ({
       item.isFree === false;
 
     return (
-      <Pressable onPress={() => handleCoursePress(item._id)}>
+      <Pressable onPress={() => handleViewCourse(item._id)}>
         <CoursesCard
           name={item.title}
           description={item.description}
@@ -91,12 +102,13 @@ const CommunityCourses = ({
           category={item.category}
           contentType={item.contentType}
           targetAudience={item.targetAudience}
-          community={item.community}
+          community={communityDetails}
           role={communityRole}
           isLocked={isLocked}
-          onEyePress={() => handleCoursePress(item._id)}
+          onEyePress={() => handleEditCourse(item)}
           onEditPress={() => {
-            // Handle edit press
+            setEditCourseData(item);
+            setIsCreateModalVisible(true);
           }}
           onDeletePress={() => {
             setSelectedCourse(item);
@@ -108,14 +120,28 @@ const CommunityCourses = ({
   };
 
   const handleCreateCourse = () => {
+    setEditCourseData(null);
     setIsCreateModalVisible(true);
   };
 
   const handleSaveCourse = (courseData: any) => {
     console.log('Course Data:', courseData);
+    const wasEditing = !!editCourseData;
+    setIsCreateModalVisible(false);
+    setEditCourseData(null);
+
+    // Silently update the list
     if (communityId) {
       const query = `?community=${communityId}`;
       getCommunityCourses(query);
+    }
+
+    if (!wasEditing) {
+      navigation.navigate('EditCourse', {
+        courseData,
+        communityName,
+        communityId,
+      });
     }
   };
 
@@ -170,7 +196,11 @@ const CommunityCourses = ({
       <CreateCourseModal
         visible={isCreateModalVisible}
         communityId={communityId || ''}
-        onClose={() => setIsCreateModalVisible(false)}
+        editCourseData={editCourseData}
+        onClose={() => {
+          setIsCreateModalVisible(false);
+          setEditCourseData(null);
+        }}
         onSave={handleSaveCourse}
       />
 
@@ -192,7 +222,9 @@ const CommunityCourses = ({
 
           <View style={styles.modalBody}>
             <Text style={styles.modalMessage}>
-              Are you sure you want to delete <Text style={styles.boldName}>"{selectedCourse?.title}"</Text>? This action cannot be undone.
+              Are you sure you want to delete{' '}
+              <Text style={styles.boldName}>"{selectedCourse?.title}"</Text>?
+              This action cannot be undone.
             </Text>
           </View>
 

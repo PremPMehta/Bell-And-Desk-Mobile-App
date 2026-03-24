@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from '@/Components/Core/Icons';
 import { COLORS } from '@/Assets/Theme/colors';
 import { useNavigation } from '@/Hooks/Utils/use-navigation';
+import { getFullImageUrl } from '@/Utils/ImageUtils';
 import CommunityMenuTabs from '@/Components/Core/CommunityMenuTabs';
 import WebView from 'react-native-webview';
 import styles from './style';
@@ -90,7 +91,7 @@ const buildVideoSource = (url: string, videoType?: string) => {
         </style>
       </head>
       <body>
-        <video controls playsinline src="${url}"></video>
+        <video controls playsinline src="${getFullImageUrl(url)}"></video>
       </body>
     </html>
   `;
@@ -170,7 +171,7 @@ const getVideoThumbnail = (url: string) => {
     return `https://vumbnail.com/${vimeoMatch[1]}.jpg`;
   }
 
-  return null;
+  return getFullImageUrl(url);
 };
 
 const CourseView = () => {
@@ -384,7 +385,7 @@ const CourseView = () => {
             numberOfLines={1}
             style={[
               styles.headerSubTitle,
-              { opacity: headerTitleOpacity, color: COLORS.white },
+              { opacity: headerTitleOpacity, color: COLORS.subText },
             ]}
           >
             {course?.title || 'Course Details'}
@@ -526,7 +527,7 @@ const CourseView = () => {
                                       <Image
                                         source={{
                                           uri:
-                                            lesson.thumbnail ||
+                                            getFullImageUrl(lesson.thumbnail) ||
                                             getVideoThumbnail(
                                               lesson.videoUrl || lesson.url,
                                             ) ||

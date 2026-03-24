@@ -107,9 +107,9 @@ const styles = StyleSheet.create({
     marginTop: ms(16),
   },
   communityLogo: {
-    width: sc(20),
-    height: vs(20),
-    borderRadius: ms(20),
+    width: ms(24),
+    height: ms(24),
+    borderRadius: ms(30),
   },
   communityText: {
     ...THEME.fontStyle.h6Regular,

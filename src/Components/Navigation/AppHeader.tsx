@@ -9,6 +9,7 @@ import { THEME } from '@/Assets/Theme';
 import Icon from '../Core/Icons';
 import { ms, sc, vs } from '@/Assets/Theme/fontStyle';
 import { AppImages } from '@/Assets/Images';
+import { getFullImageUrl } from '@/Utils/ImageUtils';
 
 import { useAtomValue } from 'jotai';
 import { userTokenAtom, userAtom } from '@/Jotai/Atoms';
@@ -100,7 +101,9 @@ const AppHeader = () => {
           {profileImage ? (
             <Image
               source={
-                profileImage ? { uri: profileImage } : AppImages.communityLogo
+                profileImage
+                  ? { uri: getFullImageUrl(profileImage) }
+                  : AppImages.communityLogo
               }
               style={styles.profileImg}
             />
