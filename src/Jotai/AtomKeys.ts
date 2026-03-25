@@ -132,6 +132,12 @@ export const AtomKeys = {
   apiDeleteCoupon: 'apiDeleteCoupon',
   apiGetCouponHistoryLoading: 'apiGetCouponHistoryLoading',
   apiGetCouponHistory: 'apiGetCouponHistory',
+  apiGetAvailableCouponsLoading: 'apiGetAvailableCouponsLoading',
+  apiGetAvailableCoupons: 'apiGetAvailableCoupons',
+  apiValidateCouponLoading: 'apiValidateCouponLoading',
+  apiValidateCoupon: 'apiValidateCoupon',
+  apiGetSubscriptionSettingsLoading: 'apiGetSubscriptionSettingsLoading',
+  apiGetSubscriptionSettings: 'apiGetSubscriptionSettings',
 
   // Member Auto Approve
   apiUpdateMemberAutoApproveLoading: 'apiUpdateMemberAutoApproveLoading',
@@ -142,4 +148,8 @@ export const AtomKeys = {
   // Member Transactions
   apiGetMemberTransactionsLoading: 'apiGetMemberTransactionsLoading',
   apiGetMemberTransactions: 'apiGetMemberTransactions',
+
+  // One-Time Payment Settings
+  apiGetOneTimePaymentSettingsLoading: 'apiGetOneTimePaymentSettingsLoading',
+  apiGetOneTimePaymentSettings: 'apiGetOneTimePaymentSettings',
 };

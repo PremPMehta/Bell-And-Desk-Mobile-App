@@ -50,10 +50,19 @@ export const ApiEndPoints = {
   // Coupons
   coupons: 'coupons/:slug',
   couponHistory: 'coupons/:slug/:couponId/history',
+  availableCoupons: 'coupons/:slug/available',
+  validateCoupon: 'coupons/:slug/validate',
+
+  // Subscription Settings
+  subscriptionSettings: 'stripe/community/subscription-settings/:slug/public',
 
   // Member Auto Approve
   memberAutoApprove: 'communities/member-auto-approve/:slug',
 
   // Member Transactions
   memberTransactions: 'transactions/community/:slug',
+
+  // One-Time Payment Settings
+  oneTimePaymentSettings:
+    'stripe/community/one-time-payment-settings/:slug/public',
 };

@@ -19,6 +19,7 @@ import { useNavigation } from '@/Hooks/Utils/use-navigation';
 import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 import CommunityCoursesSkeleton from '@/Components/Core/Skeleton/CommunityCoursesSkeleton';
 import CreateCourseModal from '@/Components/Generic/Modals/CreateCourseModal';
+import CourseSubscriptionModal from '@/Components/Generic/Modals/CourseSubscriptionModal';
 
 interface Props {
   communityId?: string;
@@ -41,8 +42,11 @@ const CommunityCourses = ({
     apiDeleteCourseLoading,
   } = useUserApi();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isSubscriptionModalVisible, setIsSubscriptionModalVisible] =
+    useState(false);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [editCourseData, setEditCourseData] = useState<any>(null);
 
@@ -57,11 +61,15 @@ const CommunityCourses = ({
 
   const communityRole = communityDetails?.role || 'member';
   const communityName = communityDetails?.name || '';
+  const communitySlug = communityDetails?.subdomain || '';
 
   useEffect(() => {
     if (communityId) {
+      setIsInitialLoading(true);
       const query = `?community=${communityId}`;
-      getCommunityCourses(query);
+      getCommunityCourses(query).finally(() => {
+        setIsInitialLoading(false);
+      });
     }
   }, [communityId]);
 
@@ -93,8 +101,20 @@ const CommunityCourses = ({
       item.courseType === 'paid' &&
       item.isFree === false;
 
+    const isSubscriptionCourse =
+      item.courseType === 'paid' && item.paymentType === 'subscription';
+
+    const handleCardPress = () => {
+      if (isLocked) {
+        setSelectedCourse(item);
+        setIsSubscriptionModalVisible(true);
+      } else {
+        handleViewCourse(item._id || item.id);
+      }
+    };
+
     return (
-      <Pressable onPress={() => handleViewCourse(item._id)}>
+      <Pressable onPress={handleCardPress}>
         <CoursesCard
           name={item.title}
           description={item.description}
@@ -147,10 +167,8 @@ const CommunityCourses = ({
 
   return (
     <View style={styles.container}>
-      {/* <Text style={{ color: 'white' }}>CommunityCourses</Text> */}
-
       {/* SEARCH */}
-      {courses.length > 0 && (
+      {/* {courses.length > 0 && (
         <View style={styles.searchContainer}>
           <SearchBar
             value={searchQuery}
@@ -163,9 +181,9 @@ const CommunityCourses = ({
             <Text style={styles.createTxt}>Create</Text>
           </TouchableOpacity>
         </View>
-      )}
+      )} */}
 
-      {apiGetCommunityCoursesLoading && courses.length === 0 ? (
+      {isInitialLoading ? (
         <CommunityCoursesSkeleton />
       ) : courses.length === 0 ? (
         <View style={styles.emptyStateContainer}>
@@ -182,15 +200,35 @@ const CommunityCourses = ({
           </TouchableOpacity>
         </View>
       ) : (
-        <Animated.FlatList
-          data={filteredCourses}
-          renderItem={renderItem}
-          keyExtractor={item => item._id || item.id}
-          contentContainerStyle={styles.contentContainer}
-          showsVerticalScrollIndicator={false}
-          onScroll={onScroll}
-          scrollEventThrottle={scrollEventThrottle}
-        />
+        <>
+          {/* SEARCH */}
+          {courses.length > 0 && (
+            <View style={styles.searchContainer}>
+              <SearchBar
+                value={searchQuery}
+                onChangeText={onChangeSearch}
+                placeholder="Search through your courses..."
+                searchInputStyle={styles.searchInputStyle}
+              />
+              <TouchableOpacity
+                style={styles.create}
+                onPress={handleCreateCourse}
+              >
+                <Icon name="CirclePlus" size={12} color={COLORS.white} />
+                <Text style={styles.createTxt}>Create</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          <Animated.FlatList
+            data={filteredCourses}
+            renderItem={renderItem}
+            keyExtractor={item => item._id || item.id}
+            contentContainerStyle={styles.contentContainer}
+            showsVerticalScrollIndicator={false}
+            onScroll={onScroll}
+            scrollEventThrottle={scrollEventThrottle}
+          />
+        </>
       )}
 
       <CreateCourseModal
@@ -204,6 +242,17 @@ const CommunityCourses = ({
         onSave={handleSaveCourse}
       />
 
+      {/* ── Subscription Modal ─────────────────────── */}
+      <CourseSubscriptionModal
+        visible={isSubscriptionModalVisible}
+        onClose={() => setIsSubscriptionModalVisible(false)}
+        communitySlug={communitySlug}
+        communityName={communityName}
+        courses={courses}
+        course={selectedCourse}
+      />
+
+      {/* ── Delete Course Modal ────────────────────── */}
       <Modal
         isVisible={isDeleteModalVisible}
         onBackdropPress={() => setIsDeleteModalVisible(false)}

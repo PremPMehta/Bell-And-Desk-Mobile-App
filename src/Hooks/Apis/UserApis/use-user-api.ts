@@ -352,6 +352,44 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiGetCouponHistory),
   );
 
+  // Get Available Coupons (public – member side)
+  const [apiGetAvailableCouponsLoading, setApiGetAvailableCouponsLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiGetAvailableCouponsLoading),
+    );
+  const [apiGetAvailableCoupons, setApiGetAvailableCoupons] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetAvailableCoupons),
+  );
+
+  // Validate Coupon Apis
+  const [apiValidateCouponLoading, setApiValidateCouponLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiValidateCouponLoading),
+  );
+  const [apiValidateCoupon, setApiValidateCoupon] = useAtom(
+    objectAtomFamily(AtomKeys.apiValidateCoupon),
+  );
+
+  // Get Subscription Settings Apis
+  const [
+    apiGetSubscriptionSettingsLoading,
+    setApiGetSubscriptionSettingsLoading,
+  ] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetSubscriptionSettingsLoading),
+  );
+  const [apiGetSubscriptionSettings, setApiGetSubscriptionSettings] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetSubscriptionSettings),
+  );
+
+  // Get One-Time Payment Settings
+  const [
+    apiGetOneTimePaymentSettingsLoading,
+    setApiGetOneTimePaymentSettingsLoading,
+  ] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetOneTimePaymentSettingsLoading),
+  );
+  const [apiGetOneTimePaymentSettings, setApiGetOneTimePaymentSettings] =
+    useAtom(objectAtomFamily(AtomKeys.apiGetOneTimePaymentSettings));
+
   // Get Member Auto Approve
   const [apiGetMemberAutoApproveLoading, setApiGetMemberAutoApproveLoading] =
     useAtom(
@@ -1221,6 +1259,69 @@ const useUserApi = () => {
     }
   }
 
+  // Get Subscription Settings (public)
+  async function getSubscriptionSettings(slug: string) {
+    try {
+      setApiGetSubscriptionSettingsLoading(true);
+      const url = ApiEndPoints.subscriptionSettings.replace(':slug', slug);
+      const res: any = await api.get(url);
+      setApiGetSubscriptionSettings(res);
+      setApiGetSubscriptionSettingsLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching subscription settings:', error);
+      setApiGetSubscriptionSettingsLoading(false);
+    }
+  }
+
+  // Get One-Time Payment Settings (public)
+  async function getOneTimePaymentSettings(slug: string) {
+    try {
+      setApiGetOneTimePaymentSettingsLoading(true);
+      const url = ApiEndPoints.oneTimePaymentSettings.replace(':slug', slug);
+      const res: any = await api.get(url);
+      setApiGetOneTimePaymentSettings(res);
+      setApiGetOneTimePaymentSettingsLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching one-time payment settings:', error);
+      setApiGetOneTimePaymentSettingsLoading(false);
+    }
+  }
+
+  // Get Available Coupons (public – member side)
+  async function getAvailableCoupons(slug: string) {
+    try {
+      setApiGetAvailableCouponsLoading(true);
+      const url = ApiEndPoints.availableCoupons.replace(':slug', slug);
+      const res: any = await api.get(url);
+      setApiGetAvailableCoupons(res);
+      setApiGetAvailableCouponsLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching available coupons:', error);
+      setApiGetAvailableCouponsLoading(false);
+    }
+  }
+
+  // Validate Coupon (member side)
+  async function validateCoupon(slug: string, couponCode: string) {
+    try {
+      setApiValidateCouponLoading(true);
+      const url = ApiEndPoints.validateCoupon.replace(':slug', slug);
+      const res: any = await api.post(url, { couponCode });
+      setApiValidateCoupon(res);
+      setApiValidateCouponLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error validating coupon:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message || 'Invalid coupon',
+      });
+      setApiValidateCouponLoading(false);
+    }
+  }
+
   // Get Member Auto Approve
   async function getMemberAutoApprove(slug: string) {
     try {
@@ -1487,6 +1588,26 @@ const useUserApi = () => {
     getCouponHistory,
     apiGetCouponHistoryLoading,
     apiGetCouponHistory,
+
+    // Available Coupons (member side)
+    getAvailableCoupons,
+    apiGetAvailableCouponsLoading,
+    apiGetAvailableCoupons,
+
+    // Validate Coupon (member side)
+    validateCoupon,
+    apiValidateCouponLoading,
+    apiValidateCoupon,
+
+    // Subscription Settings (public)
+    getSubscriptionSettings,
+    apiGetSubscriptionSettingsLoading,
+    apiGetSubscriptionSettings,
+
+    // One-Time Payment Settings (public)
+    getOneTimePaymentSettings,
+    apiGetOneTimePaymentSettingsLoading,
+    apiGetOneTimePaymentSettings,
 
     // Access Requests Tab
     // Member Auto Approve
