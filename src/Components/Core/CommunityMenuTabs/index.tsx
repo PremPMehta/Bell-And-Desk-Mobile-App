@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, ScrollView, TouchableOpacity, Text } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import { View, ScrollView, TouchableOpacity, Text, LayoutChangeEvent } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { COLORS } from '@/Assets/Theme/colors';
 import styles from './style';
@@ -11,11 +11,37 @@ interface Props {
 }
 
 const CommunityMenuTabs = ({ tabs, selectedTab, onTabPress }: Props) => {
-  console.log('checking the tabs ---> ', tabs);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [tabLayouts, setTabLayouts] = useState<Record<string, { x: number; width: number }>>({});
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    if (selectedTab && tabLayouts[selectedTab] && scrollViewRef.current && containerWidth > 0) {
+      const { x, width } = tabLayouts[selectedTab];
+      const scrollX = x - (containerWidth / 2) + (width / 2);
+      scrollViewRef.current.scrollTo({
+        x: Math.max(0, scrollX),
+        animated: true,
+      });
+    }
+  }, [selectedTab, tabLayouts, containerWidth]);
+
+  const handleTabLayout = (id: string) => (event: LayoutChangeEvent) => {
+    const { x, width } = event.nativeEvent.layout;
+    setTabLayouts(prev => ({
+      ...prev,
+      [id]: { x, width },
+    }));
+  };
+
+  const handleContainerLayout = (event: LayoutChangeEvent) => {
+    setContainerWidth(event.nativeEvent.layout.width);
+  };
 
   return (
-    <View style={styles.tabsWrapper}>
+    <View style={styles.tabsWrapper} onLayout={handleContainerLayout}>
       <ScrollView
+        ref={scrollViewRef}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.tabContainer}
@@ -28,6 +54,7 @@ const CommunityMenuTabs = ({ tabs, selectedTab, onTabPress }: Props) => {
               selectedTab === tab.id && styles.activeTabItem,
             ]}
             onPress={() => onTabPress(tab.id)}
+            onLayout={handleTabLayout(tab.id)}
           >
             <Text
               style={[

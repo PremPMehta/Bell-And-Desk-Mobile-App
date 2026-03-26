@@ -20,7 +20,7 @@ const CommunityLayout = () => {
   const { communityId, slug } = route.params || {};
   const [, setCurrentCommunityId] = useAtom(currentCommunityIdAtom);
 
-  const [selectedTab, setSelectedTab] = useState('courses');
+  const [selectedTab, setSelectedTab] = useState(route.params?.initialTab || 'courses');
 
   React.useEffect(() => {
     if (communityId) {

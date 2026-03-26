@@ -41,13 +41,22 @@ const styles = StyleSheet.create({
     borderRadius: ms(20),
     borderWidth: 1,
     borderColor: COLORS.ctgColor,
-    paddingVertical: ms(6),
-    paddingHorizontal: ms(14),
+    paddingVertical: ms(2),
+    paddingHorizontal: ms(10),
+  },
+
+  categoryBtnActive: {
+    backgroundColor: COLORS.blue,
+    // borderColor: COLORS.primary,
   },
 
   categoryBtnText: {
     ...THEME.fontStyle.h5Medium,
     color: COLORS.ctgColor,
+  },
+
+  categoryBtnTextActive: {
+    color: COLORS.white,
   },
 
   communitiesContainer: {
@@ -60,13 +69,12 @@ const styles = StyleSheet.create({
 
   /* --- Empty List FlatList contentContainer fill --- */
   emptyListContainer: {
-    flex: 1,
+    flexGrow: 1,
+    justifyContent: 'center',
   },
 
   /* --- Empty State --- */
   emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: ms(32),
   },

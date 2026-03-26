@@ -30,18 +30,24 @@ const MyCommunities = () => {
   const navigation = useNavigation();
   const { getUserData, apiGetUserDataLoading } = useUserApi();
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [communities, setCommunities] = useState<any[]>([]);
   const [planEntitlements, setPlanEntitlements] = useState<any[]>([]);
   const [reservations, setReservations] = useState<any[]>([]);
 
   // Filter communities by search query (name or description)
-  const filteredCommunities = searchQuery.trim()
-    ? communities.filter(
-        c =>
-          c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-    : communities;
+  const filteredCommunities = communities.filter(c => {
+    const matchesSearch = searchQuery.trim()
+      ? c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      : true;
+
+    // Show communities only if 'All' is selected.
+    // If other categories are selected, show empty list as per user request.
+    const matchesCategory = selectedCategory === 'All';
+
+    return matchesSearch && matchesCategory;
+  });
 
   const scrollY = useSharedValue(0);
   const lastScrollY = useSharedValue(0);
@@ -134,7 +140,14 @@ const MyCommunities = () => {
           slug: item.subdomain,
         })
       }
-      onSettingsPress={() => console.log('Settings Pressed', item.id)}
+      onSettingsPress={() =>
+        navigation.navigate('CommunityLayout', {
+          title: item.name,
+          communityId: item._id || item.id,
+          slug: item.subdomain,
+          initialTab: 'settings',
+        })
+      }
     />
   );
 
@@ -269,11 +282,28 @@ const MyCommunities = () => {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.categoryContentContainer}
             >
-              {categories.map((item, index) => (
-                <TouchableOpacity key={index} style={styles.categoryBtn}>
-                  <Text style={styles.categoryBtnText}>{item}</Text>
-                </TouchableOpacity>
-              ))}
+              {categories.map((item, index) => {
+                const isActive = selectedCategory === item;
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.categoryBtn,
+                      isActive && styles.categoryBtnActive,
+                    ]}
+                    onPress={() => setSelectedCategory(item)}
+                  >
+                    <Text
+                      style={[
+                        styles.categoryBtnText,
+                        isActive && styles.categoryBtnTextActive,
+                      ]}
+                    >
+                      {item}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
           </Animated.View>
         </>

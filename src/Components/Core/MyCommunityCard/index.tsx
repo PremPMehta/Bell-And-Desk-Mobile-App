@@ -28,6 +28,7 @@ const MyCommunityCard: React.FC<CommunityCardProps> = ({
   onSettingsPress,
 }) => {
   const [imageError, setImageError] = useState(false);
+  const isOwner = tags === 'owner';
 
   const getSource = () => {
     if (imageError || !bannerImage) {
@@ -52,7 +53,12 @@ const MyCommunityCard: React.FC<CommunityCardProps> = ({
       <View style={styles.tagsContainer}>
         {/* {tags.map((tag, index) => ( */}
         <View style={styles.tag}>
-          <Text style={styles.tagText}>{tags}</Text>
+          <Text style={styles.tagText}>General</Text>
+        </View>
+        <View style={[styles.tagRole, isOwner && styles.tagRoleOwner]}>
+          <Text style={[styles.tagRoleText, isOwner && styles.tagRoleOwnerTxt]}>
+            {tags}
+          </Text>
         </View>
         {/* ))} */}
       </View>
