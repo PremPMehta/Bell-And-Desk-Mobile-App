@@ -54,7 +54,9 @@ export const ApiEndPoints = {
   validateCoupon: 'coupons/:slug/validate',
 
   // Subscription Settings
-  subscriptionSettings: 'stripe/community/subscription-settings/:slug/public',
+  subscriptionSettings: 'stripe/community/subscription-settings/:slug',
+  subscriptionSettingsPublic:
+    'stripe/community/subscription-settings/:slug/public',
 
   // Member Auto Approve
   memberAutoApprove: 'communities/member-auto-approve/:slug',
@@ -65,4 +67,10 @@ export const ApiEndPoints = {
   // One-Time Payment Settings
   oneTimePaymentSettings:
     'stripe/community/one-time-payment-settings/:slug/public',
+
+  // Stripe Connect
+  stripeAccountStatus: 'stripe/connect/get-account-status/:slug',
+  stripePayouts: 'stripe/connect/payouts/:slug',
+  createConnectAccount: 'stripe/connect/create-account/:slug',
+  unlinkConnectAccount: 'stripe/connect/unlink-account/:slug',
 };

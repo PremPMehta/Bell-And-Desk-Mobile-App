@@ -1,5 +1,14 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Switch,
+  ActivityIndicator,
+  ScrollView,
+  AppState,
+} from 'react-native';
 import { COLORS } from '@/Assets/Theme/colors';
 import { ms } from '@/Assets/Theme/fontStyle';
 import { THEME } from '@/Assets/Theme';
@@ -7,13 +16,159 @@ import Icon from '@/Components/Core/Icons';
 import PrimaryButton from '@/Components/Core/PrimaryButton';
 import TextInputField from '@/Components/Core/TextInputField';
 import styles from './style';
+import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
+import PayoutTabSkeleton from '@/Components/Core/Skeleton/PayoutTabSkeleton';
+import CommonListModal from '@/Components/Generic/Modals/CommonListModal';
+import { STRIPE_COUNTRIES } from '@/Constants/Countries';
+import { Linking } from 'react-native';
+import Modal from 'react-native-modal';
+import { useIsFocused } from '@react-navigation/native';
 
-const PayoutTab = () => {
+interface Props {
+  slug?: string;
+}
+
+const PayoutTab = ({ slug }: Props) => {
+  const {
+    getStripeAccountStatus,
+    apiGetStripeAccountStatus,
+    getStripePayouts,
+    apiGetStripePayouts,
+    getSubscriptionSettings,
+    apiGetSubscriptionSettings,
+    apiGetStripeAccountStatusLoading,
+    apiGetStripePayoutsLoading,
+    apiGetSubscriptionSettingsLoading,
+    updateSubscriptionSettings,
+    apiUpdateSubscriptionSettingsLoading,
+    clearStripeSettings,
+    createStripeConnectAccount,
+    apiCreateStripeConnectAccountLoading,
+    unlinkStripeAccount,
+    apiUnlinkStripeAccountLoading,
+    setApiGetStripeAccountStatusLoading,
+    setApiGetStripePayoutsLoading,
+    setApiGetSubscriptionSettingsLoading,
+  } = useUserApi();
+
+  const [activeSlug, setActiveSlug] = useState(slug);
+  const [selectedCountry, setSelectedCountry] = useState<any>(null);
   const [isSubscriptionEnabled, setIsSubscriptionEnabled] = useState(false);
   const [description, setDescription] = useState('');
   const [monthlyPrice, setMonthlyPrice] = useState('0');
   const [yearlyPrice, setYearlyPrice] = useState('0');
   const [isMonthlyActive, setIsMonthlyActive] = useState(true);
+  const [isYearlyActive, setIsYearlyActive] = useState(false);
+  const [isUnlinkModalVisible, setIsUnlinkModalVisible] = useState(false);
+
+  const isFocused = useIsFocused();
+
+  if (slug !== activeSlug) {
+    setActiveSlug(slug);
+  }
+
+  useEffect(() => {
+    if (slug) {
+      clearStripeSettings();
+      fetchData();
+    }
+  }, [slug]);
+
+  useEffect(() => {
+    if (isFocused && slug) {
+      fetchData();
+    }
+  }, [isFocused, slug]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'active' && slug) {
+        fetchData();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [slug]);
+
+  const fetchData = async () => {
+    if (!slug) return;
+    try {
+      const accountStatusRes = await getStripeAccountStatus(slug);
+      const promises: any[] = [getSubscriptionSettings(slug)];
+
+      // Check both top-level and nested structure for resilience
+      const onboardingComplete =
+        accountStatusRes?.isOnboardingComplete ||
+        accountStatusRes?.data?.isOnboardingComplete;
+
+      if (onboardingComplete) {
+        promises.push(getStripePayouts(slug));
+      } else {
+        // If not calling payouts, ensure it's not marked as loading
+        setApiGetStripePayoutsLoading(false);
+      }
+
+      await Promise.all(promises);
+    } catch (error) {
+      console.error('Error in fetchData:', error);
+      // Ensure loading flags are cleared on error
+      setApiGetStripeAccountStatusLoading(false);
+      setApiGetStripePayoutsLoading(false);
+      setApiGetSubscriptionSettingsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (apiGetSubscriptionSettings?.data) {
+      const settings =
+        apiGetSubscriptionSettings.data.subscriptionSettings || {};
+      setIsSubscriptionEnabled(settings.isEnabled || false);
+      setDescription(settings.description || '');
+      setMonthlyPrice(((settings.monthlyPrice || 0) / 100).toString());
+      setYearlyPrice(((settings.yearlyPrice || 0) / 100).toString());
+      setIsMonthlyActive(settings.availableOptions?.monthly || false);
+      setIsYearlyActive(settings.availableOptions?.yearly || false);
+    }
+  }, [apiGetSubscriptionSettings]);
+
+  const onSave = async () => {
+    if (!slug) return;
+    const body = {
+      subscriptionSettings: {
+        isEnabled: isSubscriptionEnabled,
+        monthlyPrice: parseFloat(monthlyPrice) * 100,
+        yearlyPrice: parseFloat(yearlyPrice) * 100,
+        currency: 'USD',
+        availableOptions: {
+          monthly: isMonthlyActive,
+          yearly: isYearlyActive,
+        },
+        description: description,
+      },
+    };
+    await updateSubscriptionSettings(slug, body);
+    fetchData(); // Refresh data after update
+  };
+
+  const onConnectStripe = async () => {
+    if (!slug || !selectedCountry) return;
+    const res = await createStripeConnectAccount(slug, selectedCountry.id);
+    if (res?.url) {
+      Linking.openURL(res.url);
+    }
+  };
+
+  const onUnlinkStripe = async () => {
+    if (!slug) return;
+    const res = await unlinkStripeAccount(slug);
+    if (res) {
+      setIsUnlinkModalVisible(false);
+      clearStripeSettings();
+      fetchData(); // Refresh data after unlinking
+    }
+  };
 
   // Calculations for payouts
   const calculateFinalPayout = (price: string) => {
@@ -30,6 +185,34 @@ const PayoutTab = () => {
 
   const monthlyPayout = calculateFinalPayout(monthlyPrice);
   const yearlyPayout = calculateFinalPayout(yearlyPrice);
+
+  const isOnboardingComplete =
+    apiGetStripeAccountStatus?.isOnboardingComplete || false;
+  console.log('🚀 ~ PayoutTab ~ isOnboardingComplete:', isOnboardingComplete);
+  const stripeAccountId = apiGetStripeAccountStatus?.stripeAccountId;
+  const stripeConnectAccountLink =
+    apiGetStripeAccountStatus?.stripeConnectAccountLink;
+  const isStripeConnected = !!stripeAccountId;
+  const payoutsData = apiGetStripePayouts?.data || {};
+  const hasSubscriptionData =
+    !!apiGetSubscriptionSettings?.data && isOnboardingComplete;
+  const balance = payoutsData.total || 0;
+  const availableBalance = payoutsData.available || 0;
+  const pendingBalance = payoutsData.pending || 0;
+  const currency = (payoutsData.currency || 'usd').toUpperCase();
+
+  const payoutSchedule = payoutsData.payoutSchedule || {};
+  const recentTransactions = payoutsData.balanceTransactions || [];
+  const recentPayouts = payoutsData.recentPayouts || [];
+
+  if (
+    slug !== activeSlug ||
+    apiGetStripeAccountStatusLoading ||
+    apiGetStripePayoutsLoading ||
+    apiGetSubscriptionSettingsLoading
+  ) {
+    return <PayoutTabSkeleton />;
+  }
 
   return (
     <>
@@ -50,124 +233,252 @@ const PayoutTab = () => {
         <View style={styles.card}>
           <View style={styles.headerRow}>
             <Text style={styles.sectionTitle}>Stripe Account</Text>
-            {/* <Icon name="Settings" size={ms(20)} color={COLORS.lightGray} /> */}
           </View>
           <View style={styles.divider} />
 
-          <View style={styles.stripeConnectRow}>
-            <View>
-              <Text style={styles.connectedText}>Connected with Stripe</Text>
-              <Text style={styles.uIdText}>
-                Stripe account ID: acct_1NHW...
-              </Text>
-            </View>
-            <TouchableOpacity style={styles.dashboardButton}>
-              <Text style={styles.dashboardButtonText}>
-                Go to Stripe Dashboard
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.balanceTitle}>Balancce & Payouts</Text>
-          <View style={styles.balanceRow}>
-            <View style={styles.balanceItem}>
-              <Text style={styles.balanceLabel}>Available Balance</Text>
-              <Text style={styles.balanceValue}>$0.00</Text>
-            </View>
-            <View style={styles.balanceItem}>
-              <Text style={styles.balanceLabel}>Pending</Text>
-              <Text style={styles.balanceValue}>$38.70</Text>
-            </View>
-            <View style={styles.balanceItem}>
-              <Text style={styles.balanceLabel}>Total Balance</Text>
-              <Text style={styles.balanceValue}>$38.70</Text>
-            </View>
-          </View>
-
-          <View style={styles.payoutSchedule}>
-            <Text style={styles.scheduleLabel}>Payout Schedule</Text>
-            <Text style={styles.scheduleValue}>
-              Daily payouts with 2 days delay
-            </Text>
-            <Text style={styles.nextPayout}>Next payout: December 3, 2025</Text>
-          </View>
-
-          {/* Recent Payout Card */}
-          <View style={styles.recentContainer}>
-            <Text style={styles.recentTitle}>Recent Transactions</Text>
-            <View style={styles.recentPayoutRow}>
-              <View>
-                <Text style={styles.payoutAmount}>$45.00 USD</Text>
-                <Text style={styles.payoutDate}>
-                  payout - Available Dec 5, 2025
+          {isStripeConnected ? (
+            <>
+              <View style={styles.connectedContainer}>
+                <Text style={styles.connectedText}>
+                  {isOnboardingComplete
+                    ? 'Connected with Stripe'
+                    : 'Connection with Stripe - In Progress'}
+                </Text>
+                <Text style={styles.uIdText}>
+                  Stripe account ID: {stripeAccountId || 'N/A'}
                 </Text>
               </View>
-              <View style={styles.paidBadge}>
-                <Text style={styles.paidText}>Pending</Text>
+
+              <View style={styles.stripeConnectRow}>
+                <TouchableOpacity
+                  style={styles.dashboardButton}
+                  onPress={() => {
+                    if (isOnboardingComplete) {
+                      Linking.openURL('https://dashboard.stripe.com/');
+                    } else if (stripeConnectAccountLink) {
+                      Linking.openURL(stripeConnectAccountLink);
+                    }
+                  }}
+                >
+                  <Text style={styles.dashboardButtonText}>
+                    Go to Stripe Dashboard
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.unlinkButton}
+                  onPress={() => setIsUnlinkModalVisible(true)}
+                >
+                  <Text style={styles.unlinkButtonText}>
+                    Unlink Stripe Account
+                  </Text>
+                </TouchableOpacity>
               </View>
-            </View>
-          </View>
+            </>
+          ) : (
+            <>
+              <CommonListModal
+                textInputLabel="Select Country"
+                textInputValue={selectedCountry?.value || ''}
+                placeholder="Select Country"
+                dropDownData={STRIPE_COUNTRIES}
+                dropDownSelectedValue={selectedCountry?.value}
+                onDropDownSelect={(item: any) => setSelectedCountry(item)}
+              />
+              <PrimaryButton
+                title="Connect with Stripe"
+                onPress={onConnectStripe}
+                loading={apiCreateStripeConnectAccountLoading}
+                disabled={!selectedCountry}
+                buttonStyle={styles.connectButton}
+                textStyle={styles.saveButtonText}
+              />
+            </>
+          )}
 
-          <TouchableOpacity style={styles.withdrawButton}>
-            <Text style={styles.withdrawButtonText}>Request Withdrawal</Text>
-          </TouchableOpacity>
+          {hasSubscriptionData && (
+            <>
+              <Text style={styles.balanceTitle}>Balance & Payouts</Text>
+              <View style={styles.balanceRow}>
+                <View style={styles.balanceItem}>
+                  <Text style={styles.balanceLabel}>Available Balance</Text>
+                  <Text style={styles.balanceValue}>
+                    ${availableBalance.toFixed(2)}
+                  </Text>
+                </View>
+                <View style={styles.balanceItem}>
+                  <Text style={styles.balanceLabel}>Pending</Text>
+                  <Text style={styles.balanceValue}>
+                    ${pendingBalance.toFixed(2)}
+                  </Text>
+                </View>
+                <View style={styles.balanceItem}>
+                  <Text style={styles.balanceLabel}>Total Balance</Text>
+                  <Text style={styles.balanceValue}>${balance.toFixed(2)}</Text>
+                </View>
+              </View>
 
-          {/* Info Cards */}
-          <View style={styles.infoCard}>
-            <View style={styles.infoHeader}>
-              <Icon name="TriangleAlert" size={ms(20)} color={'#FFC107'} />
-              <Text style={styles.infoTitle}>
-                Cannot Withdraw Pending Funds
-              </Text>
-            </View>
-            <Text style={styles.infoText}>
-              You have $38.70 in pending funds, but $0.00 available to
-              withdrawal.
-            </Text>
-            <Text style={styles.infoSubText}>
-              Why you can't withdraw pending funds:{'\n'}• Pending funds are
-              still being processed by Stripe{'\n'}• They are subject to a hold
-              period (typically 2-7 business days){'\n'}• Only "Available
-              balance" can be withdrawn{'\n'}
-              {'\n'}
-              When your funds will become available:{'\n'}
-              $38.70 on December 4, 2025{'\n'}
-              {'\n'}
-              Why funds might still be pending:{'\n'}• Stripe may hold funds for
-              new accounts (typically 7-14 days for first payout){'\n'}• The
-              delay period is calculated in business days, not calendar days
-              {'\n'}• Additional verification may be required for your account
-              {'\n'}
-              {'\n'}
-              Check your Stripe Dashboard for exact availability date of your
-              funds.
-            </Text>
-          </View>
-          <View style={[styles.infoCard, { borderColor: COLORS.gray }]}>
-            <View style={styles.infoHeader}>
-              <Icon name="Info" size={ms(20)} color={COLORS.white} />
-              <Text style={styles.infoTitle}> Instant Payouts:</Text>
-            </View>
-            <Text style={styles.infoText}>
-              Instant Payouts allow you to receive funds within 30 minutes via
-              an eligible debit card. This feature needs to be enabled by the
-              platform. Contact support to check if Instant Payouts are
-              available for your account.
-            </Text>
-          </View>
-          <View style={[styles.infoCard, { borderColor: COLORS.gray }]}>
-            <View style={styles.infoHeader}>
-              <Icon name="Info" size={ms(20)} color={COLORS.white} />
-              <Text style={styles.infoTitle}> How Withdrawals Work:</Text>
-            </View>
-            <Text style={styles.infoText}>
-              You can request manual payouts at any time using the button above.
-              Standard payouts are also automatically sent to your connected
-              bank account based on your payout schedule. You can manage your
-              payout schedule and bank account details via your Stripe Express
-              Dashboard.
-            </Text>
-          </View>
+              <View style={styles.payoutSchedule}>
+                <Text style={styles.scheduleLabel}>Payout Schedule</Text>
+                <Text style={styles.scheduleValue}>
+                  {payoutSchedule.interval
+                    ? `${
+                        payoutSchedule.interval.charAt(0).toUpperCase() +
+                        payoutSchedule.interval.slice(1)
+                      } payouts with ${payoutSchedule.delayDays} days delay`
+                    : 'No payout schedule configured'}
+                </Text>
+                {payoutsData.nextPayoutDate && (
+                  <Text style={styles.nextPayout}>
+                    Next payout:{' '}
+                    {new Date(payoutsData.nextPayoutDate).toLocaleDateString(
+                      'en-US',
+                      {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric',
+                      },
+                    )}
+                  </Text>
+                )}
+              </View>
+
+              {/* Recent Transactions Section */}
+              <View style={styles.recentContainer}>
+                <Text style={styles.recentTitle}>Recent Transactions</Text>
+                {recentTransactions.length > 0 ? (
+                  recentTransactions.slice(0, 5).map((txn: any) => (
+                    <View key={txn.id} style={styles.recentPayoutRow}>
+                      <View>
+                        <Text style={styles.payoutAmount}>
+                          ${txn.amount.toFixed(2)} {txn.currency.toUpperCase()}
+                        </Text>
+                        <Text style={styles.payoutDate}>
+                          {txn.description
+                            ? txn.description
+                            : txn.type.charAt(0).toUpperCase() +
+                                txn.type.slice(1) || 'Transaction'}{' '}
+                          • {txn.status}{' '}
+                          {new Date(txn.availableOn).toLocaleDateString(
+                            'en-US',
+                            {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            },
+                          )}
+                        </Text>
+                      </View>
+                      <View style={styles.paidBadge}>
+                        <Text style={styles.paidText}>{txn.status}</Text>
+                      </View>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={[styles.infoText, { marginTop: ms(8) }]}>
+                    No recent transactions
+                  </Text>
+                )}
+              </View>
+
+              {/* Recent Payouts Section */}
+              <View style={styles.recentContainer}>
+                <Text style={styles.recentTitle}>Recent Payouts</Text>
+                {recentPayouts.length > 0 ? (
+                  recentPayouts.slice(0, 5).map((payout: any) => (
+                    <View key={payout.id} style={styles.recentPayoutRow}>
+                      <View>
+                        <Text style={styles.payoutAmount}>
+                          ${payout.amount.toFixed(2)}{' '}
+                          {(payout.currency || 'usd').toUpperCase()}
+                        </Text>
+                        <Text style={styles.payoutDate}>
+                          {payout.status.charAt(0).toUpperCase() +
+                            payout.status.slice(1)}{' '}
+                          • Arrives{' '}
+                          {new Date(
+                            payout.arrivalDate * 1000,
+                          ).toLocaleDateString('en-GB', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </Text>
+                      </View>
+                      <View style={styles.paidBadge}>
+                        <Text style={styles.paidText}>
+                          {payout.status.charAt(0).toUpperCase() +
+                            payout.status.slice(1)}
+                        </Text>
+                      </View>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={[styles.infoText, { marginTop: ms(8) }]}>
+                    No recent payouts
+                  </Text>
+                )}
+              </View>
+
+              <View style={styles.withdrawRow}>
+                <TouchableOpacity style={styles.withdrawButton}>
+                  <Text style={styles.withdrawButtonText}>
+                    Request Withdrawal
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.withdrawButton}>
+                  <Text style={styles.withdrawButtonText}>
+                    Withdraw All(${balance.toFixed(2)})
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Info Cards */}
+              <View style={styles.infoCard}>
+                <View style={styles.infoHeader}>
+                  <Icon name="TriangleAlert" size={ms(20)} color={'#FFC107'} />
+                  <Text style={styles.infoTitle}>
+                    Cannot Withdraw Pending Funds
+                  </Text>
+                </View>
+                <Text style={styles.infoText}>
+                  You have ${pendingBalance.toFixed(2)} in pending funds, but $
+                  {availableBalance.toFixed(2)} available to withdrawal.
+                </Text>
+                <Text style={styles.infoSubText}>
+                  Why you can't withdraw pending funds:{'\n'}• Pending funds are
+                  still being processed by Stripe{'\n'}• They are subject to a
+                  hold period (typically 2-7 business days){'\n'}• Only
+                  "Available balance" can be withdrawn{'\n'}
+                </Text>
+              </View>
+              <View style={[styles.infoCard, { borderColor: COLORS.gray }]}>
+                <View style={styles.infoHeader}>
+                  <Icon name="Info" size={ms(20)} color={COLORS.white} />
+                  <Text style={styles.infoTitle}> Instant Payouts:</Text>
+                </View>
+                <Text style={styles.infoText}>
+                  Instant Payouts allow you to receive funds within 30 minutes
+                  via an eligible debit card. This feature needs to be enabled
+                  by the platform. Contact support to check if Instant Payouts
+                  are available for your account.
+                </Text>
+              </View>
+              <View style={[styles.infoCard, { borderColor: COLORS.gray }]}>
+                <View style={styles.infoHeader}>
+                  <Icon name="Info" size={ms(20)} color={COLORS.white} />
+                  <Text style={styles.infoTitle}> How Withdrawals Work:</Text>
+                </View>
+                <Text style={styles.infoText}>
+                  You can request manual payouts at any time using the button
+                  above. Standard payouts are also automatically sent to your
+                  connected bank account based on your payout schedule. You can
+                  manage your payout schedule and bank account details via your
+                  Stripe Express Dashboard.
+                </Text>
+              </View>
+            </>
+          )}
         </View>
 
         {/* RedFi Card */}
@@ -198,9 +509,9 @@ const PayoutTab = () => {
                 in your community.
               </Text>
             </View>
-            <View style={styles.badge}>
+            <TouchableOpacity onPress={fetchData} style={styles.badge}>
               <Text style={styles.badgeText}>Refresh</Text>
-            </View>
+            </TouchableOpacity>
           </View>
           <View style={styles.divider} />
 
@@ -216,111 +527,186 @@ const PayoutTab = () => {
             </Text>
           </View>
 
-          {/* <Text style={styles.inputLabel}>Subscription Description</Text> */}
-          <TextInputField
-            label="Subscription Description"
-            placeholder="Enter description"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            numberOfLines={4}
-            style={styles.textArea}
-            // theme={{ colors: { background: COLORS.innerCardBG } }}
-            theme={{
-              colors: {
-                background: COLORS.innerCardBG,
-                text: COLORS.white,
-                placeholder: COLORS.outlineGrey,
-              },
-            }}
-            textColor={COLORS.white}
-            outlineColor={COLORS.outlineGrey}
-            activeOutlineColor={COLORS.white}
-          />
-
-          <Text style={styles.radioTitle}>Available Subscription Options</Text>
-          <View style={styles.optionRow}>
-            <TouchableOpacity
-              style={styles.radioContainer}
-              onPress={() => setIsMonthlyActive(!isMonthlyActive)}
-            >
-              <Icon
-                name={isMonthlyActive ? 'CircleCheck' : 'Circle'}
-                size={ms(20)}
-                color={isMonthlyActive ? COLORS.primary : COLORS.gray}
+          {isSubscriptionEnabled && (
+            <>
+              <TextInputField
+                label="Subscription Description"
+                placeholder="Enter description"
+                value={description}
+                onChangeText={setDescription}
+                multiline
+                numberOfLines={4}
+                style={styles.textArea}
+                theme={{
+                  colors: {
+                    background: COLORS.innerCardBG,
+                    text: COLORS.white,
+                    placeholder: COLORS.outlineGrey,
+                  },
+                }}
+                textColor={COLORS.white}
+                outlineColor={COLORS.outlineGrey}
+                activeOutlineColor={COLORS.white}
               />
-              <Text style={styles.radioLabel}>Monthly subscription</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.radioContainer}
-              onPress={() => setYearlyPrice(prev => prev)}
-            >
-              <Icon name="Circle" size={ms(20)} color={COLORS.gray} />
-              <Text style={styles.radioLabel}>Yearly subscription</Text>
-            </TouchableOpacity>
-          </View>
 
-          {/* <Text style={styles.inputLabel}>Monthly Price $</Text> */}
-          <TextInputField
-            label="Monthly Price $"
-            placeholder="Enter monthly price"
-            value={monthlyPrice}
-            onChangeText={setMonthlyPrice}
-            keyboardType="numeric"
-            style={styles.inputStyle}
-            theme={{
-              colors: {
-                background: COLORS.innerCardBG,
-                text: COLORS.white,
-                placeholder: COLORS.outlineGrey,
-              },
-            }}
-            textColor={COLORS.white}
-            outlineColor={COLORS.outlineGrey}
-            activeOutlineColor={COLORS.white}
-          />
-          <Text style={styles.feeText}>
-            Final payout: ${monthlyPayout.final} - 3% Stripe ($
-            {monthlyPayout.stripeFee}) - 10% platform ($
-            {monthlyPayout.platformFee}) = ${monthlyPayout.final}
-          </Text>
+              <Text style={styles.radioTitle}>
+                Available Subscription Options
+              </Text>
+              <View style={styles.optionRow}>
+                <TouchableOpacity
+                  style={styles.radioContainer}
+                  onPress={() => setIsMonthlyActive(!isMonthlyActive)}
+                >
+                  <Icon
+                    name={isMonthlyActive ? 'CircleCheck' : 'Circle'}
+                    size={ms(20)}
+                    color={isMonthlyActive ? COLORS.primary : COLORS.gray}
+                  />
+                  <Text style={styles.radioLabel}>Monthly subscription</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.radioContainer}
+                  onPress={() => setIsYearlyActive(!isYearlyActive)}
+                >
+                  <Icon
+                    name={isYearlyActive ? 'CircleCheck' : 'Circle'}
+                    size={ms(20)}
+                    color={isYearlyActive ? COLORS.primary : COLORS.gray}
+                  />
+                  <Text style={styles.radioLabel}>Yearly subscription</Text>
+                </TouchableOpacity>
+              </View>
 
-          {/* <Text style={[styles.inputLabel, { marginTop: ms(16) }]}>
-            Yearly Price $
-          </Text> */}
-          <TextInputField
-            label="Yearly Price $"
-            placeholder="Enter yearly price"
-            value={yearlyPrice}
-            onChangeText={setYearlyPrice}
-            keyboardType="numeric"
-            style={styles.inputStyle}
-            theme={{
-              colors: {
-                background: COLORS.innerCardBG,
-                text: COLORS.white,
-                placeholder: COLORS.outlineGrey,
-              },
-            }}
-            textColor={COLORS.white}
-            outlineColor={COLORS.outlineGrey}
-            activeOutlineColor={COLORS.white}
-          />
-          <Text style={styles.feeText}>
-            Final payout: ${yearlyPayout.final} - 3% Stripe ($
-            {yearlyPayout.stripeFee}) - 10% platform ($
-            {yearlyPayout.platformFee}) = ${yearlyPayout.final}
-          </Text>
+              {isMonthlyActive && (
+                <>
+                  <TextInputField
+                    label="Monthly Price $"
+                    placeholder="Enter monthly price"
+                    value={monthlyPrice}
+                    onChangeText={setMonthlyPrice}
+                    keyboardType="numeric"
+                    style={styles.inputStyle}
+                    theme={{
+                      colors: {
+                        background: COLORS.innerCardBG,
+                        text: COLORS.white,
+                        placeholder: COLORS.outlineGrey,
+                      },
+                    }}
+                    textColor={COLORS.white}
+                    outlineColor={COLORS.outlineGrey}
+                    activeOutlineColor={COLORS.white}
+                  />
+                  <Text style={styles.feeText}>
+                    Final payout: ${monthlyPayout.final} - 3% Stripe ($
+                    {monthlyPayout.stripeFee}) - 10% platform ($
+                    {monthlyPayout.platformFee}) = ${monthlyPayout.final}
+                  </Text>
+                </>
+              )}
+
+              {isYearlyActive && (
+                <>
+                  <TextInputField
+                    label="Yearly Price $"
+                    placeholder="Enter yearly price"
+                    value={yearlyPrice}
+                    onChangeText={setYearlyPrice}
+                    keyboardType="numeric"
+                    style={styles.inputStyle}
+                    theme={{
+                      colors: {
+                        background: COLORS.innerCardBG,
+                        text: COLORS.white,
+                        placeholder: COLORS.outlineGrey,
+                      },
+                    }}
+                    textColor={COLORS.white}
+                    outlineColor={COLORS.outlineGrey}
+                    activeOutlineColor={COLORS.white}
+                  />
+                  <Text style={styles.feeText}>
+                    Final payout: ${yearlyPayout.final} - 3% Stripe ($
+                    {yearlyPayout.stripeFee}) - 10% platform ($
+                    {yearlyPayout.platformFee}) = ${yearlyPayout.final}
+                  </Text>
+                </>
+              )}
+            </>
+          )}
 
           <PrimaryButton
             title="Save Subscription Settings"
-            onPress={() => {}}
+            onPress={onSave}
+            loading={apiUpdateSubscriptionSettingsLoading}
             buttonStyle={styles.saveButton}
             textStyle={styles.saveButtonText}
           />
         </View>
       </View>
       <View style={styles.space} />
+
+      <Modal
+        isVisible={isUnlinkModalVisible}
+        onBackdropPress={() => setIsUnlinkModalVisible(false)}
+        style={styles.modalContainer}
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+      >
+        <View style={styles.mainModalView}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Unlink Stripe Account</Text>
+            <TouchableOpacity onPress={() => setIsUnlinkModalVisible(false)}>
+              <Icon name="X" size={ms(24)} color={COLORS.white} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.modalBody}>
+            <Text style={styles.modalMessage}>
+              Are you sure you want to unlink your Stripe account? This action
+              will:
+            </Text>
+
+            <View style={styles.warningBox}>
+              <View style={styles.warningIconContainer}>
+                <Icon
+                  name="TriangleAlert"
+                  size={ms(20)}
+                  color={COLORS.primary}
+                />
+              </View>
+              <View style={styles.warningTextContainer}>
+                <Text style={styles.warningText}>
+                  • Disconnect your Stripe account from this community.
+                </Text>
+                <Text style={styles.warningText}>
+                  • Prevent future payouts from being processed.
+                </Text>
+                <Text style={styles.warningText}>
+                  • Require you to reconnect your account to receive payouts
+                  again.
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.modalFooter}>
+            <TouchableOpacity
+              onPress={() => setIsUnlinkModalVisible(false)}
+              style={styles.modalCancelButton}
+            >
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <PrimaryButton
+              title="Unlink Account"
+              onPress={onUnlinkStripe}
+              loading={apiUnlinkStripeAccountLoading}
+              buttonStyle={styles.modalUnlinkButton}
+              textStyle={styles.modalUnlinkText}
+            />
+          </View>
+        </View>
+      </Modal>
     </>
   );
 };

@@ -138,6 +138,7 @@ export const AtomKeys = {
   apiValidateCoupon: 'apiValidateCoupon',
   apiGetSubscriptionSettingsLoading: 'apiGetSubscriptionSettingsLoading',
   apiGetSubscriptionSettings: 'apiGetSubscriptionSettings',
+  apiUpdateSubscriptionSettingsLoading: 'apiUpdateSubscriptionSettingsLoading',
 
   // Member Auto Approve
   apiUpdateMemberAutoApproveLoading: 'apiUpdateMemberAutoApproveLoading',
@@ -152,4 +153,12 @@ export const AtomKeys = {
   // One-Time Payment Settings
   apiGetOneTimePaymentSettingsLoading: 'apiGetOneTimePaymentSettingsLoading',
   apiGetOneTimePaymentSettings: 'apiGetOneTimePaymentSettings',
+
+  // Stripe Connect
+  apiGetStripeAccountStatusLoading: 'apiGetStripeAccountStatusLoading',
+  apiGetStripeAccountStatus: 'apiGetStripeAccountStatus',
+  apiGetStripePayoutsLoading: 'apiGetStripePayoutsLoading',
+  apiGetStripePayouts: 'apiGetStripePayouts',
+  apiCreateStripeConnectAccountLoading: 'apiCreateStripeConnectAccountLoading',
+  apiUnlinkStripeAccountLoading: 'apiUnlinkStripeAccountLoading',
 };

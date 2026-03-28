@@ -49,7 +49,7 @@ const CommunitySettings = ({
           activeTab={activeTab}
           onTabPress={setActiveTab}
         />
-        {activeTab === 'Payout' && <PayoutTab />}
+        {activeTab === 'Payout' && <PayoutTab slug={slug} />}
         {activeTab === 'Member Transactions' && <MemberTransactionsTab slug={slug} />}
         {activeTab === 'Access Requests' && (
           <AccessRequestsTab slug={slug} communityId={communityId} />

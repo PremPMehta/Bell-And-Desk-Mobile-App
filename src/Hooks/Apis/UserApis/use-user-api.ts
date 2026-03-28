@@ -379,6 +379,22 @@ const useUserApi = () => {
   const [apiGetSubscriptionSettings, setApiGetSubscriptionSettings] = useAtom(
     objectAtomFamily(AtomKeys.apiGetSubscriptionSettings),
   );
+  const [
+    apiUpdateSubscriptionSettingsLoading,
+    setApiUpdateSubscriptionSettingsLoading,
+  ] = useAtom(
+    booleanDefaultFalseAtomFamily(
+      AtomKeys.apiUpdateSubscriptionSettingsLoading,
+    ),
+  );
+  const [
+    apiCreateStripeConnectAccountLoading,
+    setApiCreateStripeConnectAccountLoading,
+  ] = useAtom(
+    booleanDefaultFalseAtomFamily(
+      AtomKeys.apiCreateStripeConnectAccountLoading,
+    ),
+  );
 
   // Get One-Time Payment Settings
   const [
@@ -389,6 +405,12 @@ const useUserApi = () => {
   );
   const [apiGetOneTimePaymentSettings, setApiGetOneTimePaymentSettings] =
     useAtom(objectAtomFamily(AtomKeys.apiGetOneTimePaymentSettings));
+
+  // Unlink Stripe Account Apis
+  const [apiUnlinkStripeAccountLoading, setApiUnlinkStripeAccountLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiUnlinkStripeAccountLoading),
+    );
 
   // Get Member Auto Approve
   const [apiGetMemberAutoApproveLoading, setApiGetMemberAutoApproveLoading] =
@@ -417,6 +439,25 @@ const useUserApi = () => {
     );
   const [apiGetMemberTransactions, setApiGetMemberTransactions] = useAtom(
     objectAtomFamily(AtomKeys.apiGetMemberTransactions),
+  );
+
+  // Stripe Account Status Apis
+  const [
+    apiGetStripeAccountStatusLoading,
+    setApiGetStripeAccountStatusLoading,
+  ] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetStripeAccountStatusLoading),
+  );
+  const [apiGetStripeAccountStatus, setApiGetStripeAccountStatus] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetStripeAccountStatus),
+  );
+
+  // Stripe Payouts Apis
+  const [apiGetStripePayoutsLoading, setApiGetStripePayoutsLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetStripePayoutsLoading),
+  );
+  const [apiGetStripePayouts, setApiGetStripePayouts] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetStripePayouts),
   );
 
   // User Unified Login
@@ -1385,6 +1426,104 @@ const useUserApi = () => {
     }
   }
 
+  // Get Stripe Account Status
+  async function getStripeAccountStatus(slug: string) {
+    try {
+      setApiGetStripeAccountStatusLoading(true);
+      const url = ApiEndPoints.stripeAccountStatus.replace(':slug', slug);
+      const res: any = await api.get(url);
+      setApiGetStripeAccountStatus(res);
+      setApiGetStripeAccountStatusLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching stripe account status:', error);
+      setApiGetStripeAccountStatusLoading(false);
+    }
+  }
+
+  // Get Stripe Payouts
+  async function getStripePayouts(slug: string) {
+    try {
+      setApiGetStripePayoutsLoading(true);
+      const url = ApiEndPoints.stripePayouts.replace(':slug', slug);
+      const res: any = await api.get(url);
+      setApiGetStripePayouts(res);
+      setApiGetStripePayoutsLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching stripe payouts:', error);
+      setApiGetStripePayoutsLoading(false);
+    }
+  }
+
+  // Create Stripe Connect Account
+  async function createStripeConnectAccount(slug: string, country: string) {
+    try {
+      setApiCreateStripeConnectAccountLoading(true);
+      const url = ApiEndPoints.createConnectAccount.replace(':slug', slug);
+      const res: any = await api.post(url, { country });
+      console.log('🚀 ~ createStripeConnectAccount ~ res:', res);
+      setApiCreateStripeConnectAccountLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error creating stripe connect account:', error);
+      setApiCreateStripeConnectAccountLoading(false);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+    }
+  }
+
+  // Unlink Stripe Account
+  async function unlinkStripeAccount(slug: string) {
+    try {
+      setApiUnlinkStripeAccountLoading(true);
+      const url = ApiEndPoints.unlinkConnectAccount.replace(':slug', slug);
+      const res: any = await api.delete(url);
+      setApiUnlinkStripeAccountLoading(false);
+      ToastModule.successTop({
+        msg: res?.message || 'Stripe account unlinked successfully',
+      });
+      return res;
+    } catch (error: any) {
+      console.error('Error unlinking stripe account:', error);
+      setApiUnlinkStripeAccountLoading(false);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+    }
+  }
+
+  // Clear Stripe Settings Data
+  function clearStripeSettings() {
+    setApiGetStripeAccountStatus(null);
+    setApiGetStripeAccountStatusLoading(true);
+    setApiGetStripePayouts(null);
+    setApiGetStripePayoutsLoading(true);
+    setApiGetSubscriptionSettings(null);
+    setApiGetSubscriptionSettingsLoading(true);
+  }
+
+  // Update Subscription Settings
+  async function updateSubscriptionSettings(slug: string, body: any) {
+    try {
+      setApiUpdateSubscriptionSettingsLoading(true);
+      const url = ApiEndPoints.subscriptionSettings.replace(':slug', slug);
+      const res: any = await api.put(url, body);
+      setApiUpdateSubscriptionSettingsLoading(false);
+      ToastModule.successBottom({
+        msg: res?.message || 'Subscription settings updated successfully',
+      });
+      return res;
+    } catch (error: any) {
+      console.error('Error updating subscription settings:', error);
+      setApiUpdateSubscriptionSettingsLoading(false);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+    }
+  }
+
   return {
     // Auth Apis
     getUserUnifiedLogin,
@@ -1625,6 +1764,34 @@ const useUserApi = () => {
     getMemberTransactions,
     apiGetMemberTransactionsLoading,
     apiGetMemberTransactions,
+
+    // Stripe Connect
+    getStripeAccountStatus,
+    apiGetStripeAccountStatusLoading,
+    apiGetStripeAccountStatus,
+    getStripePayouts,
+    apiGetStripePayoutsLoading,
+    apiGetStripePayouts,
+
+    // Subscription Settings Update
+    updateSubscriptionSettings,
+    apiUpdateSubscriptionSettingsLoading,
+
+    // Create Stripe Connect Account
+    createStripeConnectAccount,
+    apiCreateStripeConnectAccountLoading,
+
+    // Unlink Stripe Account
+    unlinkStripeAccount,
+    apiUnlinkStripeAccountLoading,
+
+    // Loading Setters
+    setApiGetStripeAccountStatusLoading,
+    setApiGetStripePayoutsLoading,
+    setApiGetSubscriptionSettingsLoading,
+
+    // Clear Stripe Settings
+    clearStripeSettings,
 
     // Auth Token for external downloads
     userToken,

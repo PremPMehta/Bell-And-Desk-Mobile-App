@@ -57,6 +57,9 @@ const styles = StyleSheet.create({
     marginTop: ms(16),
     marginBottom: ms(20),
   },
+  connectedContainer: {
+    marginTop: ms(10),
+  },
   connectedText: {
     ...THEME.fontStyle.h5Bold, // Matches image medium/bold small text
     color: COLORS.white,
@@ -73,8 +76,19 @@ const styles = StyleSheet.create({
     paddingVertical: ms(5),
   },
   dashboardButtonText: {
-    ...THEME.fontStyle.h7Regular,
+    ...THEME.fontStyle.h5Regular,
     color: COLORS.white,
+  },
+  unlinkButton: {
+    borderColor: COLORS.red,
+    borderWidth: 1,
+    borderRadius: ms(20),
+    paddingHorizontal: ms(10),
+    paddingVertical: ms(5),
+  },
+  unlinkButtonText: {
+    ...THEME.fontStyle.h5Regular,
+    color: COLORS.red,
   },
   balanceTitle: {
     ...THEME.fontStyle.h5Bold,
@@ -126,7 +140,7 @@ const styles = StyleSheet.create({
   recentTitle: {
     ...THEME.fontStyle.h5Bold,
     color: COLORS.white,
-    marginBottom: ms(5),
+    marginBottom: ms(8),
   },
   recentPayoutRow: {
     flexDirection: 'row',
@@ -135,6 +149,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.blackGray,
     borderRadius: ms(8),
     padding: ms(12),
+    marginBottom: ms(8),
   },
   payoutAmount: {
     ...THEME.fontStyle.h5Bold,
@@ -145,16 +160,22 @@ const styles = StyleSheet.create({
     color: COLORS.lightGray,
   },
   paidBadge: {
+    // backgroundColor: COLORS.whiteLight,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     paddingHorizontal: ms(8),
     paddingVertical: ms(2),
     borderRadius: ms(12),
-    borderWidth: 1,
-    borderColor: COLORS.lightGray,
+    // borderWidth: 1,
+    // borderColor: COLORS.lightGray,
   },
   paidText: {
     ...THEME.fontStyle.h6Regular,
     color: COLORS.white,
+  },
+  withdrawRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   withdrawButton: {
     alignSelf: 'flex-start',
@@ -163,10 +184,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.lightGray,
     borderRadius: ms(20),
-    marginTop: ms(16),
+    marginTop: ms(10),
   },
   withdrawButtonText: {
-    ...THEME.fontStyle.h6Regular,
+    ...THEME.fontStyle.h5Regular,
     color: COLORS.lightGray,
   },
   infoCard: {
@@ -263,7 +284,7 @@ const styles = StyleSheet.create({
   switchLabel: {
     ...THEME.fontStyle.h5Regular,
     color: COLORS.white,
-    // marginLeft: ms(12),
+    marginLeft: ms(12),
   },
   inputLabel: {
     ...THEME.fontStyle.h5Regular,
@@ -318,8 +339,95 @@ const styles = StyleSheet.create({
     ...THEME.fontStyle.h6Regular,
     color: COLORS.white,
   },
+  connectButton: {
+    marginTop: ms(16),
+    backgroundColor: COLORS.primary,
+    paddingVertical: ms(10),
+    borderRadius: ms(24),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   space: {
     marginBottom: ms(20),
+  },
+  // Confirmation Modal Styles
+  modalContainer: {
+    margin: 0,
+    justifyContent: 'flex-end',
+  },
+  mainModalView: {
+    backgroundColor: COLORS.cardBG,
+    borderTopLeftRadius: ms(20),
+    borderTopRightRadius: ms(20),
+    paddingTop: ms(16),
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: ms(20),
+    paddingBottom: ms(16),
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  modalTitle: {
+    ...THEME.fontStyle.h3Bold,
+    color: COLORS.white,
+  },
+  modalBody: {
+    padding: ms(20),
+  },
+  modalMessage: {
+    ...THEME.fontStyle.h4Regular,
+    color: COLORS.white,
+    lineHeight: ms(22),
+    marginBottom: ms(16),
+  },
+  warningBox: {
+    backgroundColor: 'rgba(255, 68, 68, 0.1)',
+    borderRadius: ms(8),
+    padding: ms(12),
+    flexDirection: 'row',
+    gap: ms(12),
+    borderWidth: 1,
+    borderColor: 'rgba(255, 68, 68, 0.2)',
+  },
+  warningIconContainer: {
+    marginTop: ms(2),
+  },
+  warningTextContainer: {
+    flex: 1,
+    gap: ms(4),
+  },
+  warningText: {
+    ...THEME.fontStyle.h6Regular,
+    color: COLORS.white,
+    lineHeight: ms(18),
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    padding: ms(20),
+    gap: ms(16),
+  },
+  modalCancelButton: {
+    paddingHorizontal: ms(12),
+  },
+  modalCancelText: {
+    ...THEME.fontStyle.h5Regular,
+    color: COLORS.placeholder,
+  },
+  modalUnlinkButton: {
+    backgroundColor: COLORS.red,
+    paddingHorizontal: ms(20),
+    paddingVertical: ms(10),
+    borderRadius: ms(8),
+    minWidth: ms(120),
+  },
+  modalUnlinkText: {
+    ...THEME.fontStyle.h5Bold,
+    color: COLORS.white,
   },
 });
 
