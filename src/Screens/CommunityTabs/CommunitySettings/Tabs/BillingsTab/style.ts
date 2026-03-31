@@ -9,6 +9,7 @@ const styles = StyleSheet.create({
     padding: ms(12),
     backgroundColor: COLORS.cardBG,
     borderRadius: ms(8),
+    marginBottom: ms(16),
   },
   headerContainer: {
     marginBottom: ms(16),
@@ -43,9 +44,7 @@ const styles = StyleSheet.create({
   },
   planDescription: {
     ...THEME.fontStyle.h6Regular,
-    color: COLORS.lightGray,
-    borderWidth: 1,
-    borderColor: COLORS.white,
+    backgroundColor: COLORS.primary,
     borderRadius: ms(20),
     paddingHorizontal: ms(14),
     paddingVertical: ms(4),
@@ -140,7 +139,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.border,
     borderRadius: ms(8),
     padding: ms(12),
-    // marginBottom: ms(12),
+    marginBottom: ms(12),
   },
   paymentTextRow: {
     flexDirection: 'row',
@@ -170,6 +169,11 @@ const styles = StyleSheet.create({
     ...THEME.fontStyle.h6Regular,
     color: COLORS.lightGray,
   },
+  noData: {
+    ...THEME.fontStyle.h6Regular,
+    color: COLORS.lightGray,
+    textAlign: 'center',
+  },
 
   cardContainer: {
     backgroundColor: COLORS.innerCardBG,
@@ -195,6 +199,15 @@ const styles = StyleSheet.create({
   cardDate: {
     ...THEME.fontStyle.h6Regular,
     color: COLORS.white,
+  },
+  noPaymentMethodView: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.innerCardBG,
+    borderRadius: ms(8),
+    padding: ms(12),
+    marginVertical: ms(12),
   },
 
   managePaymentContainer: {

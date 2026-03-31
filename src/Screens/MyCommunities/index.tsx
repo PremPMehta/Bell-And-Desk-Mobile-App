@@ -195,7 +195,8 @@ const MyCommunities = () => {
     if (
       !activeEntitlement ||
       remainingSlots <= 0 ||
-      searchQuery.trim().length > 0
+      searchQuery.trim().length > 0 ||
+      selectedCategory !== 'All'
     )
       return null;
     return (
@@ -215,7 +216,12 @@ const MyCommunities = () => {
   };
 
   const renderPaymentPendingBanner = () => {
-    if (reservations.length === 0 || searchQuery.trim().length > 0) return null;
+    if (
+      reservations.length === 0 ||
+      searchQuery.trim().length > 0 ||
+      selectedCategory !== 'All'
+    )
+      return null;
 
     return (
       <>

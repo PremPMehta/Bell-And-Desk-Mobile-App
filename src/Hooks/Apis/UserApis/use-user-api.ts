@@ -460,6 +460,14 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiGetStripePayouts),
   );
 
+  // Billing Owner Dashboard
+  const [apiGetOwnerDashboardBillingLoading, setApiGetOwnerDashboardBillingLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetOwnerDashboardBillingLoading),
+  );
+  const [apiGetOwnerDashboardBilling, setApiGetOwnerDashboardBilling] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetOwnerDashboardBilling),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -1494,6 +1502,24 @@ const useUserApi = () => {
     }
   }
 
+  // Get Owner Dashboard Billing
+  async function getOwnerDashboardBilling(slug: string) {
+    try {
+      setApiGetOwnerDashboardBillingLoading(true);
+      const url = ApiEndPoints.ownerDashboardBilling.replace(':slug', slug);
+      const res: any = await api.get(url);
+      setApiGetOwnerDashboardBilling(res);
+      setApiGetOwnerDashboardBillingLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching owner dashboard billing info:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiGetOwnerDashboardBillingLoading(false);
+    }
+  }
+
   // Clear Stripe Settings Data
   function clearStripeSettings() {
     setApiGetStripeAccountStatus(null);
@@ -1795,6 +1821,11 @@ const useUserApi = () => {
 
     // Auth Token for external downloads
     userToken,
+    getOwnerDashboardBilling,
+    apiGetOwnerDashboardBillingLoading,
+    apiGetOwnerDashboardBilling,
+    setApiGetOwnerDashboardBillingLoading,
+    setApiGetOwnerDashboardBilling,
   };
 };
 

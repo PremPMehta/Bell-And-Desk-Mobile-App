@@ -161,4 +161,8 @@ export const AtomKeys = {
   apiGetStripePayouts: 'apiGetStripePayouts',
   apiCreateStripeConnectAccountLoading: 'apiCreateStripeConnectAccountLoading',
   apiUnlinkStripeAccountLoading: 'apiUnlinkStripeAccountLoading',
+
+  // Billing
+  apiGetOwnerDashboardBillingLoading: 'apiGetOwnerDashboardBillingLoading',
+  apiGetOwnerDashboardBilling: 'apiGetOwnerDashboardBilling',
 };

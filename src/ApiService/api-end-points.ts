@@ -73,4 +73,7 @@ export const ApiEndPoints = {
   stripePayouts: 'stripe/connect/payouts/:slug',
   createConnectAccount: 'stripe/connect/create-account/:slug',
   unlinkConnectAccount: 'stripe/connect/unlink-account/:slug',
+
+  // Billing
+  ownerDashboardBilling: 'billing/owner-dashboard/:slug',
 };

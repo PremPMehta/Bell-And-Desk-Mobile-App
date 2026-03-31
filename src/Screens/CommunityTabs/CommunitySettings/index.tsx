@@ -56,7 +56,7 @@ const CommunitySettings = ({
         )}
         {activeTab === 'Subscription' && <SubscriptionTab />}
         {activeTab === 'Coupons' && <CouponsTab slug={slug} communityId={communityId} />}
-        {activeTab === 'Billings' && <BillingsTab />}
+        {activeTab === 'Billings' && <BillingsTab slug={slug} />}
         {activeTab === 'Referrals' && <ReferralTab />}
         {activeTab === 'Moderators' && <ModeratorsTab communityId={communityId} />}
       </View>

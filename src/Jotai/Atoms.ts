@@ -110,3 +110,5 @@ export const mediaPreviewAtom = atom<{
 
 export const refreshSocialFeedsAtom = booleanDefaultFalseAtomFamily(AtomKeys.refreshSocialFeeds);
 
+export const apiGetOwnerDashboardBillingLoadingAtomFamily = booleanDefaultFalseAtomFamily(AtomKeys.apiGetOwnerDashboardBillingLoading);
+export const apiGetOwnerDashboardBillingAtomFamily = objectAtomFamily(AtomKeys.apiGetOwnerDashboardBilling);
