@@ -461,7 +461,10 @@ const useUserApi = () => {
   );
 
   // Billing Owner Dashboard
-  const [apiGetOwnerDashboardBillingLoading, setApiGetOwnerDashboardBillingLoading] = useAtom(
+  const [
+    apiGetOwnerDashboardBillingLoading,
+    setApiGetOwnerDashboardBillingLoading,
+  ] = useAtom(
     booleanDefaultFalseAtomFamily(AtomKeys.apiGetOwnerDashboardBillingLoading),
   );
   const [apiGetOwnerDashboardBilling, setApiGetOwnerDashboardBilling] = useAtom(

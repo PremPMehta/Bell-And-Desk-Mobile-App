@@ -314,7 +314,6 @@ const Home = () => {
                   <HomeCardGrid
                     data={mappedCommunities}
                     onPressCard={item => {
-                      console.log('Community card clicked:', item);
                       navigation.navigate('CategoryDetails', {
                         slug: item?.subdomain,
                       });

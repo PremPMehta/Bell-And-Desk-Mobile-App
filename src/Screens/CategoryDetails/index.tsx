@@ -15,6 +15,7 @@ import {
   Linking,
   Animated,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import styles from './style';
@@ -34,6 +35,9 @@ import { AtomKeys } from '@/Jotai/AtomKeys';
 import Clipboard from '@react-native-clipboard/clipboard';
 import ToastModule from '@/Components/Core/Toast';
 
+import { api } from '@/ApiService';
+import { ApiEndPoints } from '@/ApiService/api-end-points';
+
 const CategoryDetails = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
@@ -47,6 +51,10 @@ const CategoryDetails = () => {
   } = useUserApi();
   const { requireAuth } = useRequireAuth();
 
+  // Local state for background stats (isolates logic from the main hook)
+  const [coursesStats, setCoursesStats] = useState<any>(null);
+  const [isStatsLoading, setIsStatsLoading] = useState(false);
+
   // Directly access the setter for the slug atom to clear stale data
   const clearCommunitiesSlugAtom = useSetAtom(
     objectAtomFamily(AtomKeys.apiGetCommunitiesSlug),
@@ -54,6 +62,8 @@ const CategoryDetails = () => {
 
   // Track which slug we last fetched to avoid redundant re-fetches
   const lastFetchedSlugRef = useRef<string | null>(null);
+  // Track which community _id we last fetched stats for (prevents duplicate stats calls)
+  const lastFetchedCommunityIdRef = useRef<string | null>(null);
   // Guard against WebView height update loop
   const isUpdatingHeightRef = useRef(false);
 
@@ -83,7 +93,12 @@ const CategoryDetails = () => {
     //    show old communityData while the new request is in-flight
     clearCommunitiesSlugAtom(null as any);
 
-    // 3. Fetch fresh data for the current slug
+    // 3. Reset the stats fetch guard & clear stale stats so we never show
+    //    old counts while the new community's stats request is in-flight
+    lastFetchedCommunityIdRef.current = null;
+    setCoursesStats(null);
+
+    // 4. Fetch fresh data for the current slug
     getCommunitiesSlug(`/${slug}`);
   }, [slug]);
 
@@ -91,6 +106,50 @@ const CategoryDetails = () => {
   const communityData = useMemo(() => {
     return apiGetCommunitiesSlug?.data?.community || {};
   }, [apiGetCommunitiesSlug]);
+
+  // Compute courses / chapters / videos counts from the background stats response
+  // Traverses the structure: courses[] -> chapters[] -> videos[]
+  const courseStats = useMemo(() => {
+    const courses: any[] = coursesStats?.courses || [];
+    let chaptersCount = 0;
+    let videosCount = 0;
+    courses.forEach((course: any) => {
+      const chapters: any[] = course?.chapters || [];
+      chaptersCount += chapters.length;
+      chapters.forEach((chapter: any) => {
+        videosCount += (chapter?.videos || []).length;
+      });
+    });
+    return {
+      coursesCount: courses.length,
+      chaptersCount,
+      videosCount,
+    };
+  }, [coursesStats]);
+
+  // Background fetch: load courses stats once communityData._id is known.
+  // Performs a direct API call to avoid useUserApi hook complexity/errors.
+  const getStats = useCallback(async (communityId: string) => {
+    try {
+      setIsStatsLoading(true);
+      const res: any = await api.get(
+        `${ApiEndPoints.communityCourses}?community=${communityId}`,
+      );
+      setCoursesStats(res);
+      setIsStatsLoading(false);
+    } catch (error) {
+      console.error('Error fetching community courses stats:', error);
+      setIsStatsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const communityId = communityData?._id;
+    if (!communityId) return;
+    if (lastFetchedCommunityIdRef.current === communityId) return;
+    lastFetchedCommunityIdRef.current = communityId;
+    getStats(communityId);
+  }, [communityData?._id, getStats]);
 
   console.log('🚀 ~ CategoryDetails ~ communityData:', communityData);
 
@@ -575,17 +634,17 @@ const CategoryDetails = () => {
           <View style={styles.statsRow}>
             {[
               {
-                number: communityData?.coursesCount || '0',
+                number: courseStats.coursesCount,
                 label: 'Courses',
                 icon: 'GraduationCap',
               },
               {
-                number: communityData?.videosCount || '0',
+                number: courseStats.videosCount,
                 label: 'Videos',
                 icon: 'CirclePlay',
               },
               {
-                number: communityData?.chaptersCount || '0',
+                number: courseStats.chaptersCount,
                 label: 'Chapters',
                 icon: 'BookOpenText',
               },
@@ -595,7 +654,15 @@ const CategoryDetails = () => {
                   <Icon name={item.icon} color={COLORS.white} size={24} />
                 </View>
                 <View>
-                  <Text style={styles.statNumber}>{item.number}</Text>
+                  {isStatsLoading ? (
+                    <ActivityIndicator
+                      size="small"
+                      color={COLORS.white}
+                      style={{ marginVertical: 4 }}
+                    />
+                  ) : (
+                    <Text style={styles.statNumber}>{item.number}</Text>
+                  )}
                   <Text style={styles.statLabel}>{item.label}</Text>
                 </View>
               </View>
