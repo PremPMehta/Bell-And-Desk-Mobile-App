@@ -460,7 +460,7 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiGetStripePayouts),
   );
 
-  // Billing Owner Dashboard
+  // Billing
   const [
     apiGetOwnerDashboardBillingLoading,
     setApiGetOwnerDashboardBillingLoading,
@@ -469,6 +469,20 @@ const useUserApi = () => {
   );
   const [apiGetOwnerDashboardBilling, setApiGetOwnerDashboardBilling] = useAtom(
     objectAtomFamily(AtomKeys.apiGetOwnerDashboardBilling),
+  );
+
+  // Blogs
+  const [apiGetBlogsLoading, setApiGetBlogsLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetBlogsLoading),
+  );
+  const [apiGetBlogs, setApiGetBlogs] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetBlogs),
+  );
+  const [apiGetBlogDetailsLoading, setApiGetBlogDetailsLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetBlogDetailsLoading),
+  );
+  const [apiGetBlogDetails, setApiGetBlogDetails] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetBlogDetails),
   );
 
   // User Unified Login
@@ -1553,6 +1567,41 @@ const useUserApi = () => {
     }
   }
 
+  // Get Blogs
+  async function getBlogs() {
+    try {
+      setApiGetBlogsLoading(true);
+      const blogsRes: any = await api.get(ApiEndPoints.blogs);
+      setApiGetBlogs(blogsRes);
+      setApiGetBlogsLoading(false);
+      return blogsRes;
+    } catch (error: any) {
+      console.error('Error fetching blogs info:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiGetBlogsLoading(false);
+    }
+  }
+
+  // Get Blog Details
+  async function getBlogDetails(slug: string) {
+    try {
+      setApiGetBlogDetailsLoading(true);
+      const url = ApiEndPoints.blogDetails.replace(':slug', slug);
+      const blogDetailsRes: any = await api.get(url);
+      setApiGetBlogDetails(blogDetailsRes);
+      setApiGetBlogDetailsLoading(false);
+      return blogDetailsRes;
+    } catch (error: any) {
+      console.error('Error fetching blog details info:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiGetBlogDetailsLoading(false);
+    }
+  }
+
   return {
     // Auth Apis
     getUserUnifiedLogin,
@@ -1829,6 +1878,14 @@ const useUserApi = () => {
     apiGetOwnerDashboardBilling,
     setApiGetOwnerDashboardBillingLoading,
     setApiGetOwnerDashboardBilling,
+
+    // Blogs
+    getBlogs,
+    apiGetBlogsLoading,
+    apiGetBlogs,
+    getBlogDetails,
+    apiGetBlogDetailsLoading,
+    apiGetBlogDetails,
   };
 };
 

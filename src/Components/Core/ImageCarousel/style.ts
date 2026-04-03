@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
   carouselImg: {
     width: '100%',
     // height: '100%',
-    height: vs(145),
+    // height: vs(145),
     resizeMode: 'contain',
   },
   gradientOverlay: {

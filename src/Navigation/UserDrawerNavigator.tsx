@@ -11,6 +11,7 @@ import MyCommunities from '@/Screens/MyCommunities';
 import CommunityLayout from '@/Screens/CommunityLayout';
 import Settings from '@/Screens/Settings';
 import Profile from '@/Screens/Profile';
+import Blogs from '@/Screens/Blogs';
 import { THEME } from '@/Assets/Theme';
 
 const Drawer = createDrawerNavigator();
@@ -107,6 +108,17 @@ const UserDrawerNavigator = () => {
           drawerLabel: 'My Communities',
           drawerIcon: ({ color }) => (
             <Icon name="Users" size={22} color={color} />
+          ),
+        }}
+      />
+
+      <Drawer.Screen
+        name="Blogs"
+        component={Blogs}
+        options={{
+          drawerLabel: 'Blogs',
+          drawerIcon: ({ color }) => (
+            <Icon name="BookOpen" size={22} color={color} />
           ),
         }}
       />

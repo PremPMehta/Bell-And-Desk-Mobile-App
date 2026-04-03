@@ -66,6 +66,8 @@ const AppHeader = () => {
         return 'Community Layout';
       case 'Settings':
         return 'Settings';
+      case 'Blogs':
+        return 'Blogs';
       default:
         return '';
     }

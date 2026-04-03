@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
     ...THEME.fontStyle.h7Regular,
   },
   title: {
-    ...THEME.fontStyle.h3Bold,
+    ...THEME.fontStyle.h4Bold,
     marginTop: ms(8),
     marginBottom: ms(10),
     marginLeft: ms(6),

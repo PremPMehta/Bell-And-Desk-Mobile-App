@@ -76,4 +76,8 @@ export const ApiEndPoints = {
 
   // Billing
   ownerDashboardBilling: 'billing/owner-dashboard/:slug',
+
+  // Blogs
+  blogs: 'blogs',
+  blogDetails: 'blogs/:slug',
 };

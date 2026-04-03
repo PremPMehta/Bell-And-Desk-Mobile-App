@@ -165,4 +165,10 @@ export const AtomKeys = {
   // Billing
   apiGetOwnerDashboardBillingLoading: 'apiGetOwnerDashboardBillingLoading',
   apiGetOwnerDashboardBilling: 'apiGetOwnerDashboardBilling',
+
+  // Blogs
+  apiGetBlogsLoading: 'apiGetBlogsLoading',
+  apiGetBlogs: 'apiGetBlogs',
+  apiGetBlogDetailsLoading: 'apiGetBlogDetailsLoading',
+  apiGetBlogDetails: 'apiGetBlogDetails',
 };

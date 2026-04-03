@@ -20,6 +20,7 @@ import CategoryDetails from '@/Screens/CategoryDetails';
 import CreateCourses from '@/Screens/CommunityTabs/Courses/CreateCourses';
 import EditCourse from '@/Screens/CommunityTabs/Courses/EditCourse';
 import CourseView from '@/Screens/CommunityTabs/Courses/CourseView';
+import BlogDetails from '@/Screens/BlogDetails';
 
 export type StackNavigationProp<T> = any;
 export type RootStackParamList = {
@@ -209,6 +210,11 @@ const AppNavigator = () => {
             headerShown: true,
             title: 'Profile',
           }}
+        />
+        <MainStack.Screen
+          name="BlogDetails"
+          component={BlogDetails}
+          options={{ headerShown: false }}
         />
       </MainStack.Navigator>
       <ModalLayout />
