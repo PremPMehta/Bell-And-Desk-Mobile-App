@@ -48,8 +48,13 @@ const CategoryDetails = () => {
     getCommunitiesSlug,
     apiGetCommunitiesSlugLoading,
     apiGetCommunitiesSlug,
+    joinCommunity,
+    apiJoinCommunityLoading,
+    getUserAccessRequests,
+    apiGetUserAccessRequestsLoading,
+    apiGetUserAccessRequests,
   } = useUserApi();
-  const { requireAuth } = useRequireAuth();
+  const { requireAuth, isLoggedIn } = useRequireAuth();
 
   // Local state for background stats (isolates logic from the main hook)
   const [coursesStats, setCoursesStats] = useState<any>(null);
@@ -69,6 +74,7 @@ const CategoryDetails = () => {
 
   // WebView height — start at 1 (invisible) until content reports its actual height
   const [webHeight, setWebHeight] = useState(1);
+  const [localRequestStatus, setLocalJoinStatus] = useState<string | null>(null);
 
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -93,10 +99,10 @@ const CategoryDetails = () => {
     //    show old communityData while the new request is in-flight
     clearCommunitiesSlugAtom(null as any);
 
-    // 3. Reset the stats fetch guard & clear stale stats so we never show
-    //    old counts while the new community's stats request is in-flight
+    // 3. Reset the stats fetch guard, clear stale stats, and clear local join status
     lastFetchedCommunityIdRef.current = null;
     setCoursesStats(null);
+    setLocalJoinStatus(null);
 
     // 4. Fetch fresh data for the current slug
     getCommunitiesSlug(`/${slug}`);
@@ -149,7 +155,12 @@ const CategoryDetails = () => {
     if (lastFetchedCommunityIdRef.current === communityId) return;
     lastFetchedCommunityIdRef.current = communityId;
     getStats(communityId);
-  }, [communityData?._id, getStats]);
+
+    // Also fetch user access requests if logged in to manage the "Join Now" button status correctly
+    if (isLoggedIn) {
+      getUserAccessRequests();
+    }
+  }, [communityData?._id, getStats, isLoggedIn]);
 
   console.log('🚀 ~ CategoryDetails ~ communityData:', communityData);
 
@@ -389,6 +400,22 @@ const CategoryDetails = () => {
   // onMessage handler — the JS side already deduplicates (max 6 reports, >10px change).
   // We accept every meaningful update here so later reports (after images load) can
   // still resize the WebView to the correct final height.
+  // Determine enrollment status from userAccessRequests API response
+  const userRequestStatus = useMemo(() => {
+    const requests: any[] = apiGetUserAccessRequests?.data?.requests || [];
+    const communityId = communityData?._id;
+    if (!communityId || !isLoggedIn) return null;
+
+    const currentRequest = requests.find(
+      (req: any) =>
+        (req?.communityId?._id === communityId ||
+          req?.communityId === communityId) &&
+        req?.status === 'pending',
+    );
+
+    return currentRequest ? 'pending' : null;
+  }, [apiGetUserAccessRequests, communityData?._id, isLoggedIn]);
+
   const handleWebViewMessage = useCallback(
     (event: any) => {
       const height = Number(event.nativeEvent.data);
@@ -399,8 +426,26 @@ const CategoryDetails = () => {
     [webHeight],
   );
 
-  const handleJoinNow = () => {
-    requireAuth();
+  const handleJoinNow = async () => {
+    if (requireAuth()) {
+      const communityId = communityData?._id;
+      if (!communityId) return;
+
+      const body = {
+        message: 'I would like to join this community',
+      };
+
+      joinCommunity(communityId, body).then((res: any) => {
+        if (res?.success) {
+          // Instant feedback
+          setLocalJoinStatus('pending');
+
+          // Re-fetch community data and user requests to update status globally
+          getCommunitiesSlug(`/${slug}`);
+          getUserAccessRequests();
+        }
+      });
+    }
   };
 
   // Show skeleton while we're loading the current slug's community data
@@ -569,8 +614,44 @@ const CategoryDetails = () => {
             <Text style={styles.title}>
               {communityData?.name || 'Title name'}
             </Text>
-            <TouchableOpacity style={styles.joinNow} onPress={handleJoinNow}>
-              <Text style={styles.joinText}>Join Now</Text>
+            <TouchableOpacity
+              style={[
+                styles.joinNow,
+                (communityData?.isRequested ||
+                  communityData?.requestStatus === 'pending' ||
+                  userRequestStatus === 'pending' ||
+                  localRequestStatus === 'pending' ||
+                  communityData?.isMember) && {
+                  backgroundColor: COLORS.cardBG,
+                  borderColor: COLORS.border,
+                  borderWidth: 1,
+                },
+              ]}
+              onPress={handleJoinNow}
+              disabled={
+                apiJoinCommunityLoading ||
+                apiGetUserAccessRequestsLoading ||
+                communityData?.isRequested ||
+                communityData?.requestStatus === 'pending' ||
+                userRequestStatus === 'pending' ||
+                localRequestStatus === 'pending' ||
+                communityData?.isMember
+              }
+            >
+              {apiJoinCommunityLoading || apiGetUserAccessRequestsLoading ? (
+                <ActivityIndicator size="small" color={COLORS.white} />
+              ) : (
+                <Text style={styles.joinText}>
+                  {communityData?.isMember
+                    ? 'Joined'
+                    : communityData?.isRequested ||
+                        communityData?.requestStatus === 'pending' ||
+                        userRequestStatus === 'pending' ||
+                        localRequestStatus === 'pending'
+                      ? 'Pending'
+                      : 'Join Now'}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
 

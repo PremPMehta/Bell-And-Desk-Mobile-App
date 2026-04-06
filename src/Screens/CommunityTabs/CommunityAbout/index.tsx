@@ -6,7 +6,9 @@ import {
   TouchableOpacity,
   ScrollView,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
+
 import React, {
   useState,
   useEffect,
@@ -28,6 +30,10 @@ import { AtomKeys } from '@/Jotai/AtomKeys';
 import { Config } from '@/Config';
 import Clipboard from '@react-native-clipboard/clipboard';
 import ToastModule from '@/Components/Core/Toast';
+import { api } from '@/ApiService';
+import { ApiEndPoints } from '@/ApiService/api-end-points';
+import CommunityReferralModal from '@/Components/Generic/Modals/CommunityReferralModal';
+import LeaveCommunityModal from '@/Components/Generic/Modals/LeaveCommunityModal';
 
 interface Props {
   communityId?: string;
@@ -50,12 +56,28 @@ const CommunityAbout = ({
     getCommunitiesSlug,
     apiGetCommunitiesSlugLoading,
     apiGetCommunitiesSlug,
+    apiGetUserData,
+    getReferralCode,
+    apiGetReferralCodeLoading,
+    apiGetReferralCode,
+    user,
+    leaveCommunity,
+    apiLeaveCommunityLoading,
   } = useUserApi();
 
   const clearCommunitiesSlugAtom = useSetAtom(
     objectAtomFamily(AtomKeys.apiGetCommunitiesSlug),
   );
 
+  // Local state for statistics (parallel to community fetch)
+  const [coursesStats, setCoursesStats] = useState<any>(null);
+  const [isStatsLoading, setIsStatsLoading] = useState(false);
+
+  const [isReferralModalVisible, setIsReferralModalVisible] = useState(false);
+  const [isLeaveModalVisible, setIsLeaveModalVisible] = useState(false);
+
+  // Track which community _id we last fetched stats for
+  const lastFetchedCommunityIdRef = useRef<string | null>(null);
   const lastFetchedSlugRef = useRef<string | null>(null);
 
   const isStaging = Config.APP_ENV === 'staging';
@@ -79,6 +101,75 @@ const CommunityAbout = ({
   const communityData = useMemo(() => {
     return apiGetCommunitiesSlug?.data?.community || {};
   }, [apiGetCommunitiesSlug]);
+
+  const userRole = useMemo(() => {
+    const allCommunities = apiGetUserData?.data?.allCommunities || [];
+    const currentId = communityData?._id || communityId;
+    const currentSlug = slug || communityData?.slug || communityData?.subdomain;
+
+    const currentComm = allCommunities.find(
+      (c: any) =>
+        (currentId && (c._id === currentId || c.id === currentId)) ||
+        (currentSlug && c.subdomain === currentSlug),
+    );
+
+    return currentComm?.role?.toLowerCase() || 'member';
+  }, [apiGetUserData, communityData, communityId, slug]);
+
+  // Compute course / chapter / video counts from stats response
+  const courseStats = useMemo(() => {
+    const courses: any[] = coursesStats?.courses || [];
+    let chaptersCount = 0;
+    let videosCount = 0;
+    courses.forEach((course: any) => {
+      const chapters: any[] = course?.chapters || [];
+      chaptersCount += chapters.length;
+      chapters.forEach((chapter: any) => {
+        videosCount += (chapter?.videos || []).length;
+      });
+    });
+    return {
+      coursesCount: courses.length,
+      chaptersCount,
+      videosCount,
+    };
+  }, [coursesStats]);
+
+  // Direct fetch for stats once IDs are available
+  const getStats = useCallback(async (targetCommunityId: string) => {
+    try {
+      setIsStatsLoading(true);
+      const res: any = await api.get(
+        `${ApiEndPoints.communityCourses}?community=${targetCommunityId}`,
+      );
+      setCoursesStats(res);
+      setIsStatsLoading(false);
+    } catch (error) {
+      console.error('Error fetching community courses stats:', error);
+      setIsStatsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const cId = communityData?._id;
+    if (!cId) return;
+
+    // Trigger fetch only if the ID has changed or hasn't been fetched yet
+    if (lastFetchedCommunityIdRef.current === cId) return;
+    lastFetchedCommunityIdRef.current = cId;
+
+    getStats(cId);
+  }, [communityData?._id, getStats]);
+
+  useEffect(() => {
+    // Reset stats when switching slug
+    const fetchId = slug || communityId;
+    if (fetchId && lastFetchedSlugRef.current !== fetchId) {
+      setCoursesStats(null);
+      lastFetchedCommunityIdRef.current = null;
+    }
+  }, [slug, communityId]);
+
   console.log('🚀 ~ CommunityAbout ~ communityData:', communityData);
 
   // Build WebView HTML only when welcomeMessage changes
@@ -224,12 +315,12 @@ const CommunityAbout = ({
     return combined.length > 0
       ? combined
       : [
-        {
-          id: 'placeholder',
-          uri: 'https://picsum.photos/800/900?random=1',
-          type: 'image',
-        },
-      ];
+          {
+            id: 'placeholder',
+            uri: 'https://picsum.photos/800/900?random=1',
+            type: 'image',
+          },
+        ];
   }, [communityData?.introVideoLinks, communityData?.introImages]);
 
   const activeItem = mediaList[activeIndex] || mediaList[0];
@@ -277,7 +368,7 @@ const CommunityAbout = ({
       return {
         html,
         baseUrl: 'https://www.youtube.com',
-        headers: { Referer: 'https://www.youtube.com' }
+        headers: { Referer: 'https://www.youtube.com' },
       };
     }
 
@@ -293,8 +384,33 @@ const CommunityAbout = ({
     ToastModule.successTop({ msg: 'Copied to Clipboard' });
   };
 
+  const handleReferralPress = async () => {
+    const cId = communityData?._id;
+    if (cId) {
+      setIsReferralModalVisible(true);
+      await getReferralCode(cId);
+    }
+  };
+
+  const handleConfirmLeave = async () => {
+    const cId = communityData?._id || communityId;
+    if (cId) {
+      const res = await leaveCommunity(cId);
+      if (res) {
+        setIsLeaveModalVisible(false);
+        navigation.goBack();
+        navigation.navigate('Home');
+        ToastModule.successTop({ msg: 'Successfully left the community' });
+      }
+    }
+  };
+
   // Check if data is currently being fetched OR if we have stale data from a previous community
-  const belongsToCurrentId = (id: string | undefined, slug: string | undefined, data: any) => {
+  const belongsToCurrentId = (
+    id: string | undefined,
+    slug: string | undefined,
+    data: any,
+  ) => {
     if (!id && !slug) return true;
     const searchId = slug || id;
     if (!searchId) return true;
@@ -345,10 +461,12 @@ const CommunityAbout = ({
             {communityData?.creatorName || communityData?.name || 'Community'}
           </Text>
         </View>
-        <TouchableOpacity style={styles.editButton} onPress={handleEditPress}>
-          <Icon name="Pencil" size={14} color={COLORS.white} />
-          <Text style={styles.editButtonText}>Edit</Text>
-        </TouchableOpacity>
+        {userRole === 'owner' && (
+          <TouchableOpacity style={styles.editButton} onPress={handleEditPress}>
+            <Icon name="Pencil" size={14} color={COLORS.white} />
+            <Text style={styles.editButtonText}>Edit</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Main Video/Media Section */}
@@ -458,9 +576,24 @@ const CommunityAbout = ({
       <View style={styles.communityInfo}>
         <View style={styles.communityNameRow}>
           <Text style={styles.communityTitle}>{communityData?.name}</Text>
-          <TouchableOpacity style={styles.inviteButton}>
-            <Text style={styles.inviteButtonText}>Invite People</Text>
-          </TouchableOpacity>
+          <View style={styles.actionButtonsRow}>
+            <TouchableOpacity
+              style={styles.inviteButton}
+              onPress={handleReferralPress}
+            >
+              <Icon name="UserPlus" size={14} color={COLORS.white} />
+              {/* <Text style={styles.inviteButtonText}>Community Referral</Text> */}
+            </TouchableOpacity>
+            {userRole === 'member' && (
+              <TouchableOpacity
+                style={styles.leaveButton}
+                onPress={() => setIsLeaveModalVisible(true)}
+              >
+                <Icon name="LogOut" size={14} color={COLORS.white} />
+                {/* <Text style={styles.leaveButtonText}>Leave</Text> */}
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
         {communityData?.subdomain && (
           <View style={styles.communityLinkRow}>
@@ -531,9 +664,17 @@ const CommunityAbout = ({
             <Icon name="GraduationCap" size={20} color={COLORS.white} />
           </View>
           <View style={styles.statValueContainer}>
-            <Text style={styles.statValue}>
-              {communityData?.coursesCount || '0'}
-            </Text>
+            {isStatsLoading ? (
+              <ActivityIndicator
+                size="small"
+                color={COLORS.white}
+                style={{ marginVertical: 4 }}
+              />
+            ) : (
+              <Text style={styles.statValue}>
+                {courseStats.coursesCount || '0'}
+              </Text>
+            )}
             <Text style={styles.statLabel}>Courses</Text>
           </View>
         </View>
@@ -542,9 +683,17 @@ const CommunityAbout = ({
             <Icon name="Play" size={20} color={COLORS.white} />
           </View>
           <View>
-            <Text style={styles.statValue}>
-              {communityData?.videosCount || '0'}
-            </Text>
+            {isStatsLoading ? (
+              <ActivityIndicator
+                size="small"
+                color={COLORS.white}
+                style={{ marginVertical: 4 }}
+              />
+            ) : (
+              <Text style={styles.statValue}>
+                {courseStats.videosCount || '0'}
+              </Text>
+            )}
             <Text style={styles.statLabel}>Videos</Text>
           </View>
         </View>
@@ -553,9 +702,17 @@ const CommunityAbout = ({
             <Icon name="BookOpen" size={20} color={COLORS.white} />
           </View>
           <View>
-            <Text style={styles.statValue}>
-              {communityData?.chaptersCount || '0'}
-            </Text>
+            {isStatsLoading ? (
+              <ActivityIndicator
+                size="small"
+                color={COLORS.white}
+                style={{ marginVertical: 4 }}
+              />
+            ) : (
+              <Text style={styles.statValue}>
+                {courseStats.chaptersCount || '0'}
+              </Text>
+            )}
             <Text style={styles.statLabel}>Chapters</Text>
           </View>
         </View>
@@ -634,6 +791,24 @@ const CommunityAbout = ({
           </View>
         </>
       )} */}
+      {/* Referral Modal */}
+      <CommunityReferralModal
+        isVisible={isReferralModalVisible}
+        onClose={() => setIsReferralModalVisible(false)}
+        communityName={communityData?.name}
+        creatorName={communityData?.creatorName || 'Owner'}
+        referralData={apiGetReferralCode}
+        isLoading={apiGetReferralCodeLoading}
+        slug={communityData?.subdomain || communityData?.slug}
+        username={user?.username}
+      />
+
+      <LeaveCommunityModal
+        isVisible={isLeaveModalVisible}
+        onClose={() => setIsLeaveModalVisible(false)}
+        onConfirm={handleConfirmLeave}
+        isLoading={apiLeaveCommunityLoading}
+      />
     </Animated.ScrollView>
   );
 };

@@ -8,10 +8,13 @@ import {
 } from 'react-native';
 import styles from './style';
 import MemberItem from './Components/MemberItem';
+import PendingMemberItem from './Components/PendingMemberItem';
 import FilterTabs from './Components/FilterTabs';
+import Modal from 'react-native-modal';
 import SearchBar from '@/Components/Core/SearchBar';
 import Icon from '@/Components/Core/Icons';
 import { COLORS } from '@/Assets/Theme/colors';
+import { ms } from '@/Assets/Theme/fontStyle';
 import { MEMBER_FILTER_TABS } from '@/Constants/customData';
 import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 import CommunityMembersSkeleton from '@/Components/Core/Skeleton/CommunityMembersSkeleton';
@@ -66,6 +69,10 @@ const CommunityMembers = ({
     exportCommunityMembers,
     getCommunityAccessRequests,
     apiGetCommunityAccessRequestsLoading,
+    approveAccessRequest,
+    apiApproveAccessRequestLoading,
+    rejectAccessRequest,
+    apiRejectAccessRequestLoading,
     apiExportCommunityMembersLoading,
     userToken,
   } = useUserApi();
@@ -76,6 +83,11 @@ const CommunityMembers = ({
   const [pagination, setPagination] = useState<any>(null);
   const [page, setPage] = useState(1);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<'accept' | 'reject' | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+
   const limit = 12;
 
   const fetchMembers = async (
@@ -102,11 +114,12 @@ const CommunityMembers = ({
     if (statusFilter === 'Pending Approval') {
       res = await getCommunityAccessRequests(communityId, query);
       // Map access requests to member format
-      if (res?.success && res?.data?.accessRequests) {
-        res.data.members = res.data.accessRequests.map((req: any) => ({
-          ...req.user,
+      if (res?.success && res?.data?.requests) {
+        res.data.members = res.data.requests.map((req: any) => ({
+          ...req.userId,
           _id: req._id,
           joinedAt: req.createdAt,
+          message: req.message,
           status: 'Pending',
           role: 'Subscriber',
           subscriptionPlan: req.plan?.name || 'Free',
@@ -137,6 +150,38 @@ const CommunityMembers = ({
     }, 500);
     return () => clearTimeout(timer);
   }, [communityId, activeTab, searchText]);
+
+  const handleApprove = (item: any) => {
+    setSelectedRequest(item);
+    setConfirmAction('accept');
+    setIsConfirmModalVisible(true);
+  };
+
+  const handleReject = (item: any) => {
+    setSelectedRequest(item);
+    setConfirmAction('reject');
+    setIsConfirmModalVisible(true);
+  };
+
+  const executeAction = async () => {
+    if (!communityId || !selectedRequest || !confirmAction) return;
+
+    const requestId = selectedRequest._id;
+    setIsConfirmModalVisible(false);
+    setProcessingId(requestId);
+
+    const res =
+      confirmAction === 'accept'
+        ? await approveAccessRequest(communityId, requestId)
+        : await rejectAccessRequest(communityId, requestId);
+
+    if (res?.success) {
+      setMembers(prev => prev.filter(m => m._id !== requestId));
+    }
+    setProcessingId(null);
+    setSelectedRequest(null);
+    setConfirmAction(null);
+  };
 
   const handleLoadMore = () => {
     if (
@@ -296,7 +341,7 @@ const CommunityMembers = ({
           <SearchBar
             value={searchText}
             onChangeText={setSearchText}
-          // placeholder="Search user by name or email..."
+            // placeholder="Search user by name or email..."
           />
         </View>
         <TouchableOpacity
@@ -318,7 +363,13 @@ const CommunityMembers = ({
   );
 
   const renderEmptyState = () => {
-    if ((apiGetCommunityMembersLoading || initialLoading) && page === 1) {
+    const isLoading =
+      (apiGetCommunityMembersLoading ||
+        apiGetCommunityAccessRequestsLoading ||
+        initialLoading) &&
+      page === 1;
+
+    if (isLoading) {
       return <CommunityMembersSkeleton />;
     }
 
@@ -336,51 +387,129 @@ const CommunityMembers = ({
   };
 
   return (
-    <Animated.FlatList
-      data={
-        (apiGetCommunityMembersLoading || initialLoading) && page === 1
-          ? []
-          : members
-      }
-      keyExtractor={(item, index) => item._id || index.toString()}
-      renderItem={({ item }) => (
-        <MemberItem
-          name={`${item.firstName} ${item.lastName}`}
-          email={item.email}
-          joinedDate={new Date(item.joinedAt).toLocaleString('en-US', {
-            month: 'short',
-            day: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true,
-          })}
-          status={item.status}
-          role={item.role === 'member' ? 'Subscriber' : 'Owner'}
-          type={item.subscriptionPlan ? 'Paid' : 'Free'}
-          isSubscribed={item.isSubscribed}
-          plan={item.subscriptionPlan}
-        />
-      )}
-      onEndReached={handleLoadMore}
-      onEndReachedThreshold={0.5}
-      ListEmptyComponent={renderEmptyState()}
-      ListFooterComponent={
-        apiGetCommunityMembersLoading && page > 1 ? (
-          <ActivityIndicator
-            size="small"
-            color={COLORS.primary}
-            style={{ marginVertical: 20 }}
-          />
-        ) : null
-      }
-      style={styles.animatedScroll}
-      contentContainerStyle={styles.listContent}
-      ListHeaderComponent={renderHeader()}
-      onScroll={onScroll}
-      scrollEventThrottle={scrollEventThrottle}
-      showsVerticalScrollIndicator={false}
-    />
+    <View style={{ flex: 1 }}>
+      <Animated.FlatList
+        data={
+          (apiGetCommunityMembersLoading ||
+            apiGetCommunityAccessRequestsLoading ||
+            initialLoading) &&
+            page === 1
+            ? []
+            : members
+        }
+        keyExtractor={(item, index) => item._id || index.toString()}
+        renderItem={({ item }) => {
+          if (activeTab === 'Pending Approval') {
+            return (
+              <PendingMemberItem
+                name={`${item.firstName} ${item.lastName}`}
+                email={item.email}
+                message={item.message}
+                date={new Date(item.joinedAt).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+                onAccept={() => handleApprove(item)}
+                onReject={() => handleReject(item)}
+                isAccepting={
+                  processingId === item._id && apiApproveAccessRequestLoading
+                }
+                isRejecting={
+                  processingId === item._id && apiRejectAccessRequestLoading
+                }
+              />
+            );
+          }
+          return (
+            <MemberItem
+              name={`${item.firstName} ${item.lastName}`}
+              email={item.email}
+              joinedDate={new Date(item.joinedAt).toLocaleString('en-US', {
+                month: 'short',
+                day: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true,
+              })}
+              status={item.status}
+              role={item.role === 'member' ? 'Subscriber' : 'Owner'}
+              type={item.subscriptionPlan ? 'Paid' : 'Free'}
+              isSubscribed={item.isSubscribed}
+              plan={item.subscriptionPlan}
+            />
+          );
+        }}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListEmptyComponent={renderEmptyState()}
+        ListFooterComponent={
+          apiGetCommunityMembersLoading && page > 1 ? (
+            <ActivityIndicator
+              size="small"
+              color={COLORS.primary}
+              style={{ marginVertical: 20 }}
+            />
+          ) : null
+        }
+        style={styles.animatedScroll}
+        contentContainerStyle={styles.listContent}
+        ListHeaderComponent={renderHeader()}
+        onScroll={onScroll}
+        scrollEventThrottle={scrollEventThrottle}
+        showsVerticalScrollIndicator={false}
+      />
+
+      <Modal
+        isVisible={isConfirmModalVisible}
+        onBackdropPress={() => setIsConfirmModalVisible(false)}
+        onSwipeComplete={() => setIsConfirmModalVisible(false)}
+        swipeDirection="down"
+        style={styles.modalContainer}
+        avoidKeyboard
+      >
+        <View style={styles.mainModalView}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>
+              {confirmAction === 'accept' ? 'Accept Request' : 'Reject Request'}
+            </Text>
+            <TouchableOpacity onPress={() => setIsConfirmModalVisible(false)}>
+              <Icon name="X" size={24} color={COLORS.white} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.modalBody}>
+            <Text style={styles.modalMessage}>
+              Are you sure you want to {confirmAction}{' '}
+              <Text style={styles.boldName}>
+                {selectedRequest?.firstName} {selectedRequest?.lastName}
+              </Text>'s join request?
+              {confirmAction === 'reject' && ' This action cannot be undone.'}
+            </Text>
+          </View>
+
+          <View style={styles.modalFooter}>
+            <TouchableOpacity onPress={() => setIsConfirmModalVisible(false)}>
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.modalActionButton,
+                confirmAction === 'reject' && styles.modalRejectButton,
+              ]}
+              onPress={executeAction}
+            >
+              <Text style={styles.modalActionText}>
+                {confirmAction === 'accept' ? 'Accept' : 'Reject'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 };
 

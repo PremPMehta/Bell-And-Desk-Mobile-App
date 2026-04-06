@@ -25,10 +25,14 @@ import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 import { COLORS } from '@/Assets/Theme/colors';
 import Icon from '@/Components/Core/Icons';
 import MyCommunitiesSkeleton from '@/Components/Core/Skeleton/MyCommunitiesSkeleton';
+import { useIsFocused } from '@react-navigation/native';
+
 
 const MyCommunities = () => {
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
   const { getUserData, apiGetUserDataLoading } = useUserApi();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [communities, setCommunities] = useState<any[]>([]);
@@ -60,10 +64,13 @@ const MyCommunities = () => {
 
   const SCROLL_THRESHOLD = ms(10); // how many px before toggling
 
-  // Fetch user data on mount
+  // Fetch user data on mount and focus
   useEffect(() => {
-    fetchUserData();
-  }, []);
+    if (isFocused) {
+      fetchUserData();
+    }
+  }, [isFocused]);
+
 
   const fetchUserData = async () => {
     const response = await getUserData();

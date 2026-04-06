@@ -15,6 +15,7 @@ const useUserApi = () => {
   const navigation = useNavigation();
   const setUserToken = useSetAtom(userTokenAtom);
   const [userToken] = useAtom(userTokenAtom);
+  const [user]: [any, any] = useAtom(userAtom);
   const setUser = useSetAtom(userAtom);
 
   // User Unified Login Apis
@@ -253,6 +254,16 @@ const useUserApi = () => {
   const [apiGetCommunityAccessRequests, setApiGetCommunityAccessRequests] =
     useAtom(objectAtomFamily(AtomKeys.apiGetCommunityAccessRequests));
 
+  // Community Access Requests Actions Apis
+  const [apiApproveAccessRequestLoading, setApiApproveAccessRequestLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiApproveAccessRequestLoading),
+    );
+  const [apiRejectAccessRequestLoading, setApiRejectAccessRequestLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiRejectAccessRequestLoading),
+    );
+
   // Get Community Moderators Apis
   const [
     apiGetCommunityModeratorsLoading,
@@ -310,6 +321,36 @@ const useUserApi = () => {
     setApiUpdateReferralSettingsLoading,
   ] = useAtom(
     booleanDefaultFalseAtomFamily(AtomKeys.apiUpdateReferralSettingsLoading),
+  );
+
+  // Referral Code Apis
+  const [apiGetReferralCodeLoading, setApiGetReferralCodeLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetReferralCodeLoading),
+  );
+  const [apiGetReferralCode, setApiGetReferralCode] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetReferralCode),
+  );
+
+  // Leave Community Api
+  const [apiLeaveCommunityLoading, setApiLeaveCommunityLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiLeaveCommunityLoading),
+  );
+
+  // Join Community Api
+  const [apiJoinCommunityLoading, setApiJoinCommunityLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiJoinCommunityLoading),
+  );
+  const [apiJoinCommunity, setApiJoinCommunity] = useAtom(
+    objectAtomFamily(AtomKeys.apiJoinCommunity),
+  );
+
+  // User Access Requests Api
+  const [apiGetUserAccessRequestsLoading, setApiGetUserAccessRequestsLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiGetUserAccessRequestsLoading),
+    );
+  const [apiGetUserAccessRequests, setApiGetUserAccessRequests] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetUserAccessRequests),
   );
 
   // Coupons Apis
@@ -1033,6 +1074,54 @@ const useUserApi = () => {
     }
   }
 
+  // Approve Community Access Request
+  async function approveAccessRequest(communityId: string, requestId: string) {
+    try {
+      setApiApproveAccessRequestLoading(true);
+      const url = `${ApiEndPoints.communityAccessRequests.replace(
+        ':communityId',
+        communityId,
+      )}/${requestId}/approve`;
+      const res: any = await api.post(url, {});
+      console.log('🚀 ~ approveAccessRequest ~ res:', res);
+      ToastModule.successTop({
+        msg: res?.message || 'Access request approved successfully',
+      });
+      setApiApproveAccessRequestLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error approving access request:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiApproveAccessRequestLoading(false);
+    }
+  }
+
+  // Reject Community Access Request
+  async function rejectAccessRequest(communityId: string, requestId: string) {
+    try {
+      setApiRejectAccessRequestLoading(true);
+      const url = `${ApiEndPoints.communityAccessRequests.replace(
+        ':communityId',
+        communityId,
+      )}/${requestId}/reject`;
+      const res: any = await api.post(url, {});
+      console.log('🚀 ~ rejectAccessRequest ~ res:', res);
+      ToastModule.successTop({
+        msg: res?.message || 'Access request rejected successfully',
+      });
+      setApiRejectAccessRequestLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error rejecting access request:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiRejectAccessRequestLoading(false);
+    }
+  }
+
   // Export Community Members
   async function exportCommunityMembers(communityId: string, query: string) {
     try {
@@ -1602,6 +1691,92 @@ const useUserApi = () => {
     }
   }
 
+  // Get Referral Code
+  async function getReferralCode(communityId: string) {
+    try {
+      setApiGetReferralCodeLoading(true);
+      const url =
+        ApiEndPoints.referralCode.replace(':communityId', communityId) +
+        '?type=community_join';
+      const res: any = await api.get(url);
+      console.log('🚀 ~ getReferralCode ~ res:', res);
+      setApiGetReferralCode(res);
+      setApiGetReferralCodeLoading(false);
+      return res;
+    } catch (error) {
+      console.error('Error fetching referral code:', error);
+      setApiGetReferralCodeLoading(false);
+    }
+  }
+
+  // Leave Community
+  async function leaveCommunity(communityId: string) {
+    console.log('🚀 ~ leaveCommunity ~ communityId:', communityId);
+    try {
+      setApiLeaveCommunityLoading(true);
+      const url = ApiEndPoints.leaveCommunity.replace(
+        ':communityId',
+        communityId,
+      );
+      const res: any = await api.post(url, {});
+      console.log('🚀 ~ leaveCommunity ~ res:', res);
+      if (res) {
+        await getUserData();
+      }
+      setApiLeaveCommunityLoading(false);
+      return res;
+    } catch (error) {
+      console.error('Error leaving community:', error);
+      setApiLeaveCommunityLoading(false);
+    }
+  }
+
+  // Join Community
+  async function joinCommunity(communityId: string, body: { message: string }) {
+    console.log('🚀 ~ joinCommunity ~ communityId:', communityId);
+    try {
+      setApiJoinCommunityLoading(true);
+      const url = ApiEndPoints.joinCommunity.replace(
+        ':communityId',
+        communityId,
+      );
+      const res: any = await api.post(url, body);
+      console.log('🚀 ~ joinCommunity ~ res:', res);
+      setApiJoinCommunity(res);
+      setApiJoinCommunityLoading(false);
+      ToastModule.successTop({
+        msg: res?.message || 'Join request sent successfully!',
+      });
+      return res;
+    } catch (error: any) {
+      console.error('Error joining community:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiJoinCommunityLoading(false);
+    }
+  }
+
+  // Get User Access Requests
+  async function getUserAccessRequests() {
+    try {
+      setApiGetUserAccessRequestsLoading(true);
+      const res: any = await api.get(ApiEndPoints.userAccessRequests);
+      console.log('🚀 ~ getUserAccessRequests ~ res:', res);
+      setApiGetUserAccessRequests(res);
+      setApiGetUserAccessRequestsLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching user access requests:', error);
+      setApiGetUserAccessRequestsLoading(false);
+    }
+  }
+
+  function clearReferralCode() {
+    setApiGetReferralCode(null);
+    setApiGetReferralCodeLoading(false);
+  }
+
   return {
     // Auth Apis
     getUserUnifiedLogin,
@@ -1742,6 +1917,12 @@ const useUserApi = () => {
     apiGetCommunityAccessRequestsLoading,
     apiGetCommunityAccessRequests,
 
+    // Community Access Requests Actions
+    approveAccessRequest,
+    apiApproveAccessRequestLoading,
+    rejectAccessRequest,
+    apiRejectAccessRequestLoading,
+
     /* Community Settings Screen Apis */
     // Moderators Tab
     // Get Community Moderators
@@ -1780,6 +1961,26 @@ const useUserApi = () => {
     // Update Referral Settings
     updateReferralSettings,
     apiUpdateReferralSettingsLoading,
+
+    // Referral Code
+    getReferralCode,
+    apiGetReferralCodeLoading,
+    apiGetReferralCode,
+    clearReferralCode,
+
+    // Leave Community
+    leaveCommunity,
+    apiLeaveCommunityLoading,
+
+    // Join Community
+    joinCommunity,
+    apiJoinCommunityLoading,
+    apiJoinCommunity,
+
+    // User Access Requests
+    getUserAccessRequests,
+    apiGetUserAccessRequestsLoading,
+    apiGetUserAccessRequests,
 
     // Coupons
     getCoupons,
@@ -1886,6 +2087,9 @@ const useUserApi = () => {
     getBlogDetails,
     apiGetBlogDetailsLoading,
     apiGetBlogDetails,
+
+    // User
+    user,
   };
 };
 

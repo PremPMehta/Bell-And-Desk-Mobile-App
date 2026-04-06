@@ -13,6 +13,9 @@ export const ApiEndPoints = {
 
   // Communities
   communities: 'communities',
+  leaveCommunity: 'communities/:communityId/leave',
+  joinCommunity: 'communities/:communityId/join',
+  userAccessRequests: 'user-access-requests',
 
   /* Category Details Screen */
 
@@ -46,6 +49,7 @@ export const ApiEndPoints = {
 
   // Referral Settings
   referralSettings: 'referrals/admin/settings/:communityId',
+  referralCode: 'referrals/code/:communityId',
 
   // Coupons
   coupons: 'coupons/:slug',

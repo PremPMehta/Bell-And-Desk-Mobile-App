@@ -113,11 +113,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: ms(12),
     paddingVertical: vs(6),
     borderRadius: ms(6),
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   inviteButtonText: {
     ...fontStyle.h6Bold,
     color: COLORS.white,
+    marginLeft: ms(5),
   },
+  leaveButton: {
+    backgroundColor: COLORS.red,
+    paddingHorizontal: ms(12),
+    paddingVertical: vs(6),
+    borderRadius: ms(6),
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: ms(10),
+  },
+  leaveButtonText: {
+    ...fontStyle.h6Bold,
+    color: COLORS.white,
+    marginLeft: ms(5),
+  },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
   communityLinkRow: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -171,4 +171,23 @@ export const AtomKeys = {
   apiGetBlogs: 'apiGetBlogs',
   apiGetBlogDetailsLoading: 'apiGetBlogDetailsLoading',
   apiGetBlogDetails: 'apiGetBlogDetails',
+
+  // Referral Code
+  apiGetReferralCodeLoading: 'apiGetReferralCodeLoading',
+  apiGetReferralCode: 'apiGetReferralCode',
+
+  // Leave Community
+  apiLeaveCommunityLoading: 'apiLeaveCommunityLoading',
+
+  // Join Community
+  apiJoinCommunityLoading: 'apiJoinCommunityLoading',
+  apiJoinCommunity: 'apiJoinCommunity',
+
+  // User Access Requests
+  apiGetUserAccessRequestsLoading: 'apiGetUserAccessRequestsLoading',
+  apiGetUserAccessRequests: 'apiGetUserAccessRequests',
+
+  // Community Access Requests Actions
+  apiApproveAccessRequestLoading: 'apiApproveAccessRequestLoading',
+  apiRejectAccessRequestLoading: 'apiRejectAccessRequestLoading',
 };
