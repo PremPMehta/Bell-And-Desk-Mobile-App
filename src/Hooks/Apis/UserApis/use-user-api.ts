@@ -263,6 +263,10 @@ const useUserApi = () => {
     useAtom(
       booleanDefaultFalseAtomFamily(AtomKeys.apiRejectAccessRequestLoading),
     );
+  const [apiUpdateMemberStatusLoading, setApiUpdateMemberStatusLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiUpdateMemberStatusLoading),
+    );
 
   // Get Community Moderators Apis
   const [
@@ -1122,6 +1126,32 @@ const useUserApi = () => {
     }
   }
 
+  // Update Member Status (Ban/Deactivate)
+  async function updateMemberStatus(
+    communityId: string,
+    memberId: string,
+    body: any,
+  ) {
+    try {
+      setApiUpdateMemberStatusLoading(true);
+      const url = ApiEndPoints.updateMemberStatus
+        .replace(':communityId', communityId)
+        .replace(':memberId', memberId);
+      const res: any = await api.put(url, body);
+      ToastModule.successTop({
+        msg: res?.message || 'Member status updated successfully!',
+      });
+      setApiUpdateMemberStatusLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error updating member status:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiUpdateMemberStatusLoading(false);
+    }
+  }
+
   // Export Community Members
   async function exportCommunityMembers(communityId: string, query: string) {
     try {
@@ -1923,6 +1953,10 @@ const useUserApi = () => {
     rejectAccessRequest,
     apiRejectAccessRequestLoading,
 
+    // Member Status Update
+    updateMemberStatus,
+    apiUpdateMemberStatusLoading,
+
     /* Community Settings Screen Apis */
     // Moderators Tab
     // Get Community Moderators
@@ -2048,6 +2082,8 @@ const useUserApi = () => {
     getStripeAccountStatus,
     apiGetStripeAccountStatusLoading,
     apiGetStripeAccountStatus,
+
+    // Get Stripe Payouts
     getStripePayouts,
     apiGetStripePayoutsLoading,
     apiGetStripePayouts,
@@ -2074,6 +2110,8 @@ const useUserApi = () => {
 
     // Auth Token for external downloads
     userToken,
+
+    // Get Owner Dashboard Billing
     getOwnerDashboardBilling,
     apiGetOwnerDashboardBillingLoading,
     apiGetOwnerDashboardBilling,
@@ -2084,6 +2122,8 @@ const useUserApi = () => {
     getBlogs,
     apiGetBlogsLoading,
     apiGetBlogs,
+
+    // Blog Details
     getBlogDetails,
     apiGetBlogDetailsLoading,
     apiGetBlogDetails,

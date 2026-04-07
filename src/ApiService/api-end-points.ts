@@ -37,6 +37,7 @@ export const ApiEndPoints = {
   communityMembers: 'communities/:communityId/members',
   communityMembersExport: 'communities/:communityId/members/export',
   communityAccessRequests: 'communities/:communityId/access-requests',
+  updateMemberStatus: 'communities/:communityId/members/:memberId/status',
 
   /* Community Settings Screen */
   // Moderators Tab

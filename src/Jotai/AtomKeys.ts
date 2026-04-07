@@ -190,4 +190,5 @@ export const AtomKeys = {
   // Community Access Requests Actions
   apiApproveAccessRequestLoading: 'apiApproveAccessRequestLoading',
   apiRejectAccessRequestLoading: 'apiRejectAccessRequestLoading',
+  apiUpdateMemberStatusLoading: 'apiUpdateMemberStatusLoading',
 };

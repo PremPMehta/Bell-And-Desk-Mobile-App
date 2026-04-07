@@ -129,6 +129,21 @@ const styles = StyleSheet.create({
   modalRejectButton: {
     backgroundColor: COLORS.red,
   },
+  reasonInput: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: ms(8),
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: ms(12),
+    ...THEME.fontStyle.h5Regular,
+    color: COLORS.white,
+    marginTop: ms(16),
+    height: ms(100),
+    textAlignVertical: 'top',
+  },
+  orangeConfirmButton: {
+    backgroundColor: '#A66908', // Orange/Brown color from design
+  },
 });
 
 export default styles;

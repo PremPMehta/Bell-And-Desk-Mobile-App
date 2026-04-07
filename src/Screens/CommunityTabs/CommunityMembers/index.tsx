@@ -5,6 +5,7 @@ import {
   Animated,
   TouchableOpacity,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import styles from './style';
 import MemberItem from './Components/MemberItem';
@@ -74,6 +75,8 @@ const CommunityMembers = ({
     rejectAccessRequest,
     apiRejectAccessRequestLoading,
     apiExportCommunityMembersLoading,
+    updateMemberStatus,
+    apiUpdateMemberStatusLoading,
     userToken,
   } = useUserApi();
 
@@ -85,8 +88,11 @@ const CommunityMembers = ({
   const [initialLoading, setInitialLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<'accept' | 'reject' | null>(null);
+  const [confirmAction, setConfirmAction] = useState<'accept' | 'reject' | 'deactivate' | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [isDeactivateModalVisible, setIsDeactivateModalVisible] = useState(false);
+  const [selectedMemberForDeactivation, setSelectedMemberForDeactivation] = useState<any>(null);
+  const [deactivationReason, setDeactivationReason] = useState('');
 
   const limit = 12;
 
@@ -161,6 +167,36 @@ const CommunityMembers = ({
     setSelectedRequest(item);
     setConfirmAction('reject');
     setIsConfirmModalVisible(true);
+  };
+
+  const handleDeactivatePress = (item: any) => {
+    setSelectedMemberForDeactivation(item);
+    setDeactivationReason('');
+    setIsDeactivateModalVisible(true);
+  };
+
+  const handleConfirmDeactivation = async () => {
+    if (!communityId || !selectedMemberForDeactivation) return;
+
+    const body = {
+      deactivationReason: deactivationReason,
+      status: 'inactive',
+    };
+
+    const res = await updateMemberStatus(
+      communityId,
+      selectedMemberForDeactivation._id,
+      body,
+    );
+
+    if (res?.success) {
+      setMembers(prev =>
+        prev.filter(m => m._id !== selectedMemberForDeactivation._id),
+      );
+      setIsDeactivateModalVisible(false);
+      setSelectedMemberForDeactivation(null);
+      setDeactivationReason('');
+    }
   };
 
   const executeAction = async () => {
@@ -440,6 +476,7 @@ const CommunityMembers = ({
               type={item.subscriptionPlan ? 'Paid' : 'Free'}
               isSubscribed={item.isSubscribed}
               plan={item.subscriptionPlan}
+              onBlockPress={() => handleDeactivatePress(item)}
             />
           );
         }}
@@ -505,6 +542,60 @@ const CommunityMembers = ({
               <Text style={styles.modalActionText}>
                 {confirmAction === 'accept' ? 'Accept' : 'Reject'}
               </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Deactivate User Modal */}
+      <Modal
+        isVisible={isDeactivateModalVisible}
+        onBackdropPress={() => setIsDeactivateModalVisible(false)}
+        style={styles.modalContainer}
+        avoidKeyboard
+      >
+        <View style={styles.mainModalView}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Deactivate User</Text>
+            <TouchableOpacity onPress={() => setIsDeactivateModalVisible(false)}>
+              <Icon name="X" size={24} color={COLORS.white} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.modalBody}>
+            <Text style={styles.modalMessage}>
+              Are you sure you want to deactivate{' '}
+              <Text style={styles.boldName}>
+                {selectedMemberForDeactivation?.firstName}{' '}
+                {selectedMemberForDeactivation?.lastName}
+              </Text>
+              ?
+            </Text>
+
+            <TextInput
+              style={styles.reasonInput}
+              placeholder="Deactivation Reason"
+              placeholderTextColor={COLORS.placeholder}
+              multiline
+              value={deactivationReason}
+              onChangeText={setDeactivationReason}
+            />
+          </View>
+
+          <View style={styles.modalFooter}>
+            <TouchableOpacity onPress={() => setIsDeactivateModalVisible(false)}>
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalActionButton, styles.orangeConfirmButton]}
+              onPress={handleConfirmDeactivation}
+              disabled={apiUpdateMemberStatusLoading}
+            >
+              {apiUpdateMemberStatusLoading ? (
+                <ActivityIndicator size="small" color={COLORS.white} />
+              ) : (
+                <Text style={styles.modalActionText}>Confirm</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
