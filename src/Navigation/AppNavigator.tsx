@@ -21,6 +21,7 @@ import CreateCourses from '@/Screens/CommunityTabs/Courses/CreateCourses';
 import EditCourse from '@/Screens/CommunityTabs/Courses/EditCourse';
 import CourseView from '@/Screens/CommunityTabs/Courses/CourseView';
 import BlogDetails from '@/Screens/BlogDetails';
+import CreateCommunity from '@/Screens/CreateCommunity';
 
 export type StackNavigationProp<T> = any;
 export type RootStackParamList = {
@@ -79,11 +80,12 @@ const AppNavigator = () => {
         />
         <MainStack.Screen name="ForgotPassword" component={ForgotPassword} />
 
-        {/* <MainStack.Screen
-          name="CreateCommunity"  // Edit community screen from the about edit
+        {/* Edit/Create Community Screen */}
+        <MainStack.Screen
+          name="CreateCommunity"
           component={CreateCommunity}
           options={{ headerShown: false }}
-        /> */}
+        />
 
         {/* Combined screens */}
         {/* <MainStack.Screen

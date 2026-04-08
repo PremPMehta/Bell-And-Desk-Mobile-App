@@ -24,8 +24,8 @@ import { useNavigation } from '@/Hooks/Utils/use-navigation';
 import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 import WebView from 'react-native-webview';
 import CommunityAboutSkeleton from '@/Components/Core/Skeleton/CommunityAboutSkeleton';
-import { useSetAtom } from 'jotai';
-import { objectAtomFamily } from '@/Jotai/Atoms';
+import { useAtom, useSetAtom } from 'jotai';
+import { objectAtomFamily, communityRefreshAtom } from '@/Jotai/Atoms';
 import { AtomKeys } from '@/Jotai/AtomKeys';
 import { Config } from '@/Config';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -69,6 +69,9 @@ const CommunityAbout = ({
     objectAtomFamily(AtomKeys.apiGetCommunitiesSlug),
   );
 
+  // Watch for community updates triggered by CreateCommunity (edit screen)
+  const [communityRefresh] = useAtom(communityRefreshAtom);
+
   // Local state for statistics (parallel to community fetch)
   const [coursesStats, setCoursesStats] = useState<any>(null);
   const [isStatsLoading, setIsStatsLoading] = useState(false);
@@ -83,8 +86,8 @@ const CommunityAbout = ({
   const isStaging = Config.APP_ENV === 'staging';
   const copyUrl = isStaging ? Config.STAGING_URL : Config.LIVE_URL;
 
+  // Primary fetch: runs when slug/communityId changes (switching communities)
   useEffect(() => {
-    // We need the slug to fetch community details, fallback to communityId just in case
     const fetchId = slug || communityId;
     if (!fetchId) return;
 
@@ -97,6 +100,24 @@ const CommunityAbout = ({
     clearCommunitiesSlugAtom(null as any);
     getCommunitiesSlug(`/${fetchId}`);
   }, [slug, communityId]);
+
+  // Refresh-after-edit: only runs when communityRefresh counter is incremented
+  // after a successful PUT from CreateCommunity. Does NOT fire on ordinary focus.
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return; // skip the initial mount — the primary fetch above handles it
+    }
+    const fetchId = slug || communityId;
+    if (!fetchId) return;
+    // Reset slug ref so data is re-fetched even if slug hasn't changed
+    lastFetchedSlugRef.current = null;
+    lastFetchedCommunityIdRef.current = null;
+    setCoursesStats(null);
+    clearCommunitiesSlugAtom(null as any);
+    getCommunitiesSlug(`/${fetchId}`);
+  }, [communityRefresh]);
 
   const communityData = useMemo(() => {
     return apiGetCommunitiesSlug?.data?.community || {};
@@ -376,7 +397,10 @@ const CommunityAbout = ({
   }, [activeItem]);
 
   const handleEditPress = () => {
-    navigation.navigate('CreateCommunity');
+    navigation.navigate('CreateCommunity', {
+      isEditMode: true,
+      communityData: communityData,
+    });
   };
 
   const handleCopyUrl = (url: string) => {

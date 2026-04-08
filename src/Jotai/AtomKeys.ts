@@ -191,4 +191,12 @@ export const AtomKeys = {
   apiApproveAccessRequestLoading: 'apiApproveAccessRequestLoading',
   apiRejectAccessRequestLoading: 'apiRejectAccessRequestLoading',
   apiUpdateMemberStatusLoading: 'apiUpdateMemberStatusLoading',
+
+  // Update Community
+  apiUpdateCommunityLoading: 'apiUpdateCommunityLoading',
+  apiUpdateCommunity: 'apiUpdateCommunity',
+
+  // Upload Community Media
+  apiUploadCommunityMediaLoading: 'apiUploadCommunityMediaLoading',
+  apiUploadCommunityMedia: 'apiUploadCommunityMedia',
 };

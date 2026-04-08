@@ -530,6 +530,23 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiGetBlogDetails),
   );
 
+  // Update Community Apis
+  const [apiUpdateCommunityLoading, setApiUpdateCommunityLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiUpdateCommunityLoading),
+  );
+  const [apiUpdateCommunity, setApiUpdateCommunity] = useAtom(
+    objectAtomFamily(AtomKeys.apiUpdateCommunity),
+  );
+
+  // Upload Community Media Apis
+  const [apiUploadCommunityMediaLoading, setApiUploadCommunityMediaLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiUploadCommunityMediaLoading),
+    );
+  const [apiUploadCommunityMedia, setApiUploadCommunityMedia] = useAtom(
+    objectAtomFamily(AtomKeys.apiUploadCommunityMedia),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -1721,6 +1738,56 @@ const useUserApi = () => {
     }
   }
 
+  // Update Community
+  async function updateCommunity(communityId: string, body: any) {
+    console.log('🚀 ~ updateCommunity ~ body:', body);
+    const header = { 'Content-Type': 'multipart/form-data' };
+    try {
+      setApiUpdateCommunityLoading(true);
+      const url = ApiEndPoints.updateCommunity.replace(
+        ':communityId',
+        communityId,
+      );
+      const res: any = await api.put(url, body, header);
+      console.log('🚀 ~ updateCommunity ~ res:', res);
+      setApiUpdateCommunity(res);
+      setApiUpdateCommunityLoading(false);
+      ToastModule.successTop({
+        msg: res?.message || 'Community updated successfully!',
+      });
+      return res;
+    } catch (error: any) {
+      console.error('Error updating community:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiUpdateCommunityLoading(false);
+    }
+  }
+
+  // Upload Community Media
+  async function uploadCommunityMedia(communityId: string, body: any) {
+    const header = { 'Content-Type': 'multipart/form-data' };
+    try {
+      setApiUploadCommunityMediaLoading(true);
+      const url = ApiEndPoints.uploadCommunityMedia.replace(
+        ':communityId',
+        communityId,
+      );
+      const res: any = await api.post(url, body, header);
+      console.log('🚀 ~ uploadCommunityMedia ~ res:', res);
+      setApiUploadCommunityMedia(res);
+      setApiUploadCommunityMediaLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error uploading community media:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiUploadCommunityMediaLoading(false);
+    }
+  }
+
   // Get Referral Code
   async function getReferralCode(communityId: string) {
     try {
@@ -2127,6 +2194,16 @@ const useUserApi = () => {
     getBlogDetails,
     apiGetBlogDetailsLoading,
     apiGetBlogDetails,
+
+    // Update Community
+    updateCommunity,
+    apiUpdateCommunityLoading,
+    apiUpdateCommunity,
+
+    // Upload Community Media
+    uploadCommunityMedia,
+    apiUploadCommunityMediaLoading,
+    apiUploadCommunityMedia,
 
     // User
     user,

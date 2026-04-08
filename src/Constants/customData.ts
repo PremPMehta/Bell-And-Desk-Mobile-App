@@ -348,6 +348,27 @@ export const CATEGORY_DATA = [
   { id: '43', value: 'Gaming' },
 ];
 
+export const CREATE_CATEGORY_DATA = [
+  { id: '1', value: 'Technology' },
+  { id: '2', value: 'Business' },
+  { id: '3', value: 'Finance' },
+  { id: '4', value: 'Education' },
+  { id: '5', value: 'Marketing' },
+  { id: '6', value: 'Design' },
+  { id: '7', value: 'Sales' },
+  { id: '8', value: 'Consulting' },
+  { id: '9', value: 'Manufacturing' },
+  { id: '10', value: 'Retail' },
+  { id: '11', value: 'Real Estate' },
+  { id: '12', value: 'Entertainment' },
+  { id: '13', value: 'Non-profit' },
+  { id: '14', value: 'Government' },
+  { id: '15', value: 'Fitness' },
+  { id: '16', value: 'Self Improvement' },
+  { id: '17', value: 'Health' },
+  { id: '18', value: 'Other' },
+];
+
 export const COURSE_TYPE_DATA = [
   { id: '1', value: 'Free' },
   { id: '2', value: 'Paid' },

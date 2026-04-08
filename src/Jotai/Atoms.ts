@@ -112,3 +112,7 @@ export const refreshSocialFeedsAtom = booleanDefaultFalseAtomFamily(AtomKeys.ref
 
 export const apiGetOwnerDashboardBillingLoadingAtomFamily = booleanDefaultFalseAtomFamily(AtomKeys.apiGetOwnerDashboardBillingLoading);
 export const apiGetOwnerDashboardBillingAtomFamily = objectAtomFamily(AtomKeys.apiGetOwnerDashboardBilling);
+
+// Incremented by CreateCommunity after a successful community update.
+// CommunityAbout watches this to know when to re-fetch.
+export const communityRefreshAtom = atom<number>(0);

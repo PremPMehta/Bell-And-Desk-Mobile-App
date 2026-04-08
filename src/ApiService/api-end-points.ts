@@ -13,6 +13,8 @@ export const ApiEndPoints = {
 
   // Communities
   communities: 'communities',
+  updateCommunity: 'communities/:communityId',
+  uploadCommunityMedia: 'communities/:communityId/upload-media',
   leaveCommunity: 'communities/:communityId/leave',
   joinCommunity: 'communities/:communityId/join',
   userAccessRequests: 'user-access-requests',
