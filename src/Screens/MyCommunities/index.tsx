@@ -186,7 +186,14 @@ const MyCommunities = () => {
   );
 
   const handleCreateCommunityPress = () => {
-    navigation.navigate('ChoosePlan');
+    if (remainingSlots > 0) {
+      navigation.navigate('CreateCommunity', {
+        isEditMode: false,
+        planId: activeEntitlement?._id,
+      });
+    } else {
+      navigation.navigate('ChoosePlan');
+    }
   };
 
   const handleDiscoverPress = () => {
@@ -215,7 +222,15 @@ const MyCommunities = () => {
           communit{remainingSlots === 1 ? 'y' : 'ies'} left under{' '}
           <Text style={styles.createBannerHighlight}>{planName}</Text>.
         </Text>
-        <TouchableOpacity style={styles.createBannerBtn}>
+        <TouchableOpacity
+          style={styles.createBannerBtn}
+          onPress={() =>
+            navigation.navigate('CreateCommunity', {
+              isEditMode: false,
+              planId: activeEntitlement?._id,
+            })
+          }
+        >
           <Text style={styles.createBannerBtnText}>+ Create Community</Text>
         </TouchableOpacity>
       </View>

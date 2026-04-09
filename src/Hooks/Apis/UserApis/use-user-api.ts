@@ -547,6 +547,23 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiUploadCommunityMedia),
   );
 
+  // Create Community Apis
+  const [apiCreateCommunityLoading, setApiCreateCommunityLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiCreateCommunityLoading),
+  );
+  const [apiCreateCommunity, setApiCreateCommunity] = useAtom(
+    objectAtomFamily(AtomKeys.apiCreateCommunity),
+  );
+
+  // Check Community Slug Apis
+  const [apiCheckCommunitySlugLoading, setApiCheckCommunitySlugLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiCheckCommunitySlugLoading),
+    );
+  const [apiCheckCommunitySlug, setApiCheckCommunitySlug] = useAtom(
+    objectAtomFamily(AtomKeys.apiCheckCommunitySlug),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -1738,6 +1755,48 @@ const useUserApi = () => {
     }
   }
 
+  // Create Community
+  async function createCommunity(body: any) {
+    console.log('🚀 ~ createCommunity ~ body:', body);
+    const header = { 'Content-Type': 'multipart/form-data' };
+    try {
+      setApiCreateCommunityLoading(true);
+      const res: any = await api.post(
+        ApiEndPoints.createCommunityUsingSlot,
+        body,
+        header,
+      );
+      console.log('🚀 ~ createCommunity ~ res:', res);
+      setApiCreateCommunity(res);
+      setApiCreateCommunityLoading(false);
+      ToastModule.successTop({
+        msg: res?.message || 'Community created successfully!',
+      });
+      return res;
+    } catch (error: any) {
+      console.error('Error creating community:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiCreateCommunityLoading(false);
+    }
+  }
+
+  // Check Community Slug
+  async function checkCommunitySlug(body: any) {
+    try {
+      setApiCheckCommunitySlugLoading(true);
+      const res: any = await api.post(ApiEndPoints.checkCommunitySlug, body);
+      console.log('🚀 ~ checkCommunitySlug ~ res:', res);
+      setApiCheckCommunitySlug(res);
+      setApiCheckCommunitySlugLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error checking community slug:', error);
+      setApiCheckCommunitySlugLoading(false);
+    }
+  }
+
   // Update Community
   async function updateCommunity(communityId: string, body: any) {
     console.log('🚀 ~ updateCommunity ~ body:', body);
@@ -2204,6 +2263,17 @@ const useUserApi = () => {
     uploadCommunityMedia,
     apiUploadCommunityMediaLoading,
     apiUploadCommunityMedia,
+
+    // Create Community
+    createCommunity,
+    apiCreateCommunityLoading,
+    apiCreateCommunity,
+
+    // Check Community Slug
+    checkCommunitySlug,
+    apiCheckCommunitySlugLoading,
+    apiCheckCommunitySlug,
+    setApiCheckCommunitySlug,
 
     // User
     user,

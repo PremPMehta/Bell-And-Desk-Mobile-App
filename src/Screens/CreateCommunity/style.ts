@@ -14,15 +14,22 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: ms(16),
     paddingVertical: ms(12),
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    // borderBottomWidth: 1,
+    // borderBottomColor: '#333',
+    height: ms(56),
+    justifyContent: 'center',
   },
   headerTitle: {
     ...THEME.fontStyle.h3Bold,
     color: COLORS.white,
+    textAlign: 'center',
+  },
+  backButton: {
+    position: 'absolute',
+    left: ms(16),
+    zIndex: 10,
   },
   contentContainer: {
     padding: ms(16),
@@ -156,6 +163,21 @@ const styles = StyleSheet.create({
   disabledButton: {
     backgroundColor: COLORS.outlineGrey,
     opacity: 0.5,
+  },
+  slugAvailabilityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: ms(5),
+    // marginTop: ms(6),
+    marginBottom: ms(12),
+  },
+  availableText: {
+    ...THEME.fontStyle.h6SemiBold,
+    color: COLORS.green,
+  },
+  unavailableText: {
+    ...THEME.fontStyle.h6SemiBold,
+    color: COLORS.red,
   },
 });
 

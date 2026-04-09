@@ -13,6 +13,7 @@ export const ApiEndPoints = {
 
   // Communities
   communities: 'communities',
+  createCommunityUsingSlot: 'auth/create-community-using-slot',
   updateCommunity: 'communities/:communityId',
   uploadCommunityMedia: 'communities/:communityId/upload-media',
   leaveCommunity: 'communities/:communityId/leave',
@@ -87,4 +88,5 @@ export const ApiEndPoints = {
   // Blogs
   blogs: 'blogs',
   blogDetails: 'blogs/:slug',
+  checkCommunitySlug: 'communities/check-slug',
 };

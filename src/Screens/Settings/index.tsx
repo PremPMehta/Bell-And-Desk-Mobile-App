@@ -11,8 +11,8 @@ import {
   LEGAL_SETTINGS,
 } from '@/Constants/customData';
 import { COLORS } from '@/Assets/Theme/colors';
-import { useAtom } from 'jotai';
-import { logoutVisibleAtom } from '@/Jotai/Atoms';
+import { useAtom, useAtomValue } from 'jotai';
+import { logoutVisibleAtom, userTokenAtom } from '@/Jotai/Atoms';
 import { useTranslation } from 'react-i18next';
 
 interface SettingItemProps {
@@ -52,6 +52,7 @@ const Settings = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const [, setIsLogoutModalVisible] = useAtom(logoutVisibleAtom);
+  const userToken = useAtomValue(userTokenAtom);
 
   const handleNavigation = (routeName?: string) => {
     if (routeName) {
@@ -155,14 +156,16 @@ const Settings = () => {
           </View>
         </View>
 
-        <TouchableOpacity
-          style={styles.logoutButton}
-          activeOpacity={0.7}
-          onPress={handleLogout}
-        >
-          <Icon name="LogOut" size={20} color={COLORS.red} />
-          <Text style={styles.logoutText}>{t('settings.logOut')}</Text>
-        </TouchableOpacity>
+        {!!userToken && (
+          <TouchableOpacity
+            style={styles.logoutButton}
+            activeOpacity={0.7}
+            onPress={handleLogout}
+          >
+            <Icon name="LogOut" size={20} color={COLORS.red} />
+            <Text style={styles.logoutText}>{t('settings.logOut')}</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </View>
   );

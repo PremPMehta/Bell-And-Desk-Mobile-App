@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
@@ -64,6 +65,7 @@ interface CommunityFormValues {
   logo: Asset | null;
   banner: Asset | null;
   mediaCount: number;
+  phoneNumber: string;
 }
 
 // ─── Validation schemas ───────────────────────────────────────────────────────
@@ -125,6 +127,12 @@ const CreateCommunity = () => {
     apiUpdateCommunityLoading,
     uploadCommunityMedia,
     apiUploadCommunityMediaLoading,
+    createCommunity,
+    apiCreateCommunityLoading,
+    checkCommunitySlug,
+    apiCheckCommunitySlug,
+    setApiCheckCommunitySlug,
+    user,
   } = useUserApi();
 
   const [, setIsVisibleAddMediaModal] = useAtom(addMediaVisibleAtom);
@@ -305,6 +313,7 @@ const CreateCommunity = () => {
     logo: null,
     banner: null,
     mediaCount: buildInitialMedia().length,
+    phoneNumber: existingCommunityData?.phoneNumber || '',
   };
 
   // ── Submit ────────────────────────────────────────────────────────────────
@@ -334,6 +343,9 @@ const CreateCommunity = () => {
       }
       if (values.external) {
         formData.append('externalLink', values.external);
+      }
+      if (values.phoneNumber) {
+        formData.append('phoneNumber', values.phoneNumber);
       }
 
       // New logo picked by user
@@ -387,8 +399,91 @@ const CreateCommunity = () => {
         navigation.goBack();
       }
     } else {
-      // Create mode — placeholder
-      console.log('Create Community Values =>', values);
+      // Create mode
+      const formData = new FormData();
+      formData.append('communityName', values.name);
+      formData.append('subdomain', values.slug);
+      formData.append('description', values.description);
+      formData.append('category', values.category);
+
+      // Explicitly append all fields seen in the target Form Data screenshot
+      // sending empty strings for missing optional fields to match the target schema
+      formData.append('welcomeMessage', values.welcomeMessage || '');
+      formData.append('phoneNumber', values.phoneNumber || '');
+      formData.append('instagramLink', values.instagram || '');
+      formData.append('telegramLink', values.telegram || '');
+      formData.append('whatsappLink', values.whatsapp || '');
+      formData.append('youtubeLink', values.youtube || '');
+      formData.append('linkedinLink', values.linkedin || '');
+      formData.append('externalLink', values.external || '');
+
+      // Logo
+      if (values.logo?.uri) {
+        formData.append('logo', {
+          uri: values.logo.uri,
+          type: values.logo.type || 'image/jpeg',
+          name: values.logo.fileName || `logo_${Date.now()}.jpg`,
+        } as any);
+      }
+
+      // Banner
+      if (values.banner?.uri) {
+        formData.append('banner', {
+          uri: values.banner.uri,
+          type: values.banner.type || 'image/jpeg',
+          name: values.banner.fileName || `banner_${Date.now()}.jpg`,
+        } as any);
+      }
+
+      // Media Items Separation (matching the successful pattern used in Edit Mode)
+      const introImagesFiles: any[] = [];
+      const introVideoLinks: string[] = [];
+
+      mediaItems.forEach((m, index) => {
+        if (m.type === 'image') {
+          if (m.asset?.uri || m.localUri) {
+            formData.append('introImages', {
+              uri: m.asset?.uri || m.localUri,
+              type: m.asset?.type || 'image/jpeg',
+              name: m.asset?.fileName || `intro_image_${index}.jpg`,
+            } as any);
+          }
+        } else if (m.type === 'video') {
+          if (m.asset?.uri || m.localUri) {
+            // Local video file
+            formData.append('introImages', {
+              uri: m.asset?.uri || m.localUri,
+              type: m.asset?.type || 'video/mp4',
+              name: m.asset?.fileName || `intro_video_${index}.mp4`,
+            } as any);
+          } else if (m.videoUrl?.trim()) {
+            // Video link (YouTube/Vimeo)
+            introVideoLinks.push(m.videoUrl);
+          }
+        }
+      });
+
+      // Pass video links as a stringified JSON array if present
+      if (introVideoLinks.length > 0) {
+        formData.append('introVideoLinks', JSON.stringify(introVideoLinks));
+      }
+
+      if (user?.activePlanId) {
+        formData.append('planId', user.activePlanId);
+      }
+
+      // ── DEBUG LOG ──────────────────────────────────────────────────────────
+      // @ts-ignore
+      if (formData?._parts) {
+        // @ts-ignore
+        console.log('🚀 ~ Creation Payload Parts (Final):', formData._parts);
+      }
+      // ───────────────────────────────────────────────────────────────────────
+
+      const res = await createCommunity(formData);
+      if (res?.success || res?.data) {
+        navigation.goBack();
+      }
     }
   };
 
@@ -441,15 +536,19 @@ const CreateCommunity = () => {
     <SafeAreaView style={styles.mainContainer}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="ArrowLeft" size={24} color={COLORS.white} />
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Icon
+            name={Platform.OS === 'ios' ? 'ChevronLeft' : 'ArrowLeft'}
+            size={24}
+            color={COLORS.white}
+          />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>
-          {isEditMode ? 'Edit Community' : 'Bell n Desk'}
+          {isEditMode ? 'Edit Community' : 'Create Community'}
         </Text>
-        <TouchableOpacity>
-          <Icon name="CircleUserRound" size={24} color={COLORS.white} />
-        </TouchableOpacity>
       </View>
 
       <KeyboardAwareScrollView
@@ -505,6 +604,23 @@ const CreateCommunity = () => {
               setFieldValue('mediaCount', mediaItems.length);
             }, [mediaItems.length]);
 
+            // Real-time Slug validation
+            React.useEffect(() => {
+              if (values.slug && values.slug.length >= 3) {
+                const timeoutId = setTimeout(() => {
+                  checkCommunitySlug({ slug: values.slug });
+                }, 500);
+                return () => clearTimeout(timeoutId);
+              } else {
+                setApiCheckCommunitySlug(null);
+              }
+            }, [values.slug]);
+
+            const handleSlugChange = (text: string) => {
+              const transformed = text.toLowerCase().replace(/\s+/g, '-');
+              setFieldValue('slug', transformed);
+            };
+
             return (
               <>
                 {/* ── Community Name ─────────────────────────── */}
@@ -534,10 +650,57 @@ const CreateCommunity = () => {
                   label="Community URL Slug"
                   placeholder="Enter community slug"
                   value={values.slug}
-                  onChangeText={handleChange('slug')}
+                  onChangeText={handleSlugChange}
                   onBlur={() => setFieldTouched('slug')}
                   touched={touched.slug}
                   error={errors.slug}
+                  style={styles.inputStyle}
+                  theme={{
+                    colors: {
+                      background: COLORS.cardBG,
+                      text: COLORS.white,
+                      placeholder: COLORS.outlineGrey,
+                    },
+                  }}
+                  textColor={COLORS.white}
+                  outlineColor={COLORS.outlineGrey}
+                  activeOutlineColor={COLORS.white}
+                />
+
+                {/* Slug Availability Status */}
+                {values.slug.length >= 3 && apiCheckCommunitySlug?.success && (
+                  <View style={styles.slugAvailabilityContainer}>
+                    <Icon
+                      name={apiCheckCommunitySlug.available ? 'Check' : 'X'}
+                      size={14}
+                      color={
+                        apiCheckCommunitySlug.available
+                          ? COLORS.green
+                          : COLORS.red
+                      }
+                    />
+                    <Text
+                      style={
+                        apiCheckCommunitySlug.available
+                          ? styles.availableText
+                          : styles.unavailableText
+                      }
+                    >
+                      {apiCheckCommunitySlug.message}
+                    </Text>
+                  </View>
+                )}
+
+                {/* ── Phone Number ──────────────────────────── */}
+                <TextInputField
+                  label="Phone Number (Optional)"
+                  placeholder="Enter phone number"
+                  keyboardType="phone-pad"
+                  value={values.phoneNumber}
+                  onChangeText={handleChange('phoneNumber')}
+                  onBlur={() => setFieldTouched('phoneNumber')}
+                  touched={touched.phoneNumber}
+                  error={errors.phoneNumber}
                   style={styles.inputStyle}
                   theme={{
                     colors: {
@@ -800,15 +963,23 @@ const CreateCommunity = () => {
                 {/* ── Submit ────────────────────────────────── */}
                 <PrimaryButton
                   title={isEditMode ? 'Update Community' : 'Create Community'}
-                  onPress={formikSubmit}
+                  onPress={formikSubmit as any}
                   buttonStyle={[
                     styles.createBtnStyle,
-                    (!isValid || apiUpdateCommunityLoading) &&
+                    (!isValid ||
+                      apiUpdateCommunityLoading ||
+                      apiCreateCommunityLoading) &&
                       styles.disabledButton,
                   ]}
                   textStyle={styles.createBtnText}
-                  loading={apiUpdateCommunityLoading}
-                  disabled={!isValid || apiUpdateCommunityLoading}
+                  loading={
+                    apiUpdateCommunityLoading || apiCreateCommunityLoading
+                  }
+                  disabled={
+                    !isValid ||
+                    apiUpdateCommunityLoading ||
+                    apiCreateCommunityLoading
+                  }
                 />
               </>
             );

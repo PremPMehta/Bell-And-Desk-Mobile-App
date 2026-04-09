@@ -634,9 +634,9 @@ export const ACCOUNT_SETTINGS = [
     bgColor: '#007AFF',
     routeName: 'Profile',
   },
-  { icon: 'Bell', label: 'Notifications', bgColor: '#FF9500' },
-  { icon: 'Shield', label: 'Security & Privacy', bgColor: '#4CD964' },
-  { icon: 'CreditCard', label: 'Payments', bgColor: '#5856D6' },
+  // { icon: 'Bell', label: 'Notifications', bgColor: '#FF9500' },
+  // { icon: 'Shield', label: 'Security & Privacy', bgColor: '#4CD964' },
+  // { icon: 'CreditCard', label: 'Payments', bgColor: '#5856D6' },
   {
     icon: 'Globe',
     label: 'Language',
@@ -652,7 +652,7 @@ export const COMMUNITY_SETTINGS = [
     bgColor: '#FF2D55',
     routeName: 'MyReferral',
   },
-  { icon: 'Users', label: 'Community Management', bgColor: '#AF52DE' },
+  // { icon: 'Users', label: 'Community Management', bgColor: '#AF52DE' },
 ];
 
 export const SUPPORT_SETTINGS = [
@@ -674,7 +674,7 @@ export const SUPPORT_SETTINGS = [
     bgColor: '#34C759',
     routeName: 'ChoosePlan',
   },
-  { icon: 'Info', label: 'About Us', bgColor: '#5AC8FA' },
+  // { icon: 'Info', label: 'About Us', bgColor: '#5AC8FA' },
 ];
 
 export const LEGAL_SETTINGS = [

@@ -199,4 +199,12 @@ export const AtomKeys = {
   // Upload Community Media
   apiUploadCommunityMediaLoading: 'apiUploadCommunityMediaLoading',
   apiUploadCommunityMedia: 'apiUploadCommunityMedia',
+
+  // Create Community
+  apiCreateCommunityLoading: 'apiCreateCommunityLoading',
+  apiCreateCommunity: 'apiCreateCommunity',
+
+  // Check Community Slug
+  apiCheckCommunitySlugLoading: 'apiCheckCommunitySlugLoading',
+  apiCheckCommunitySlug: 'apiCheckCommunitySlug',
 };
