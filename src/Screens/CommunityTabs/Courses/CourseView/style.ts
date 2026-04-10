@@ -206,6 +206,35 @@ export default StyleSheet.create({
     borderRadius: ms(12),
     textTransform: 'capitalize',
   },
+  progressSection: {
+    marginHorizontal: ms(16),
+    marginBottom: vs(4),
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: vs(8),
+  },
+  progressLabel: {
+    ...THEME.fontStyle.h5Medium,
+    color: COLORS.white,
+  },
+  progressPercent: {
+    ...THEME.fontStyle.h5Bold,
+    color: COLORS.white,
+  },
+  progressBarBg: {
+    height: vs(6),
+    backgroundColor: COLORS.innerCardBG,
+    borderRadius: ms(6),
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: COLORS.primary,
+    borderRadius: ms(6),
+  },
   scrollToTopButton: {
     position: 'absolute',
     bottom: vs(20),

@@ -17,32 +17,63 @@ const CourseViewSkeleton = () => {
       <View style={{ padding: ms(16) }}>
         {/* Title & Description Section */}
         <Skeleton width="80%" height={ms(28)} style={{ marginBottom: vs(8) }} />
-        <Skeleton width="100%" height={ms(16)} style={{ marginBottom: vs(4) }} />
-        <Skeleton width="60%" height={ms(16)} style={{ marginBottom: vs(12) }} />
+        <Skeleton
+          width="100%"
+          height={ms(16)}
+          style={{ marginBottom: vs(4) }}
+        />
+        <Skeleton
+          width="60%"
+          height={ms(16)}
+          style={{ marginBottom: vs(12) }}
+        />
 
         {/* Mark as Complete & Session Type row */}
         <View style={styles.completeSection}>
-           <Skeleton width={ms(140)} height={ms(36)} borderRadius={ms(20)} style={{ marginRight: ms(12) }} />
-           <Skeleton width={ms(100)} height={ms(24)} borderRadius={ms(12)} />
+          <Skeleton
+            width={ms(100)}
+            height={ms(24)}
+            borderRadius={ms(12)}
+            style={{ marginRight: ms(12) }}
+          />
+          <Skeleton width={ms(140)} height={ms(36)} borderRadius={ms(20)} />
         </View>
 
         {/* Tabs Section */}
         <View style={styles.tabSection}>
-           <Skeleton width={ms(100)} height={ms(30)} style={{ marginRight: ms(20) }} />
-           <Skeleton width={ms(100)} height={ms(30)} />
+          <Skeleton
+            width={ms(100)}
+            height={ms(30)}
+            style={{ marginRight: ms(20) }}
+          />
+          <Skeleton width={ms(100)} height={ms(30)} />
         </View>
 
         {/* Lessons List - Chapters */}
-        {[1, 2].map((chapter) => (
+        {[1, 2].map(chapter => (
           <View key={chapter} style={styles.chapterContainer}>
-            <Skeleton width="100%" height={vs(45)} borderRadius={ms(8)} style={{ marginBottom: vs(8) }} />
-            
+            <Skeleton
+              width="100%"
+              height={vs(45)}
+              borderRadius={ms(8)}
+              style={{ marginBottom: vs(8) }}
+            />
+
             {/* Lessons within chapter */}
-            {[1, 2, 3].map((lesson) => (
+            {[1, 2, 3].map(lesson => (
               <View key={lesson} style={styles.lessonItem}>
-                <Skeleton width={ms(80)} height={vs(40)} borderRadius={ms(8)} style={{ marginRight: ms(12) }} />
+                <Skeleton
+                  width={ms(80)}
+                  height={vs(40)}
+                  borderRadius={ms(8)}
+                  style={{ marginRight: ms(12) }}
+                />
                 <View style={{ flex: 1 }}>
-                  <Skeleton width="90%" height={ms(14)} style={{ marginBottom: vs(6) }} />
+                  <Skeleton
+                    width="90%"
+                    height={ms(14)}
+                    style={{ marginBottom: vs(6) }}
+                  />
                   <Skeleton width="40%" height={ms(10)} />
                 </View>
               </View>

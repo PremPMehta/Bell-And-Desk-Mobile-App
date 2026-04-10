@@ -89,4 +89,8 @@ export const ApiEndPoints = {
   blogs: 'blogs',
   blogDetails: 'blogs/:slug',
   checkCommunitySlug: 'communities/check-slug',
+
+  // Course Video Progress
+  toggleLessonComplete:
+    'progress/courses/:courseId/videos/:videoId/toggle-complete',
 };

@@ -5,6 +5,8 @@ import React, {
   useMemo,
   useCallback,
 } from 'react';
+import { api } from '@/ApiService';
+import { ApiEndPoints } from '@/ApiService/api-end-points';
 import {
   View,
   Text,
@@ -180,6 +182,7 @@ const CourseView = () => {
   const { courseId } = route.params || {};
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
+  const progressAnim = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<any>(null);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const lastScrollY = useRef(0);
@@ -200,10 +203,18 @@ const CourseView = () => {
   const [summaryWebHeight, setSummaryWebHeight] = useState(1);
   const isUpdatingHeightRef = useRef(false);
 
+  // Track completed lessons locally (optimistic updates)
+  const [completedLessonIds, setCompletedLessonIds] = useState<
+    Record<string, boolean>
+  >({});
+  // Track which lesson is currently being toggled (for button loading state)
+  const [togglingLessonId, setTogglingLessonId] = useState<string | null>(null);
+
   useEffect(() => {
     if (courseId) {
       clearCourseDetails();
       setSelectedLessonId(null);
+      setCompletedLessonIds({});
       getCourseDetails(courseId);
     }
   }, [courseId]);
@@ -228,6 +239,19 @@ const CourseView = () => {
         if (firstLessonId) {
           setSelectedLessonId(firstLessonId);
         }
+      }
+
+      // Seed completed state from API data (isCompleted field on each video)
+      const seeded: Record<string, boolean> = {};
+      chapters.forEach((chapter: any) => {
+        (chapter.videos || []).forEach((video: any) => {
+          if (video._id && video.isCompleted) {
+            seeded[video._id] = true;
+          }
+        });
+      });
+      if (Object.keys(seeded).length > 0) {
+        setCompletedLessonIds(prev => ({ ...seeded, ...prev }));
       }
     }
   }, [chapters, selectedLessonId]);
@@ -256,6 +280,24 @@ const CourseView = () => {
     return allLessons[0];
   }, [allLessons, selectedLessonId]);
 
+  // Course progress derived values
+  const totalLessons = allLessons.length;
+  const completedCount = useMemo(
+    () => Object.values(completedLessonIds).filter(Boolean).length,
+    [completedLessonIds],
+  );
+  const progressPercent =
+    totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+
+  // Animate progress bar whenever completedCount changes
+  useEffect(() => {
+    Animated.timing(progressAnim, {
+      toValue: progressPercent,
+      duration: 500,
+      useNativeDriver: false,
+    }).start();
+  }, [completedCount]);
+
   // Build video source for the current lesson
   const videoSource = useMemo(() => {
     if (!currentLesson) return null;
@@ -279,6 +321,36 @@ const CourseView = () => {
       [chapterId]: !prev[chapterId],
     }));
   };
+
+  // Toggle lesson complete / incomplete — optimistic update + silent API call
+  const handleToggleComplete = useCallback(
+    async (lessonId: string, isCurrentlyCompleted: boolean) => {
+      if (!lessonId || !courseId || togglingLessonId) return;
+
+      const newValue = !isCurrentlyCompleted;
+
+      // Optimistic update
+      setCompletedLessonIds(prev => ({ ...prev, [lessonId]: newValue }));
+      setTogglingLessonId(lessonId);
+
+      try {
+        const url = ApiEndPoints.toggleLessonComplete
+          .replace(':courseId', courseId)
+          .replace(':videoId', lessonId);
+        await api.post(url, { isCompleted: newValue });
+      } catch (error) {
+        console.error('Error toggling lesson complete:', error);
+        // Revert on failure
+        setCompletedLessonIds(prev => ({
+          ...prev,
+          [lessonId]: isCurrentlyCompleted,
+        }));
+      } finally {
+        setTogglingLessonId(null);
+      }
+    },
+    [courseId, togglingLessonId],
+  );
 
   const handleSummaryWebViewMessage = useCallback(
     (event: any) => {
@@ -459,12 +531,62 @@ const CourseView = () => {
                 {currentLesson.type.toLowerCase()} {'Lesson'}
               </Text>
             )}
-            <TouchableOpacity style={styles.completeButton} activeOpacity={0.8}>
-              <Icon name="CircleCheck" size={18} color={COLORS.white} />
-              <Text style={styles.completeText}>Mark as Complete</Text>
-            </TouchableOpacity>
+            {currentLesson?._id && (
+              <TouchableOpacity
+                style={[
+                  styles.completeButton,
+                  completedLessonIds[currentLesson._id] && {
+                    backgroundColor: '#22c55e',
+                  },
+                  togglingLessonId === currentLesson._id && { opacity: 0.6 },
+                ]}
+                activeOpacity={0.8}
+                disabled={togglingLessonId === currentLesson._id}
+                onPress={() =>
+                  handleToggleComplete(
+                    currentLesson._id,
+                    !!completedLessonIds[currentLesson._id],
+                  )
+                }
+              >
+                {togglingLessonId === currentLesson._id ? (
+                  <ActivityIndicator size={16} color={COLORS.white} />
+                ) : (
+                  <Icon name="CircleCheck" size={18} color={COLORS.white} />
+                )}
+                <Text style={styles.completeText}>
+                  {completedLessonIds[currentLesson._id]
+                    ? 'Completed'
+                    : 'Mark as Complete'}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
+
+        {/* COURSE PROGRESS BAR */}
+        {totalLessons > 0 && (
+          <View style={styles.progressSection}>
+            <View style={styles.progressHeader}>
+              <Text style={styles.progressLabel}>Course Progress</Text>
+              <Text style={styles.progressPercent}>{progressPercent}%</Text>
+            </View>
+            <View style={styles.progressBarBg}>
+              <Animated.View
+                style={[
+                  styles.progressBarFill,
+                  {
+                    width: progressAnim.interpolate({
+                      inputRange: [0, 100],
+                      outputRange: ['0%', '100%'],
+                      extrapolate: 'clamp',
+                    }),
+                  },
+                ]}
+              />
+            </View>
+          </View>
+        )}
 
         {/* TABS */}
         <View style={styles.tabSection}>
@@ -507,6 +629,8 @@ const CourseView = () => {
                           {videos.map((lesson: any) => {
                             const isSelected =
                               currentLesson?._id === lesson._id;
+                            const isCompleted =
+                              !!completedLessonIds[lesson._id];
                             return (
                               <TouchableOpacity
                                 key={lesson._id}
@@ -592,6 +716,21 @@ const CourseView = () => {
                                       : 'Video'}
                                   </Text>
                                 </View>
+                                {/* Completed checkmark badge */}
+                                {isCompleted && (
+                                  <View
+                                    style={{
+                                      marginLeft: 6,
+                                      alignSelf: 'center',
+                                    }}
+                                  >
+                                    <Icon
+                                      name="CircleCheck"
+                                      size={18}
+                                      color="#22c55e"
+                                    />
+                                  </View>
+                                )}
                               </TouchableOpacity>
                             );
                           })}
