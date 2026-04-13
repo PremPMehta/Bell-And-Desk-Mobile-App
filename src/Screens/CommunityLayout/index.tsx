@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import { useNavigation } from '@/Hooks/Utils/use-navigation';
 import { useRoute } from '@react-navigation/native';
@@ -11,6 +11,7 @@ import CommunityMenuTabsContent from '@/Components/Generic/CommunityMenuTabsCont
 import AppHeader from '@/Components/Navigation/AppHeader';
 import { useAtom } from 'jotai';
 import { currentCommunityIdAtom } from '@/Jotai/Atoms';
+import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 
 const TAB_HEIGHT = 50; // Height of the tab bar
 
@@ -20,7 +21,43 @@ const CommunityLayout = () => {
   const { communityId, slug } = route.params || {};
   const [, setCurrentCommunityId] = useAtom(currentCommunityIdAtom);
 
-  const [selectedTab, setSelectedTab] = useState(route.params?.initialTab || 'courses');
+  const { apiGetUserData, apiGetCommunitiesSlug } = useUserApi();
+
+  const communityData = useMemo(() => {
+    return apiGetCommunitiesSlug?.data?.community || {};
+  }, [apiGetCommunitiesSlug]);
+
+  const userRole = useMemo(() => {
+    const allCommunities = apiGetUserData?.data?.allCommunities || [];
+    const currentId = communityData?._id || communityId;
+    const currentSlug = slug || communityData?.slug || communityData?.subdomain;
+
+    const currentComm = allCommunities.find(
+      (c: any) =>
+        (currentId && (c._id === currentId || c.id === currentId)) ||
+        (currentSlug && c.subdomain === currentSlug),
+    );
+
+    return currentComm?.role?.toLowerCase() || 'member';
+  }, [apiGetUserData, communityData, communityId, slug]);
+
+  const filteredTabs = useMemo(() => {
+    if (userRole === 'owner') {
+      return COMMUNITY_MENU_TABS;
+    }
+    return COMMUNITY_MENU_TABS.filter(tab => tab.id !== 'members');
+  }, [userRole]);
+
+  const [selectedTab, setSelectedTab] = useState(
+    route.params?.initialTab || 'courses',
+  );
+
+  // If user is not owner and somehow lands on members tab, redirect to courses
+  React.useEffect(() => {
+    if (userRole !== 'owner' && selectedTab === 'members') {
+      setSelectedTab('courses');
+    }
+  }, [userRole, selectedTab]);
 
   React.useEffect(() => {
     if (communityId) {
@@ -111,7 +148,7 @@ const CommunityLayout = () => {
           ]}
         >
           <CommunityMenuTabs
-            tabs={COMMUNITY_MENU_TABS}
+            tabs={filteredTabs}
             selectedTab={selectedTab}
             onTabPress={handleTabPress}
           />
@@ -131,6 +168,7 @@ const CommunityLayout = () => {
     </View>
   );
 };
+
 
 
 export default CommunityLayout;

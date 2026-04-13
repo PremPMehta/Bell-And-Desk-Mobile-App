@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -27,6 +27,26 @@ interface Props {
   scrollEventThrottle?: number;
 }
 
+const toIdString = (value: any): string => {
+  if (value == null || value === '') return '';
+  if (typeof value === 'object' && value !== null) {
+    const inner = (value as any)._id ?? (value as any).id;
+    if (inner != null) return String(inner);
+  }
+  return String(value);
+};
+
+const moderatorRecordUserId = (m: any): string => {
+  if (!m) return '';
+  if (typeof m.userId === 'string') return toIdString(m.userId);
+  if (m.userId != null && typeof m.userId === 'object') {
+    return toIdString(
+      (m.userId as any)._id ?? (m.userId as any).id ?? m.userId,
+    );
+  }
+  return toIdString((m as any).user?._id ?? (m as any).user?.id);
+};
+
 const CommunityCourses = ({
   communityId,
   onScroll,
@@ -36,13 +56,14 @@ const CommunityCourses = ({
   const [user] = useAtom(userAtom);
   const {
     getCommunityCourses,
-    apiGetCommunityCoursesLoading,
     apiGetCommunityCourses,
+    getCommunityModerators,
     deleteCourse,
     apiDeleteCourseLoading,
   } = useUserApi();
   const [searchQuery, setSearchQuery] = useState('');
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [moderatorSelf, setModeratorSelf] = useState<any | null>(null);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [isSubscriptionModalVisible, setIsSubscriptionModalVisible] =
@@ -51,7 +72,6 @@ const CommunityCourses = ({
   const [editCourseData, setEditCourseData] = useState<any>(null);
 
   const courses = apiGetCommunityCourses?.courses || [];
-  console.log('🚀 ~ CommunityCourses ~ courses:', courses);
 
   const communityDetails = React.useMemo(() => {
     return (user as any)?.allCommunities?.find(
@@ -59,19 +79,77 @@ const CommunityCourses = ({
     );
   }, [user, communityId]);
 
-  const communityRole = communityDetails?.role || 'member';
+  const communityRole = (communityDetails?.role || 'member')
+    .toString()
+    .toLowerCase();
   const communityName = communityDetails?.name || '';
   const communitySlug = communityDetails?.subdomain || '';
 
+  const currentUserIdStr = useMemo(() => {
+    const u = user as any;
+    if (!u || typeof u !== 'object') return '';
+    return toIdString(u._id ?? u.id);
+  }, [user]);
+
+  const coursePermissionUi = useMemo(() => {
+    const isOwner = communityRole === 'owner';
+    const modStatus = (moderatorSelf?.status || '').toString().toLowerCase();
+    const isListedModerator = !!moderatorSelf;
+    const isActiveModerator = isListedModerator && modStatus === 'active';
+    const coursesBlock = moderatorSelf?.permissions?.courses || {};
+    const courseActions = coursesBlock.actions || {};
+    const canUseModCoursePerms = !isOwner && isActiveModerator;
+    // Action flags are honored even when permissions.courses.enabled is false (API can send both).
+    const actionOn = (v: any) => v === true || v === 'true';
+
+    const showCreateButton =
+      isOwner || (canUseModCoursePerms && actionOn(courseActions.addCourse));
+
+    const cardFlags = (isLocked: boolean) => {
+      const showEye =
+        !isLocked &&
+        (isOwner ||
+          (canUseModCoursePerms &&
+            (actionOn(courseActions.editCourse) ||
+              actionOn(courseActions.viewCourseSettings))));
+      const showEdit =
+        isOwner ||
+        (canUseModCoursePerms && actionOn(courseActions.updateCourse));
+      const showDelete =
+        isOwner ||
+        (canUseModCoursePerms && actionOn(courseActions.deleteCourse));
+      return { showEye, showEdit, showDelete };
+    };
+
+    return { showCreateButton, cardFlags };
+  }, [communityRole, moderatorSelf]);
+
+  const isShowCreateButton = coursePermissionUi.showCreateButton;
+
   useEffect(() => {
-    if (communityId) {
-      setIsInitialLoading(true);
-      const query = `?community=${communityId}`;
-      getCommunityCourses(query).finally(() => {
+    if (!communityId) return;
+    setIsInitialLoading(true);
+    const query = `?community=${communityId}`;
+    Promise.all([
+      getCommunityCourses(query),
+      getCommunityModerators(communityId),
+    ])
+      .then(([, modRes]) => {
+        const raw = modRes?.data;
+        const moderators: any[] = Array.isArray(raw) ? raw : [];
+        if (!currentUserIdStr) {
+          setModeratorSelf(null);
+          return;
+        }
+        const me = moderators.find(
+          (m: any) => moderatorRecordUserId(m) === currentUserIdStr,
+        );
+        setModeratorSelf(me || null);
+      })
+      .finally(() => {
         setIsInitialLoading(false);
       });
-    }
-  }, [communityId]);
+  }, [communityId, currentUserIdStr]);
 
   const onChangeSearch = query => setSearchQuery(query);
 
@@ -101,8 +179,8 @@ const CommunityCourses = ({
       item.courseType === 'paid' &&
       item.isFree === false;
 
-    const isSubscriptionCourse =
-      item.courseType === 'paid' && item.paymentType === 'subscription';
+    const { showEye, showEdit, showDelete } =
+      coursePermissionUi.cardFlags(isLocked);
 
     const handleCardPress = () => {
       if (isLocked) {
@@ -125,6 +203,9 @@ const CommunityCourses = ({
           community={communityDetails}
           role={communityRole}
           isLocked={isLocked}
+          showEyeButton={showEye}
+          showEditButton={showEdit}
+          showDeleteButton={showDelete}
           onEyePress={() => handleEditCourse(item)}
           onEditPress={() => {
             setEditCourseData(item);
@@ -145,7 +226,6 @@ const CommunityCourses = ({
   };
 
   const handleSaveCourse = (courseData: any) => {
-    console.log('Course Data:', courseData);
     const wasEditing = !!editCourseData;
     setIsCreateModalVisible(false);
     setEditCourseData(null);
@@ -188,16 +268,26 @@ const CommunityCourses = ({
       ) : courses.length === 0 ? (
         <View style={styles.emptyStateContainer}>
           <Text style={styles.noCoursesTitle}>No courses found</Text>
-          <Text style={styles.noCoursesSubtitle}>Create First Course</Text>
-          <TouchableOpacity
-            style={styles.createFirstCourseButton}
-            onPress={handleCreateCourse}
-          >
-            <Icon name="Plus" size={20} color={COLORS.white} />
-            <Text style={styles.createFirstCourseButtonText}>
-              Create First Course
+          {isShowCreateButton ? (
+            <>
+              <Text style={styles.noCoursesSubtitle}>
+                Create your first course
+              </Text>
+              <TouchableOpacity
+                style={styles.createFirstCourseButton}
+                onPress={handleCreateCourse}
+              >
+                <Icon name="Plus" size={20} color={COLORS.white} />
+                <Text style={styles.createFirstCourseButtonText}>
+                  Create First Course
+                </Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <Text style={styles.noCoursesSubtitle}>
+              There are no courses in this community yet.
             </Text>
-          </TouchableOpacity>
+          )}
         </View>
       ) : (
         <>
@@ -208,15 +298,21 @@ const CommunityCourses = ({
                 value={searchQuery}
                 onChangeText={onChangeSearch}
                 placeholder="Search through your courses..."
-                searchInputStyle={styles.searchInputStyle}
+                searchInputStyle={
+                  isShowCreateButton
+                    ? styles.searchInputStyle
+                    : styles.searchInputStyle2
+                }
               />
-              <TouchableOpacity
-                style={styles.create}
-                onPress={handleCreateCourse}
-              >
-                <Icon name="CirclePlus" size={12} color={COLORS.white} />
-                <Text style={styles.createTxt}>Create</Text>
-              </TouchableOpacity>
+              {isShowCreateButton ? (
+                <TouchableOpacity
+                  style={styles.create}
+                  onPress={handleCreateCourse}
+                >
+                  <Icon name="CirclePlus" size={12} color={COLORS.white} />
+                  <Text style={styles.createTxt}>Create</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           )}
           <Animated.FlatList

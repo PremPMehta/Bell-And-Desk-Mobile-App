@@ -95,6 +95,9 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     minHeight: ms(250),
   },
+  emptyStateCardViewOnly: {
+    borderStyle: 'dashed',
+  },
   emptyStateTitle: {
     ...THEME.fontStyle.h3Bold,
     color: COLORS.white,
@@ -108,6 +111,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: ms(24),
     lineHeight: ms(18),
+  },
+  emptyStateTitleViewOnly: {
+    ...THEME.fontStyle.h3Bold,
+    color: COLORS.white,
+    marginTop: ms(16),
+    marginBottom: ms(8),
+    textAlign: 'center',
+  },
+  emptyStateSubtitleViewOnly: {
+    ...THEME.fontStyle.h6Regular,
+    color: COLORS.subText,
+    textAlign: 'center',
+    lineHeight: ms(20),
+    paddingHorizontal: ms(4),
   },
   createPostButton: {
     paddingHorizontal: ms(12),

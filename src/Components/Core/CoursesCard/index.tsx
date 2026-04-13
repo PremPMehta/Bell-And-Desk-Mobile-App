@@ -25,6 +25,12 @@ interface CoursesCardProps {
   onDeletePress: () => void;
   role?: string;
   isLocked?: boolean;
+  /** When set, overrides default role-based visibility for the eye (view) action */
+  showEyeButton?: boolean;
+  /** When set, overrides default role-based visibility for the edit (pencil) action */
+  showEditButton?: boolean;
+  /** When set, overrides default role-based visibility for delete */
+  showDeleteButton?: boolean;
 }
 
 const CoursesCard: React.FC<CoursesCardProps> = ({
@@ -40,6 +46,9 @@ const CoursesCard: React.FC<CoursesCardProps> = ({
   onDeletePress,
   role = 'member',
   isLocked = false,
+  showEyeButton,
+  showEditButton,
+  showDeleteButton,
 }) => {
   const [imageError, setImageError] = useState(false);
 
@@ -52,27 +61,30 @@ const CoursesCard: React.FC<CoursesCardProps> = ({
   };
 
   const isOwner = role === 'owner';
+  const eyeVisible =
+    showEyeButton !== undefined ? showEyeButton : !isLocked;
+  const editVisible =
+    showEditButton !== undefined ? showEditButton : isOwner;
+  const deleteVisible =
+    showDeleteButton !== undefined ? showDeleteButton : isOwner;
 
   return (
     <View style={styles.cardContainer}>
       <View style={styles.actionContainer}>
-        {!isLocked && (
+        {eyeVisible && (
           <TouchableOpacity style={styles.eyeStyle} onPress={onEyePress}>
             <Icon name="Eye" size={16} color={COLORS.primary} />
           </TouchableOpacity>
         )}
-        {isOwner && (
-          <>
-            <TouchableOpacity style={styles.editStyle} onPress={onEditPress}>
-              <Icon name="Pencil" size={16} color={COLORS.primary} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.deleteStyle}
-              onPress={onDeletePress}
-            >
-              <Icon name="Trash2" size={16} color={COLORS.primary} />
-            </TouchableOpacity>
-          </>
+        {editVisible && (
+          <TouchableOpacity style={styles.editStyle} onPress={onEditPress}>
+            <Icon name="Pencil" size={16} color={COLORS.primary} />
+          </TouchableOpacity>
+        )}
+        {deleteVisible && (
+          <TouchableOpacity style={styles.deleteStyle} onPress={onDeletePress}>
+            <Icon name="Trash2" size={16} color={COLORS.primary} />
+          </TouchableOpacity>
         )}
         {isLocked && (
           <View style={styles.lockStyle}>

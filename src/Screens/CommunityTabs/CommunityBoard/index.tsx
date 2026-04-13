@@ -6,7 +6,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Icon from '@/Components/Core/Icons';
 import { COLORS } from '@/Assets/Theme/colors';
 import PrimaryButton from '@/Components/Core/PrimaryButton';
@@ -14,7 +14,6 @@ import styles from './style';
 import { useAtom } from 'jotai';
 import {
   createPostVisibleAtom,
-  postsAtom,
   communityCategoriesAtom,
   userAtom,
   refreshSocialFeedsAtom,
@@ -35,6 +34,26 @@ interface Props {
   scrollEventThrottle?: number;
 }
 
+const toIdString = (value: any): string => {
+  if (value == null || value === '') return '';
+  if (typeof value === 'object' && value !== null) {
+    const inner = (value as any)._id ?? (value as any).id;
+    if (inner != null) return String(inner);
+  }
+  return String(value);
+};
+
+const moderatorRecordUserId = (m: any): string => {
+  if (!m) return '';
+  if (typeof m.userId === 'string') return toIdString(m.userId);
+  if (m.userId != null && typeof m.userId === 'object') {
+    return toIdString(
+      (m.userId as any)._id ?? (m.userId as any).id ?? m.userId,
+    );
+  }
+  return toIdString((m as any).user?._id ?? (m as any).user?.id);
+};
+
 const CommunityBoard = ({
   communityId,
   onScroll,
@@ -51,6 +70,7 @@ const CommunityBoard = ({
     apiUpdateSocialFeedCategoryLoading,
     deleteSocialFeedCategory,
     apiDeleteSocialFeedCategoryLoading,
+    getCommunityModerators,
   } = useUserApi();
   // const [posts] = useAtom(postsAtom);
   const [, setCreatePostVisible] = useAtom(createPostVisibleAtom);
@@ -68,6 +88,93 @@ const CommunityBoard = ({
     null,
   ); // null = "All"
   const [manageCategoriesVisible, setManageCategoriesVisible] = useState(false);
+  const [moderatorSelf, setModeratorSelf] = useState<any | null>(null);
+
+  const [user] = useAtom(userAtom);
+
+  const communityDetails = useMemo(() => {
+    return (user as any)?.allCommunities?.find(
+      (c: any) => c._id === communityId || c.id === communityId,
+    );
+  }, [user, communityId]);
+
+  const communityRole = (communityDetails?.role || 'member')
+    .toString()
+    .toLowerCase();
+
+  const currentUserIdStr = useMemo(() => {
+    const u = user as any;
+    if (!u || typeof u !== 'object') return '';
+    return toIdString(u._id ?? u.id);
+  }, [user]);
+
+  const boardPermissionUi = useMemo(() => {
+    const isOwner = communityRole === 'owner';
+    const modStatus = (moderatorSelf?.status || '').toString().toLowerCase();
+    const isListedModerator = !!moderatorSelf;
+    const isActiveModerator = isListedModerator && modStatus === 'active';
+    const boardActions = moderatorSelf?.permissions?.board?.actions || {};
+    const canUseModBoardPerms = !isOwner && isActiveModerator;
+    const actionOn = (v: any) => v === true || v === 'true';
+
+    const showComment =
+      isOwner || (canUseModBoardPerms && actionOn(boardActions.comment));
+    const showCreatePost =
+      isOwner || (canUseModBoardPerms && actionOn(boardActions.createPost));
+    const showDeletePost =
+      isOwner || (canUseModBoardPerms && actionOn(boardActions.deletePost));
+    const showEditPost =
+      isOwner ||
+      (canUseModBoardPerms &&
+        (actionOn(boardActions.editPost) || actionOn(boardActions.updatePost)));
+    const showManagePosts =
+      isOwner || (canUseModBoardPerms && actionOn(boardActions.managePosts));
+
+    const hasAnyBoardAction =
+      isOwner ||
+      (canUseModBoardPerms &&
+        (actionOn(boardActions.comment) ||
+          actionOn(boardActions.createPost) ||
+          actionOn(boardActions.deletePost) ||
+          actionOn(boardActions.editPost) ||
+          actionOn(boardActions.updatePost) ||
+          actionOn(boardActions.managePosts)));
+
+    return {
+      showComment,
+      showCreatePost,
+      showDeletePost,
+      showEditPost,
+      showManagePosts,
+      hasAnyBoardAction,
+      postItemBoardUi: {
+        showComment,
+        showEditPost,
+        showDeletePost,
+      },
+    };
+  }, [communityRole, moderatorSelf]);
+
+  useEffect(() => {
+    if (!communityId) return;
+    let cancelled = false;
+    getCommunityModerators(communityId).then((modRes: any) => {
+      if (cancelled) return;
+      const raw = modRes?.data;
+      const moderators: any[] = Array.isArray(raw) ? raw : [];
+      if (!currentUserIdStr) {
+        setModeratorSelf(null);
+        return;
+      }
+      const me = moderators.find(
+        (m: any) => moderatorRecordUserId(m) === currentUserIdStr,
+      );
+      setModeratorSelf(me || null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [communityId, currentUserIdStr]);
 
   // ── API Fetch ────────────────────────────────────────────────────────────
   const fetchCategories = useCallback(async () => {
@@ -241,7 +348,6 @@ const CommunityBoard = ({
 
   // ── Filtered posts ───────────────────────────────────────────────────────
   const filteredPosts = feeds;
-  const [user] = useAtom(userAtom);
   const userInitials = (user as any)?.firstName
     ? (user as any).firstName[0]
     : 'U';
@@ -273,32 +379,35 @@ const CommunityBoard = ({
           selectedCategoryId={selectedCategoryId}
           onSelectCategory={setSelectedCategoryId}
           onPressSettings={() => setManageCategoriesVisible(true)}
+          showSettingsButton={boardPermissionUi.showManagePosts}
         />
 
         {/* Create Post Section */}
-        <Pressable
-          style={styles.createPostCard}
-          onPress={() => setCreatePostVisible(true)}
-        >
-          <View style={styles.inputRow}>
-            <View style={styles.avatar}>
-              {userAvatar ? (
-                <Image source={{ uri: userAvatar }} style={styles.avatar} />
-              ) : (
-                <Text style={styles.avatarText}>{userInitials}</Text>
-              )}
+        {boardPermissionUi.showCreatePost ? (
+          <Pressable
+            style={styles.createPostCard}
+            onPress={() => setCreatePostVisible(true)}
+          >
+            <View style={styles.inputRow}>
+              <View style={styles.avatar}>
+                {userAvatar ? (
+                  <Image source={{ uri: userAvatar }} style={styles.avatar} />
+                ) : (
+                  <Text style={styles.avatarText}>{userInitials}</Text>
+                )}
+              </View>
+              <View style={styles.input}>
+                <Text style={styles.inputPlaceholder}>Start a post</Text>
+              </View>
             </View>
-            <View style={styles.input}>
-              <Text style={styles.inputPlaceholder}>Start a post</Text>
+            <View style={styles.actionsRow}>
+              {renderActionBtn('Video', 'Video')}
+              {renderActionBtn('Image', 'Photo')}
+              {renderActionBtn('FileText', 'Write article')}
+              {renderActionBtn('ChartNoAxesColumn', 'Poll')}
             </View>
-          </View>
-          <View style={styles.actionsRow}>
-            {renderActionBtn('Video', 'Video')}
-            {renderActionBtn('Image', 'Photo')}
-            {renderActionBtn('FileText', 'Write article')}
-            {renderActionBtn('ChartNoAxesColumn', 'Poll')}
-          </View>
-        </Pressable>
+          </Pressable>
+        ) : null}
 
         {/* Posts List */}
         {apiGetSocialFeedsLoading && feeds.length === 0 ? (
@@ -306,40 +415,65 @@ const CommunityBoard = ({
             <ActivityIndicator size="small" color={COLORS.primary} />
           </View>
         ) : filteredPosts.length === 0 ? (
-          /* Empty State */
-          <View style={styles.emptyStateCard}>
-            {selectedCategoryId ? (
-              <>
-                <Icon name="MessageSquare" size={48} color={COLORS.subText} />
-                <Text style={styles.emptyStateTitle}>
-                  No posts in this category
-                </Text>
-                <Text style={styles.emptyStateSubtitle}>
-                  No posts have been shared in this category yet.
-                </Text>
-              </>
-            ) : (
-              <>
-                <Icon name="MessageSquareText" size={48} color={COLORS.white} />
-                <Text style={styles.emptyStateTitle}>
-                  Start the Conversation
-                </Text>
-                <Text style={styles.emptyStateSubtitle}>
-                  Be the first to share something amazing with your community!
-                  {'\n'}
-                  Your voice matters and we can't wait to hear from you.
-                </Text>
-                <PrimaryButton
-                  title="+ Create Your First Post"
-                  onPress={() => setCreatePostVisible(true)}
-                  buttonStyle={styles.createPostButton}
-                  textStyle={styles.createPostButtonText}
-                />
-              </>
-            )}
-          </View>
+          !boardPermissionUi.hasAnyBoardAction ? (
+            /* View-only: no board permissions — minimal empty (no create/manage CTAs) */
+            <View
+              style={[styles.emptyStateCard, styles.emptyStateCardViewOnly]}
+            >
+              <Icon name="MessageSquareText" size={48} color={COLORS.subText} />
+              <Text style={styles.emptyStateTitleViewOnly}>
+                {selectedCategoryId ? 'No posts in this category' : 'No posts yet'}
+              </Text>
+              <Text style={styles.emptyStateSubtitleViewOnly}>
+                {selectedCategoryId
+                  ? 'No posts have been shared in this category yet.'
+                  : 'There are no posts in this community yet. Check back later for updates from the community admin.'}
+              </Text>
+            </View>
+          ) : (
+            /* At least one board action allowed — rich empty (first-post CTA when createPost) */
+            <View style={styles.emptyStateCard}>
+              {selectedCategoryId ? (
+                <>
+                  <Icon name="MessageSquare" size={48} color={COLORS.subText} />
+                  <Text style={styles.emptyStateTitle}>
+                    No posts in this category
+                  </Text>
+                  <Text style={styles.emptyStateSubtitle}>
+                    No posts have been shared in this category yet.
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Icon name="MessageSquareText" size={48} color={COLORS.white} />
+                  <Text style={styles.emptyStateTitle}>
+                    Start the Conversation
+                  </Text>
+                  <Text style={styles.emptyStateSubtitle}>
+                    Be the first to share something amazing with your community!
+                    {'\n'}
+                    Your voice matters and we can't wait to hear from you.
+                  </Text>
+                  {boardPermissionUi.showCreatePost ? (
+                    <PrimaryButton
+                      title="+ Create Your First Post"
+                      onPress={() => setCreatePostVisible(true)}
+                      buttonStyle={styles.createPostButton}
+                      textStyle={styles.createPostButtonText}
+                    />
+                  ) : null}
+                </>
+              )}
+            </View>
+          )
         ) : (
-          filteredPosts.map(post => <PostItem key={post.id} post={post} />)
+          filteredPosts.map(post => (
+            <PostItem
+              key={post.id}
+              post={post}
+              boardUi={boardPermissionUi.postItemBoardUi}
+            />
+          ))
         )}
 
         {/* Load More Indicator */}

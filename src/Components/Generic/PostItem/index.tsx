@@ -30,11 +30,19 @@ import { COLORS } from '@/Assets/Theme/colors';
 import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 import ToastModule from '@/Components/Core/Toast';
 
+export type BoardPostUiFlags = {
+  showComment: boolean;
+  showEditPost: boolean;
+  showDeletePost: boolean;
+};
+
 interface Props {
   post: Post;
+  /** When set (e.g. from Community Board), gates comment row and post menu actions */
+  boardUi?: BoardPostUiFlags;
 }
 
-const PostItem = ({ post }: Props) => {
+const PostItem = ({ post, boardUi }: Props) => {
   const [showMenu, setShowMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState<{
     top: number;
@@ -439,6 +447,15 @@ const PostItem = ({ post }: Props) => {
     // But with space-between, we just need widths to sum to < 100%
   };
 
+  const canEditThisPost = !!post.content && !post.isPoll;
+  const menuShowEdit =
+    boardUi === undefined
+      ? canEditThisPost
+      : boardUi.showEditPost && canEditThisPost;
+  const menuShowDelete = boardUi === undefined ? true : boardUi.showDeletePost;
+  const showOverflowMenu =
+    boardUi === undefined ? true : menuShowEdit || menuShowDelete;
+
   return (
     <View style={styles.container}>
       {/* ... Header ... */}
@@ -466,21 +483,23 @@ const PostItem = ({ post }: Props) => {
             )}
           </View>
         </View>
-        <TouchableOpacity
-          ref={moreButtonRef}
-          style={styles.moreButton}
-          onPress={() => {
-            moreButtonRef.current?.measureInWindow((x, y, width, height) => {
-              setMenuPosition({
-                top: y + height,
-                right: Dimensions.get('window').width - (x + width),
+        {showOverflowMenu ? (
+          <TouchableOpacity
+            ref={moreButtonRef}
+            style={styles.moreButton}
+            onPress={() => {
+              moreButtonRef.current?.measureInWindow((x, y, width, height) => {
+                setMenuPosition({
+                  top: y + height,
+                  right: Dimensions.get('window').width - (x + width),
+                });
+                setShowMenu(true);
               });
-              setShowMenu(true);
-            });
-          }}
-        >
-          <Icon name="EllipsisVertical" size={20} color={COLORS.white} />
-        </TouchableOpacity>
+            }}
+          >
+            <Icon name="EllipsisVertical" size={20} color={COLORS.white} />
+          </TouchableOpacity>
+        ) : null}
       </View>
 
       {/* Menu Modal - unchanged */}
@@ -505,7 +524,7 @@ const PostItem = ({ post }: Props) => {
               },
             ]}
           >
-            {post.content && !post.isPoll && (
+            {menuShowEdit ? (
               <TouchableOpacity
                 style={styles.menuItem}
                 onPress={() => {
@@ -517,11 +536,15 @@ const PostItem = ({ post }: Props) => {
                 <Icon name="Pencil" size={16} color={COLORS.white} />
                 <Text style={styles.menuText}>Edit</Text>
               </TouchableOpacity>
-            )}
-            <TouchableOpacity style={styles.menuItem} onPress={handleDelete}>
-              <Icon name="Trash2" size={16} color={COLORS.red} />
-              <Text style={[styles.menuText, styles.deleteText]}>Delete</Text>
-            </TouchableOpacity>
+            ) : null}
+            {menuShowDelete ? (
+              <TouchableOpacity style={styles.menuItem} onPress={handleDelete}>
+                <Icon name="Trash2" size={16} color={COLORS.red} />
+                <Text style={[styles.menuText, styles.deleteText]}>
+                  Delete
+                </Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         </TouchableOpacity>
       </Modal>
@@ -640,6 +663,12 @@ const PostItem = ({ post }: Props) => {
             {localLikesCount}
           </Text>
         </TouchableOpacity>
+        {boardUi?.showComment ? (
+          <View style={styles.commentRow}>
+            <Icon name="MessageSquare" size={18} color={COLORS.white} />
+            <Text style={styles.footerText}>{post.comments}</Text>
+          </View>
+        ) : null}
       </View>
     </View>
   );

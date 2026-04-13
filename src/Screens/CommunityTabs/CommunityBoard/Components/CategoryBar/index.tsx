@@ -11,6 +11,8 @@ interface CategoryBarProps {
     selectedCategoryId: string | null;
     onSelectCategory: (id: string | null) => void;
     onPressSettings: () => void;
+    /** When false, hides the settings / manage categories control */
+    showSettingsButton?: boolean;
 }
 
 const CategoryBar: React.FC<CategoryBarProps> = ({
@@ -18,6 +20,7 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
     selectedCategoryId,
     onSelectCategory,
     onPressSettings,
+    showSettingsButton = true,
 }) => {
     return (
         <View style={styles.wrapper}>
@@ -75,15 +78,17 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
                 ))}
             </ScrollView>
 
-            {/* Settings / gear icon */}
-            <TouchableOpacity
-                style={styles.settingsBtn}
-                onPress={onPressSettings}
-                activeOpacity={0.7}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-                <Icon name="Settings" size={20} color={COLORS.white} />
-            </TouchableOpacity>
+            {/* Settings / gear icon (manage categories) */}
+            {showSettingsButton ? (
+                <TouchableOpacity
+                    style={styles.settingsBtn}
+                    onPress={onPressSettings}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                    <Icon name="Settings" size={20} color={COLORS.white} />
+                </TouchableOpacity>
+            ) : null}
         </View>
     );
 };

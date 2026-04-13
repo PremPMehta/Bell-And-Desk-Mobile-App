@@ -26,12 +26,14 @@ import { COLORS } from '@/Assets/Theme/colors';
 import Icon from '@/Components/Core/Icons';
 import MyCommunitiesSkeleton from '@/Components/Core/Skeleton/MyCommunitiesSkeleton';
 import { useIsFocused } from '@react-navigation/native';
+import ToastModule from '@/Components/Core/Toast';
 
 
 const MyCommunities = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
-  const { getUserData, apiGetUserDataLoading } = useUserApi();
+  const { getUserData, apiGetUserDataLoading, getCommunityModerators, user } =
+    useUserApi();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -91,6 +93,51 @@ const MyCommunities = () => {
     }
   };
 
+  const handleOpenCommunity = async (
+    item: any,
+    options?: { initialTab?: string },
+  ) => {
+    const communityId = item?._id || item?.id;
+    const slug = item?.subdomain;
+
+    // Default behavior: navigate as before. We only block if we can confidently
+    // detect that the CURRENT user is a moderator with status "inactive".
+    try {
+      if (communityId) {
+        const res: any = await getCommunityModerators(communityId);
+        const moderators: any[] = res?.data || [];
+        const currentUserId = user?._id;
+
+        if (currentUserId && Array.isArray(moderators)) {
+          const me = moderators.find(m => {
+            const mUserId =
+              typeof m?.userId === 'string'
+                ? m.userId
+                : m?.userId?._id || m?.userId?.id;
+            return mUserId === currentUserId;
+          });
+
+          const status = (me?.status || '').toString().toLowerCase();
+          if (status === 'inactive') {
+            ToastModule.errorBottom({
+              msg: 'Your moderator access is inactive for this community.',
+            });
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      // Fail-open to avoid breaking navigation if API is down.
+    }
+
+    navigation.navigate('CommunityLayout', {
+      title: item.name,
+      communityId,
+      slug,
+      ...(options?.initialTab ? { initialTab: options.initialTab } : {}),
+    });
+  };
+
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: event => {
       const currentY = event.contentOffset.y;
@@ -140,21 +187,8 @@ const MyCommunities = () => {
       description={item.description}
       bannerImage={item.banner}
       tags={item.role ?? 'Member'}
-      onViewPress={() =>
-        navigation.navigate('CommunityLayout', {
-          title: item.name,
-          communityId: item._id || item.id,
-          slug: item.subdomain,
-        })
-      }
-      onSettingsPress={() =>
-        navigation.navigate('CommunityLayout', {
-          title: item.name,
-          communityId: item._id || item.id,
-          slug: item.subdomain,
-          initialTab: 'settings',
-        })
-      }
+      onViewPress={() => handleOpenCommunity(item)}
+      onSettingsPress={() => handleOpenCommunity(item, { initialTab: 'settings' })}
     />
   );
 

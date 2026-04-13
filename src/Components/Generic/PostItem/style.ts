@@ -184,6 +184,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: ms(24),
   },
+  commentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   footerText: {
     ...fontStyle.h5Medium,
     color: COLORS.white,

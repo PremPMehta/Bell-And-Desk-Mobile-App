@@ -16,6 +16,9 @@ const styles = StyleSheet.create({
   searchInputStyle: {
     width: sc(210),
   },
+  searchInputStyle2: {
+    width: sc(286),
+  },
   create: {
     flexDirection: 'row',
     alignItems: 'center',
