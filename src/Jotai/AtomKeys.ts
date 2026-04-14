@@ -207,4 +207,14 @@ export const AtomKeys = {
   // Check Community Slug
   apiCheckCommunitySlugLoading: 'apiCheckCommunitySlugLoading',
   apiCheckCommunitySlug: 'apiCheckCommunitySlug',
+
+  // Video Bank
+  apiGetVideoBankLoading: 'apiGetVideoBankLoading',
+  apiGetVideoBank: 'apiGetVideoBank',
+  apiDeleteVideoBankItemLoading: 'apiDeleteVideoBankItemLoading',
+  apiDeleteVideoBankItem: 'apiDeleteVideoBankItem',
+  apiUpdateVideoBankItemLoading: 'apiUpdateVideoBankItemLoading',
+  apiUpdateVideoBankItem: 'apiUpdateVideoBankItem',
+  apiAddVideoBankItemLoading: 'apiAddVideoBankItemLoading',
+  apiAddVideoBankItem: 'apiAddVideoBankItem',
 };

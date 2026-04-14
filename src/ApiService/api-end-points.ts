@@ -93,4 +93,9 @@ export const ApiEndPoints = {
   // Course Video Progress
   toggleLessonComplete:
     'progress/courses/:courseId/videos/:videoId/toggle-complete',
+
+  // Video Bank
+  videoBank: 'video-bank/community/:communityId',
+  videoBankItem: 'video-bank/:videoId',
+  videoBankUpload: 'video-bank/upload',
 };

@@ -564,6 +564,40 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiCheckCommunitySlug),
   );
 
+  // Get Video Bank Apis
+  const [apiGetVideoBankLoading, setApiGetVideoBankLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetVideoBankLoading),
+  );
+  const [apiGetVideoBank, setApiGetVideoBank] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetVideoBank),
+  );
+
+  // Delete Video Bank Item Apis
+  const [apiDeleteVideoBankItemLoading, setApiDeleteVideoBankItemLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiDeleteVideoBankItemLoading),
+    );
+  const [apiDeleteVideoBankItem, setApiDeleteVideoBankItem] = useAtom(
+    objectAtomFamily(AtomKeys.apiDeleteVideoBankItem),
+  );
+
+  // Update Video Bank Item Apis
+  const [apiUpdateVideoBankItemLoading, setApiUpdateVideoBankItemLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiUpdateVideoBankItemLoading),
+    );
+  const [apiUpdateVideoBankItem, setApiUpdateVideoBankItem] = useAtom(
+    objectAtomFamily(AtomKeys.apiUpdateVideoBankItem),
+  );
+
+  // Add Video Bank Item Apis
+  const [apiAddVideoBankItemLoading, setApiAddVideoBankItemLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiAddVideoBankItemLoading),
+  );
+  const [apiAddVideoBankItem, setApiAddVideoBankItem] = useAtom(
+    objectAtomFamily(AtomKeys.apiAddVideoBankItem),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -1933,6 +1967,94 @@ const useUserApi = () => {
     setApiGetReferralCodeLoading(false);
   }
 
+  // Get Video Bank
+  async function getVideoBank(communityId: string, query: string) {
+    try {
+      setApiGetVideoBankLoading(true);
+      const url = ApiEndPoints.videoBank.replace(':communityId', communityId);
+      const res: any = await api.get(url + query);
+      console.log('🚀 ~ getVideoBank ~ res:', res);
+      setApiGetVideoBank(res);
+      setApiGetVideoBankLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching video bank:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiGetVideoBankLoading(false);
+    }
+  }
+
+  // Delete Video Bank Item
+  async function deleteVideoBankItem(videoId: string) {
+    try {
+      setApiDeleteVideoBankItemLoading(true);
+      const url = ApiEndPoints.videoBankItem.replace(':videoId', videoId);
+      const res: any = await api.delete(url);
+      setApiDeleteVideoBankItem(res);
+      setApiDeleteVideoBankItemLoading(false);
+      ToastModule.successTop({
+        msg: res?.message || 'Video deleted successfully!',
+      });
+      return res;
+    } catch (error: any) {
+      console.error('Error deleting video bank item:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiDeleteVideoBankItemLoading(false);
+    }
+  }
+
+  // Update Video Bank Item
+  async function updateVideoBankItem(videoId: string, body: any) {
+    const isFormData = body instanceof FormData;
+    const header = isFormData ? { 'Content-Type': 'multipart/form-data' } : {};
+    try {
+      setApiUpdateVideoBankItemLoading(true);
+      const url = ApiEndPoints.videoBankItem.replace(':videoId', videoId);
+      const res: any = await api.put(url, body, header);
+      setApiUpdateVideoBankItem(res);
+      setApiUpdateVideoBankItemLoading(false);
+      ToastModule.successTop({
+        msg: res?.message || 'Video updated successfully!',
+      });
+      return res;
+    } catch (error: any) {
+      console.error('Error updating video bank item:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiUpdateVideoBankItemLoading(false);
+    }
+  }
+
+  // Add Video Bank Item
+  async function addVideoBankItem(body: any) {
+    const header = { 'Content-Type': 'multipart/form-data' };
+    try {
+      setApiAddVideoBankItemLoading(true);
+      const res: any = await api.post(
+        ApiEndPoints.videoBankUpload,
+        body,
+        header,
+      );
+      setApiAddVideoBankItem(res);
+      setApiAddVideoBankItemLoading(false);
+      ToastModule.successTop({
+        msg: res?.message || 'Video added successfully!',
+      });
+      return res;
+    } catch (error: any) {
+      console.error('Error adding video bank item:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiAddVideoBankItemLoading(false);
+    }
+  }
+
   return {
     // Auth Apis
     getUserUnifiedLogin,
@@ -2274,6 +2396,27 @@ const useUserApi = () => {
     apiCheckCommunitySlugLoading,
     apiCheckCommunitySlug,
     setApiCheckCommunitySlug,
+
+    // Video Bank
+    // Get Video Bank
+    getVideoBank,
+    apiGetVideoBankLoading,
+    apiGetVideoBank,
+
+    // Delete Video Bank Item
+    deleteVideoBankItem,
+    apiDeleteVideoBankItemLoading,
+    apiDeleteVideoBankItem,
+
+    // Update Video Bank Item
+    updateVideoBankItem,
+    apiUpdateVideoBankItemLoading,
+    apiUpdateVideoBankItem,
+
+    // Add Video Bank Item
+    addVideoBankItem,
+    apiAddVideoBankItemLoading,
+    apiAddVideoBankItem,
 
     // User
     user,

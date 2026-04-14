@@ -22,6 +22,7 @@ import EditCourse from '@/Screens/CommunityTabs/Courses/EditCourse';
 import CourseView from '@/Screens/CommunityTabs/Courses/CourseView';
 import BlogDetails from '@/Screens/BlogDetails';
 import CreateCommunity from '@/Screens/CreateCommunity';
+import VideoBankDetails from '@/Screens/VideoBankDetails';
 
 export type StackNavigationProp<T> = any;
 export type RootStackParamList = {
@@ -217,6 +218,15 @@ const AppNavigator = () => {
           name="BlogDetails"
           component={BlogDetails}
           options={{ headerShown: false }}
+        />
+        <MainStack.Screen
+          name="VideoBankDetails"
+          component={VideoBankDetails}
+          options={{
+            ...getDefaultStackHeaderOptions(),
+            headerShown: true,
+            title: 'Video Details',
+          }}
         />
       </MainStack.Navigator>
       <ModalLayout />

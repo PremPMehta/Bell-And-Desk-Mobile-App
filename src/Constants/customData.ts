@@ -232,6 +232,7 @@ export const COMMUNITY_MENU_TABS = [
   { id: 'board', title: 'Board' },
   { id: 'members', title: 'Members' },
   { id: 'about', title: 'About' },
+  { id: 'videos', title: 'Videos' },
   { id: 'settings', title: 'Settings' },
 ];
 

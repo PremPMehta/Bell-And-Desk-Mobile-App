@@ -45,7 +45,9 @@ const CommunityLayout = () => {
     if (userRole === 'owner') {
       return COMMUNITY_MENU_TABS;
     }
-    return COMMUNITY_MENU_TABS.filter(tab => tab.id !== 'members');
+    return COMMUNITY_MENU_TABS.filter(
+      tab => tab.id !== 'members' && tab.id !== 'videos',
+    );
   }, [userRole]);
 
   const [selectedTab, setSelectedTab] = useState(
@@ -54,7 +56,10 @@ const CommunityLayout = () => {
 
   // If user is not owner and somehow lands on members tab, redirect to courses
   React.useEffect(() => {
-    if (userRole !== 'owner' && selectedTab === 'members') {
+    if (
+      userRole !== 'owner' &&
+      (selectedTab === 'members' || selectedTab === 'videos')
+    ) {
       setSelectedTab('courses');
     }
   }, [userRole, selectedTab]);
