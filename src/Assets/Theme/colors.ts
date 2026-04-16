@@ -24,6 +24,8 @@ export const COLORS = {
   referral: '#181833',
   transparent: 'transparent',
   gold: '#D48D0B',
+  walletLight: '#1c222e',
+  walletBorder: '#2d3544',
 
   // PRIMARY COLORS
   primary: '#1B7CFF',

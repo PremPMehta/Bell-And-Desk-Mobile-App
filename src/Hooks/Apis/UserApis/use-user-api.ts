@@ -335,6 +335,15 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiGetReferralCode),
   );
 
+  // Referral Balance Apis
+  const [apiGetReferralBalanceLoading, setApiGetReferralBalanceLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiGetReferralBalanceLoading),
+    );
+  const [apiGetReferralBalance, setApiGetReferralBalance] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetReferralBalance),
+  );
+
   // Leave Community Api
   const [apiLeaveCommunityLoading, setApiLeaveCommunityLoading] = useAtom(
     booleanDefaultFalseAtomFamily(AtomKeys.apiLeaveCommunityLoading),
@@ -424,6 +433,25 @@ const useUserApi = () => {
   const [apiGetSubscriptionSettings, setApiGetSubscriptionSettings] = useAtom(
     objectAtomFamily(AtomKeys.apiGetSubscriptionSettings),
   );
+
+  // Get Subscription Check Apis
+  const [apiGetSubscriptionCheckLoading, setApiGetSubscriptionCheckLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiGetSubscriptionCheckLoading),
+    );
+  const [apiGetSubscriptionCheck, setApiGetSubscriptionCheck] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetSubscriptionCheck),
+  );
+
+  // Get Subscription Details Apis (member role)
+  const [apiGetSubscriptionDetailsLoading, setApiGetSubscriptionDetailsLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiGetSubscriptionDetailsLoading),
+    );
+  const [apiGetSubscriptionDetails, setApiGetSubscriptionDetails] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetSubscriptionDetails),
+  );
+
   const [
     apiUpdateSubscriptionSettingsLoading,
     setApiUpdateSubscriptionSettingsLoading,
@@ -1527,6 +1555,40 @@ const useUserApi = () => {
     }
   }
 
+  // Get Subscription Check (cryptomanji)
+  async function getSubscriptionCheck(slug: string) {
+    try {
+      setApiGetSubscriptionCheck(null);
+      setApiGetSubscriptionCheckLoading(true);
+      const url = ApiEndPoints.subscriptionCheck.replace(':slug', slug);
+      const res: any = await api.get(url);
+      console.log('🚀 ~ getSubscriptionCheck ~ res:', res);
+      setApiGetSubscriptionCheck(res);
+      setApiGetSubscriptionCheckLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error checking subscription:', error);
+      setApiGetSubscriptionCheckLoading(false);
+    }
+  }
+
+  // Get Subscription Details (member role)
+  async function getSubscriptionDetails(slug: string) {
+    try {
+      setApiGetSubscriptionDetails(null);
+      setApiGetSubscriptionDetailsLoading(true);
+      const url = ApiEndPoints.subscriptionDetails.replace(':slug', slug);
+      const res: any = await api.get(url);
+      console.log('🚀 ~ getSubscriptionDetails ~ res:', res);
+      setApiGetSubscriptionDetails(res);
+      setApiGetSubscriptionDetailsLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching subscription details:', error);
+      setApiGetSubscriptionDetailsLoading(false);
+    }
+  }
+
   // Get One-Time Payment Settings (public)
   async function getOneTimePaymentSettings(slug: string) {
     try {
@@ -1882,12 +1944,15 @@ const useUserApi = () => {
   }
 
   // Get Referral Code
-  async function getReferralCode(communityId: string) {
+  async function getReferralCode(
+    communityId: string,
+    type: 'community_join' | 'platform_signup' = 'community_join',
+  ) {
     try {
       setApiGetReferralCodeLoading(true);
       const url =
         ApiEndPoints.referralCode.replace(':communityId', communityId) +
-        '?type=community_join';
+        `?type=${type}`;
       const res: any = await api.get(url);
       console.log('🚀 ~ getReferralCode ~ res:', res);
       setApiGetReferralCode(res);
@@ -1896,6 +1961,25 @@ const useUserApi = () => {
     } catch (error) {
       console.error('Error fetching referral code:', error);
       setApiGetReferralCodeLoading(false);
+    }
+  }
+
+  // Get Referral Balance
+  async function getReferralBalance(communityId: string) {
+    try {
+      setApiGetReferralBalanceLoading(true);
+      const url = ApiEndPoints.referralBalance.replace(
+        ':communityId',
+        communityId,
+      );
+      const res: any = await api.get(url);
+      console.log('🚀 ~ getReferralBalance ~ res:', res);
+      setApiGetReferralBalance(res);
+      setApiGetReferralBalanceLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching referral balance:', error);
+      setApiGetReferralBalanceLoading(false);
     }
   }
 
@@ -2250,6 +2334,11 @@ const useUserApi = () => {
     apiGetReferralCode,
     clearReferralCode,
 
+    // Referral Balance
+    getReferralBalance,
+    apiGetReferralBalanceLoading,
+    apiGetReferralBalance,
+
     // Leave Community
     leaveCommunity,
     apiLeaveCommunityLoading,
@@ -2303,6 +2392,16 @@ const useUserApi = () => {
     getSubscriptionSettings,
     apiGetSubscriptionSettingsLoading,
     apiGetSubscriptionSettings,
+
+    // Subscription Check
+    getSubscriptionCheck,
+    apiGetSubscriptionCheckLoading,
+    apiGetSubscriptionCheck,
+
+    // Subscription Details (member role)
+    getSubscriptionDetails,
+    apiGetSubscriptionDetailsLoading,
+    apiGetSubscriptionDetails,
 
     // One-Time Payment Settings (public)
     getOneTimePaymentSettings,

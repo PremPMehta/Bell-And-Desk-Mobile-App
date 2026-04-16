@@ -54,6 +54,7 @@ export const ApiEndPoints = {
   // Referral Settings
   referralSettings: 'referrals/admin/settings/:communityId',
   referralCode: 'referrals/code/:communityId',
+  referralBalance: 'referrals/balance/:communityId',
 
   // Coupons
   coupons: 'coupons/:slug',
@@ -65,6 +66,8 @@ export const ApiEndPoints = {
   subscriptionSettings: 'stripe/community/subscription-settings/:slug',
   subscriptionSettingsPublic:
     'stripe/community/subscription-settings/:slug/public',
+  subscriptionCheck: 'stripe/community/subscription-check/:slug',
+  subscriptionDetails: 'stripe/community/subscription-details/:slug',
 
   // Member Auto Approve
   memberAutoApprove: 'communities/member-auto-approve/:slug',

@@ -40,6 +40,7 @@ const MyCommunities = () => {
   const [communities, setCommunities] = useState<any[]>([]);
   const [planEntitlements, setPlanEntitlements] = useState<any[]>([]);
   const [reservations, setReservations] = useState<any[]>([]);
+  const [screenLoading, setScreenLoading] = useState(true);
 
   // Filter communities by search query (name or description)
   const filteredCommunities = communities.filter(c => {
@@ -69,27 +70,36 @@ const MyCommunities = () => {
   // Fetch user data on mount and focus
   useEffect(() => {
     if (isFocused) {
+      setScreenLoading(true);
       fetchUserData();
+    } else {
+      setScreenLoading(true);
     }
   }, [isFocused]);
 
 
   const fetchUserData = async () => {
-    const response = await getUserData();
-    if (response?.data?.allCommunities) {
-      setCommunities(response.data.allCommunities);
-    } else {
-      setCommunities([]);
-    }
-    if (response?.data?.planEntitlements) {
-      setPlanEntitlements(response.data.planEntitlements);
-    } else {
-      setPlanEntitlements([]);
-    }
-    if (response?.data?.reservations) {
-      setReservations(response.data.reservations);
-    } else {
-      setReservations([]);
+    try {
+      const response = await getUserData();
+      if (response?.data?.allCommunities) {
+        setCommunities(response.data.allCommunities);
+      } else {
+        setCommunities([]);
+      }
+      if (response?.data?.planEntitlements) {
+        setPlanEntitlements(response.data.planEntitlements);
+      } else {
+        setPlanEntitlements([]);
+      }
+      if (response?.data?.reservations) {
+        setReservations(response.data.reservations);
+      } else {
+        setReservations([]);
+      }
+    } catch (error) {
+      console.error('Error in fetchUserData:', error);
+    } finally {
+      setScreenLoading(false);
     }
   };
 
@@ -324,7 +334,7 @@ const MyCommunities = () => {
     <View style={styles.mainContainer}>
       <AppHeader />
 
-      {communities.length > 0 && (
+      {communities.length > 0 && !(apiGetUserDataLoading || screenLoading) && (
         <>
           {/* SEARCH */}
           <View style={styles.searchContainer}>
@@ -372,7 +382,7 @@ const MyCommunities = () => {
       )}
 
       {/* SKELETON / COMMUNITIES LIST */}
-      {apiGetUserDataLoading ? (
+      {apiGetUserDataLoading || screenLoading ? (
         <MyCommunitiesSkeleton />
       ) : (
         /* COMMUNITIES LIST */

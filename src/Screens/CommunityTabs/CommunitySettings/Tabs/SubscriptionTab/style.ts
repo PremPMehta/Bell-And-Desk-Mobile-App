@@ -10,6 +10,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cardBG,
     borderRadius: ms(8),
   },
+
+  // ── Header ──
   headerContainer: {
     marginBottom: ms(16),
   },
@@ -23,6 +25,14 @@ const styles = StyleSheet.create({
     color: COLORS.lightGray,
   },
 
+  // ── Loading ──
+  loadingContainer: {
+    paddingVertical: ms(40),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // ── Active subscription card ──
   subscriptionContainer: {
     backgroundColor: COLORS.innerCardBG,
     borderRadius: ms(8),
@@ -38,7 +48,6 @@ const styles = StyleSheet.create({
     ...THEME.fontStyle.h4Bold,
     color: COLORS.white,
   },
-
   subscriptionContent: {
     flexDirection: 'row',
     gap: ms(12),
@@ -51,8 +60,8 @@ const styles = StyleSheet.create({
   subscriptionValue: {
     ...THEME.fontStyle.h5Regular,
     color: COLORS.white,
+    flexShrink: 1,
   },
-
   manageSubscriptionContainer: {
     alignItems: 'center',
     marginTop: ms(12),
@@ -60,12 +69,12 @@ const styles = StyleSheet.create({
   manageSubscription: {
     ...THEME.fontStyle.h6Regular,
     color: COLORS.lightGray,
+    textAlign: 'center',
   },
   contactSupport: {
     ...THEME.fontStyle.h6Bold,
     color: COLORS.white,
   },
-
   cancelSubscriptionContainer: {
     borderWidth: 1,
     borderColor: COLORS.white,
@@ -78,6 +87,59 @@ const styles = StyleSheet.create({
   cancelSubscription: {
     ...THEME.fontStyle.h6Regular,
     color: COLORS.white,
+  },
+
+  // ── Empty / No Active Subscription ──
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: ms(32),
+    paddingHorizontal: ms(16),
+  },
+  emptyIconCircle: {
+    width: ms(64),
+    height: ms(64),
+    borderRadius: ms(32),
+    backgroundColor: COLORS.innerCardBG,
+    borderWidth: 2,
+    borderColor: COLORS.gray,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: ms(16),
+  },
+  emptyTitle: {
+    ...THEME.fontStyle.h4Bold,
+    color: COLORS.white,
+    textAlign: 'center',
+    marginBottom: ms(8),
+  },
+  emptySubtitle: {
+    ...THEME.fontStyle.h6Regular,
+    color: COLORS.lightGray,
+    textAlign: 'center',
+    lineHeight: ms(20),
+    marginBottom: ms(20),
+  },
+  subscribeButton: {
+    backgroundColor: COLORS.white,
+    borderRadius: ms(24),
+    paddingVertical: ms(8),
+    paddingHorizontal: ms(24),
+    marginBottom: ms(12),
+  },
+  subscribeButtonText: {
+    ...THEME.fontStyle.h5Bold,
+    color: COLORS.cardBG,
+  },
+  refreshLinkContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: ms(6),
+    marginTop: ms(4),
+  },
+  refreshLink: {
+    ...THEME.fontStyle.h6Regular,
+    color: COLORS.lightGray,
   },
 });
 

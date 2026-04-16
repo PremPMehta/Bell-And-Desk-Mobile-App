@@ -139,6 +139,10 @@ export const AtomKeys = {
   apiGetSubscriptionSettingsLoading: 'apiGetSubscriptionSettingsLoading',
   apiGetSubscriptionSettings: 'apiGetSubscriptionSettings',
   apiUpdateSubscriptionSettingsLoading: 'apiUpdateSubscriptionSettingsLoading',
+  apiGetSubscriptionCheckLoading: 'apiGetSubscriptionCheckLoading',
+  apiGetSubscriptionCheck: 'apiGetSubscriptionCheck',
+  apiGetSubscriptionDetailsLoading: 'apiGetSubscriptionDetailsLoading',
+  apiGetSubscriptionDetails: 'apiGetSubscriptionDetails',
 
   // Member Auto Approve
   apiUpdateMemberAutoApproveLoading: 'apiUpdateMemberAutoApproveLoading',
@@ -175,6 +179,8 @@ export const AtomKeys = {
   // Referral Code
   apiGetReferralCodeLoading: 'apiGetReferralCodeLoading',
   apiGetReferralCode: 'apiGetReferralCode',
+  apiGetReferralBalanceLoading: 'apiGetReferralBalanceLoading',
+  apiGetReferralBalance: 'apiGetReferralBalance',
 
   // Leave Community
   apiLeaveCommunityLoading: 'apiLeaveCommunityLoading',
