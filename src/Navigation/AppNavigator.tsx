@@ -23,6 +23,8 @@ import CourseView from '@/Screens/CommunityTabs/Courses/CourseView';
 import BlogDetails from '@/Screens/BlogDetails';
 import CreateCommunity from '@/Screens/CreateCommunity';
 import VideoBankDetails from '@/Screens/VideoBankDetails';
+import PdfViewer from '@/Screens/Shared/PdfViewer';
+
 
 export type StackNavigationProp<T> = any;
 export type RootStackParamList = {
@@ -228,6 +230,12 @@ const AppNavigator = () => {
             title: 'Video Details',
           }}
         />
+        <MainStack.Screen
+          name="PdfViewer"
+          component={PdfViewer}
+          options={{ headerShown: false }}
+        />
+
       </MainStack.Navigator>
       <ModalLayout />
     </>

@@ -253,4 +253,32 @@ export default StyleSheet.create({
     shadowRadius: 3,
     zIndex: 999,
   },
+  pdfPlaceholder: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.cardBG,
+  },
+  pdfPlaceholderText: {
+    ...THEME.fontStyle.h4Medium,
+    color: COLORS.subText,
+    marginTop: ms(12),
+    textAlign: 'center',
+    paddingHorizontal: ms(20),
+  },
+  pdfButton: {
+    marginTop: vs(16),
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: ms(20),
+    paddingVertical: vs(10),
+    borderRadius: ms(20),
+  },
+  pdfButtonText: {
+    ...THEME.fontStyle.h5Bold,
+    color: COLORS.white,
+    marginLeft: ms(8),
+  },
 });

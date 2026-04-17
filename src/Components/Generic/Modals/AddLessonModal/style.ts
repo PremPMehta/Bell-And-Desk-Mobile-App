@@ -13,7 +13,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.newModalBG,
     borderTopLeftRadius: ms(16),
     borderTopRightRadius: ms(16),
-    height: '85%',
+    height: '90%',
   },
   header: {
     flexDirection: 'row',
@@ -23,11 +23,41 @@ const styles = StyleSheet.create({
     paddingVertical: ms(12),
     borderBottomWidth: 1,
     borderBottomColor: COLORS.modalBG,
-    marginBottom: ms(16),
+    marginBottom: ms(8),
   },
   title: {
     ...THEME.fontStyle.h3Bold,
     alignSelf: 'center',
+  },
+
+  // ── Lesson Type Tabs ──
+  lessonTypeSwitcher: {
+    flexDirection: 'row',
+    marginHorizontal: ms(16),
+    marginBottom: ms(16),
+    backgroundColor: COLORS.cardBG,
+    borderRadius: ms(10),
+    padding: ms(3),
+  },
+  lessonTypeTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: ms(6),
+    paddingVertical: ms(9),
+    borderRadius: ms(8),
+  },
+  lessonTypeTabActive: {
+    backgroundColor: COLORS.primary,
+  },
+  lessonTypeTabText: {
+    ...THEME.fontStyle.h6Regular,
+    color: COLORS.outlineGrey,
+  },
+  lessonTypeTabTextActive: {
+    color: COLORS.white,
+    ...THEME.fontStyle.h6Bold,
   },
 
   inputStyle: {
@@ -74,7 +104,7 @@ const styles = StyleSheet.create({
     height: ms(120),
   },
   selectedCard: {
-    borderColor: COLORS.primary, // Or any active color
+    borderColor: COLORS.primary,
   },
   cardContent: {
     alignItems: 'center',
@@ -91,6 +121,44 @@ const styles = StyleSheet.create({
     color: COLORS.outlineGrey,
     marginTop: ms(4),
     textAlign: 'center',
+  },
+
+  // ── PDF Section ──
+  pdfSection: {
+    marginTop: ms(16),
+  },
+
+  // Document Picker
+  documentPickerContainer: {
+    marginHorizontal: ms(16),
+    marginTop: ms(16),
+  },
+  documentPickerLabel: {
+    ...THEME.fontStyle.h6Bold,
+    color: COLORS.white,
+    marginBottom: ms(8),
+  },
+  documentPickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: ms(10),
+    backgroundColor: COLORS.cardBG,
+    borderRadius: ms(8),
+    borderWidth: 1,
+    borderColor: COLORS.outlineGrey,
+    borderStyle: 'dashed',
+    paddingHorizontal: ms(14),
+    paddingVertical: ms(14),
+  },
+  documentPickerButtonText: {
+    ...THEME.fontStyle.h6Regular,
+    color: COLORS.outlineGrey,
+    flex: 1,
+  },
+  documentPickerHint: {
+    ...THEME.fontStyle.h7Regular,
+    color: COLORS.primary,
+    marginTop: ms(6),
   },
 
   //   Button container

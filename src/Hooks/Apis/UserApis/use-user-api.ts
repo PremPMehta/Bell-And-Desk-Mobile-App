@@ -209,6 +209,14 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiDeleteSocialFeed),
   );
 
+  // Upload PDF State
+  const [apiUploadPdfLoading, setApiUploadPdfLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiUploadPdfLoading),
+  );
+  const [apiUploadPdf, setApiUploadPdf] = useAtom(
+    objectAtomFamily(AtomKeys.apiUploadPdf),
+  );
+
   // Vote on Poll Post Apis
   const [apiVoteOnPollLoading, setApiVoteOnPollLoading] = useAtom(
     booleanDefaultFalseAtomFamily(AtomKeys.apiVoteOnPollLoading),
@@ -2139,6 +2147,25 @@ const useUserApi = () => {
     }
   }
 
+  // Upload PDF
+  async function uploadPdf(body: any) {
+    const header = { 'Content-Type': 'multipart/form-data' };
+    try {
+      setApiUploadPdfLoading(true);
+      const res: any = await api.post(ApiEndPoints.uploadPdf, body, header);
+      console.log('🚀 ~ uploadPdf ~ res:', res);
+      setApiUploadPdf(res);
+      setApiUploadPdfLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error uploading PDF:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiUploadPdfLoading(false);
+    }
+  }
+
   return {
     // Auth Apis
     getUserUnifiedLogin,
@@ -2516,6 +2543,11 @@ const useUserApi = () => {
     addVideoBankItem,
     apiAddVideoBankItemLoading,
     apiAddVideoBankItem,
+
+    // Upload PDF
+    uploadPdf,
+    apiUploadPdfLoading,
+    apiUploadPdf,
 
     // User
     user,

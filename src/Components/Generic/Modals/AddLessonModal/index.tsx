@@ -1,4 +1,11 @@
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import React from 'react';
 import Modal from 'react-native-modal';
 import { COLORS } from '@/Assets/Theme/colors';
@@ -6,8 +13,10 @@ import styles from './style';
 import Icon from '@/Components/Core/Icons';
 import TextInputField from '@/Components/Core/TextInputField';
 import RichTextEditorComponent from '@/Components/Core/RichTextEditor';
+import { pick, types, isCancel, type DocumentPickerResponse } from '@react-native-documents/picker';
 
 export type VideoSource = 'none' | 'youtube' | 'loom' | 'vimeo';
+export type LessonType = 'video' | 'pdf';
 
 interface Props {
   isModalVisible: boolean;
@@ -24,12 +33,24 @@ interface Props {
   lessonContentValue: string;
   onLessonContentChange: (text: string) => void;
 
+  // Lesson Type (video | pdf)
+  lessonType: LessonType;
+  onLessonTypeChange: (type: LessonType) => void;
+
+  // Video-specific
   videoSource: VideoSource;
   onVideoSourceChange: (source: VideoSource) => void;
   videoLink: string;
   onVideoLinkChange: (text: string) => void;
 
+  // PDF/Text-specific
+  contentUrl: string;
+  onContentUrlChange: (text: string) => void;
+  primaryDocument: DocumentPickerResponse | null;
+  onPrimaryDocumentChange: (asset: DocumentPickerResponse | null) => void;
+
   onAddLesson: () => void;
+  isLoading?: boolean;
   buttonLabel?: string;
 }
 
@@ -48,12 +69,21 @@ const AddLessonModal: React.FC<Props> = ({
   lessonContentValue,
   onLessonContentChange,
 
+  lessonType,
+  onLessonTypeChange,
+
   videoSource,
   onVideoSourceChange,
   videoLink,
   onVideoLinkChange,
 
-  onAddLesson = () => {},
+  contentUrl,
+  onContentUrlChange,
+  primaryDocument,
+  onPrimaryDocumentChange,
+
+  onAddLesson,
+  isLoading = false,
   buttonLabel = 'Add Lesson',
 }) => {
   const renderVideoSourceCard = (
@@ -88,15 +118,31 @@ const AddLessonModal: React.FC<Props> = ({
     );
   };
 
+  const handlePickDocument = async () => {
+    try {
+      // types.pdf restricts the native OS file browser to PDF files only
+      const [file] = await pick({
+        type: [types.pdf],
+        allowMultiSelection: false,
+      });
+      onPrimaryDocumentChange(file);
+    } catch (err) {
+      if (isCancel(err)) {
+        // User dismissed the picker — nothing to do
+        return;
+      }
+      Alert.alert('Error', 'Failed to pick document. Please try again.');
+    }
+  };
+
   return (
     <Modal
-      isVisible={isModalVisible} // isLogoutModalVisible
+      isVisible={isModalVisible}
       onSwipeComplete={onHandleCancel}
       onBackdropPress={onHandleCancel}
       swipeDirection="down"
       animationIn="slideInUp"
       animationOut="slideOutDown"
-      // backdropColor={THEME.COLORS.modalBackdropColor}
       animationInTiming={500}
       animationOutTiming={500}
       backdropTransitionInTiming={1000}
@@ -105,7 +151,6 @@ const AddLessonModal: React.FC<Props> = ({
       avoidKeyboard={true}
     >
       <View style={styles.mainModalView}>
-        {/* <View style={styles.modalPanDownToClose} /> */}
         <View style={styles.header}>
           <Text style={styles.title}>{headerLabel}</Text>
           <TouchableOpacity onPress={onHandleCancel}>
@@ -117,6 +162,55 @@ const AddLessonModal: React.FC<Props> = ({
           style={styles.scrollContent}
           contentContainerStyle={{ paddingBottom: 20 }}
         >
+          {/* Lesson Type Tabs */}
+          <View style={styles.lessonTypeSwitcher}>
+            <TouchableOpacity
+              style={[
+                styles.lessonTypeTab,
+                lessonType === 'video' && styles.lessonTypeTabActive,
+              ]}
+              onPress={() => onLessonTypeChange('video')}
+              activeOpacity={0.8}
+            >
+              <Icon
+                name="Video"
+                size={14}
+                color={lessonType === 'video' ? COLORS.white : COLORS.outlineGrey}
+              />
+              <Text
+                style={[
+                  styles.lessonTypeTabText,
+                  lessonType === 'video' && styles.lessonTypeTabTextActive,
+                ]}
+              >
+                Video Lesson
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.lessonTypeTab,
+                lessonType === 'pdf' && styles.lessonTypeTabActive,
+              ]}
+              onPress={() => onLessonTypeChange('pdf')}
+              activeOpacity={0.8}
+            >
+              <Icon
+                name="FileText"
+                size={14}
+                color={lessonType === 'pdf' ? COLORS.white : COLORS.outlineGrey}
+              />
+              <Text
+                style={[
+                  styles.lessonTypeTabText,
+                  lessonType === 'pdf' && styles.lessonTypeTabTextActive,
+                ]}
+              >
+                PDF/Text Lesson
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Lesson Title */}
           <TextInputField
             label="Lesson title"
             placeholder="Enter Lesson title"
@@ -168,52 +262,82 @@ const AddLessonModal: React.FC<Props> = ({
             />
           </View>
 
-          {/* Video Source Selection */}
-          <View style={styles.videoSourceContainer}>
-            <Text style={styles.videoSourceLabel}>Video Source (Optional)</Text>
-            <View style={styles.gridContainer}>
-              {renderVideoSourceCard(
-                'none',
-                'No Video',
-                'Skip video for this lesson',
-                'X',
-                COLORS.outlineGrey,
-              )}
-              {renderVideoSourceCard(
-                'youtube',
-                'YouTube Link',
-                'Paste YouTube video URL',
-                'Youtube', // Assuming Icon component has Youtube icon
-                COLORS.red,
-              )}
-              {renderVideoSourceCard(
-                'loom',
-                'Loom Link',
-                'Paste Loom video URL',
-                'Play', // Placeholder if Loom icon missing, or check Icon library
-                COLORS.loom,
-              )}
-              {renderVideoSourceCard(
-                'vimeo',
-                'Vimeo Link',
-                'Paste Vimeo video URL',
-                'Video', // Placeholder if Vimeo icon missing
-                COLORS.vimeo,
-              )}
-            </View>
-          </View>
+          {/* ── VIDEO LESSON ── */}
+          {lessonType === 'video' && (
+            <>
+              {/* Video Source Selection */}
+              <View style={styles.videoSourceContainer}>
+                <Text style={styles.videoSourceLabel}>Video Source (Optional)</Text>
+                <View style={styles.gridContainer}>
+                  {renderVideoSourceCard(
+                    'none',
+                    'No Video',
+                    'Skip video for this lesson',
+                    'X',
+                    COLORS.outlineGrey,
+                  )}
+                  {renderVideoSourceCard(
+                    'youtube',
+                    'YouTube Link',
+                    'Paste YouTube video URL',
+                    'Youtube',
+                    COLORS.red,
+                  )}
+                  {renderVideoSourceCard(
+                    'loom',
+                    'Loom Link',
+                    'Paste Loom video URL',
+                    'Play',
+                    COLORS.loom,
+                  )}
+                  {renderVideoSourceCard(
+                    'vimeo',
+                    'Vimeo Link',
+                    'Paste Vimeo video URL',
+                    'Video',
+                    COLORS.vimeo,
+                  )}
+                </View>
+              </View>
 
-          {/* Video URL Input */}
-          {videoSource !== 'none' && (
-            <View style={{ marginTop: 16 }}>
+              {/* Video URL Input */}
+              {videoSource !== 'none' && (
+                <View style={{ marginTop: 16 }}>
+                  <TextInputField
+                    label={`${
+                      videoSource.charAt(0).toUpperCase() + videoSource.slice(1)
+                    } Video URL`}
+                    placeholder={`Paste your ${videoSource} video URL here`}
+                    value={videoLink}
+                    onChangeText={onVideoLinkChange}
+                    leftIcon="play"
+                    style={styles.inputStyle}
+                    theme={{
+                      colors: {
+                        background: COLORS.cardBG,
+                        text: COLORS.white,
+                        placeholder: COLORS.outlineGrey,
+                      },
+                    }}
+                    textColor={COLORS.white}
+                    outlineColor={COLORS.outlineGrey}
+                    activeOutlineColor={COLORS.white}
+                  />
+                </View>
+              )}
+            </>
+          )}
+
+          {/* ── PDF / TEXT LESSON ── */}
+          {lessonType === 'pdf' && (
+            <View style={styles.pdfSection}>
+              {/* Content URL */}
               <TextInputField
-                label={`${
-                  videoSource.charAt(0).toUpperCase() + videoSource.slice(1)
-                } Video URL`}
-                placeholder={`Paste your ${videoSource} video URL here`}
-                value={videoLink}
-                onChangeText={onVideoLinkChange}
-                leftIcon="play"
+                label="Content URL"
+                placeholder="Enter PDF URL or text content link"
+                value={contentUrl}
+                onChangeText={onContentUrlChange}
+                leftIcon="link"
                 style={styles.inputStyle}
                 theme={{
                   colors: {
@@ -225,8 +349,41 @@ const AddLessonModal: React.FC<Props> = ({
                 textColor={COLORS.white}
                 outlineColor={COLORS.outlineGrey}
                 activeOutlineColor={COLORS.white}
-                // Add footer text if needed like "Examples: https://..."
               />
+
+              {/* Primary Document Picker */}
+              <View style={styles.documentPickerContainer}>
+                <Text style={styles.documentPickerLabel}>Primary Document</Text>
+                <TouchableOpacity
+                  style={styles.documentPickerButton}
+                  onPress={handlePickDocument}
+                  activeOpacity={0.75}
+                >
+                  <Icon name="Paperclip" size={18} color={COLORS.outlineGrey} />
+                  <Text
+                    style={styles.documentPickerButtonText}
+                    numberOfLines={1}
+                  >
+                    {primaryDocument?.name ||
+                      primaryDocument?.uri?.split('/').pop() ||
+                      'Pick PDF document from device'}
+                  </Text>
+                  {primaryDocument && (
+                    <TouchableOpacity
+                      onPress={() => onPrimaryDocumentChange(null)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Icon name="X" size={16} color={COLORS.outlineGrey} />
+                    </TouchableOpacity>
+                  )}
+                </TouchableOpacity>
+                {primaryDocument ? (
+                  <Text style={styles.documentPickerHint} numberOfLines={1}>
+                    {primaryDocument.name ||
+                      primaryDocument.uri?.split('/').pop()}
+                  </Text>
+                ) : null}
+              </View>
             </View>
           )}
         </ScrollView>
@@ -239,10 +396,15 @@ const AddLessonModal: React.FC<Props> = ({
             <Text style={styles.cancelButtonText}>Cancel</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.addChapterButton}
+            style={[styles.addChapterButton, isLoading && { opacity: 0.7 }]}
             onPress={onAddLesson}
+            disabled={isLoading}
           >
-            <Text style={styles.addChapterButtonText}>{buttonLabel}</Text>
+            {isLoading ? (
+              <ActivityIndicator color={COLORS.white} size="small" />
+            ) : (
+              <Text style={styles.addChapterButtonText}>{buttonLabel}</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>

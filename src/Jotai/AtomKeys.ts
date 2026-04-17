@@ -223,4 +223,8 @@ export const AtomKeys = {
   apiUpdateVideoBankItem: 'apiUpdateVideoBankItem',
   apiAddVideoBankItemLoading: 'apiAddVideoBankItemLoading',
   apiAddVideoBankItem: 'apiAddVideoBankItem',
+
+  // Upload PDF
+  apiUploadPdfLoading: 'apiUploadPdfLoading',
+  apiUploadPdf: 'apiUploadPdf',
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 import CommunityCoursesSkeleton from '@/Components/Core/Skeleton/CommunityCoursesSkeleton';
 import CreateCourseModal from '@/Components/Generic/Modals/CreateCourseModal';
 import CourseSubscriptionModal from '@/Components/Generic/Modals/CourseSubscriptionModal';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface Props {
   communityId?: string;
@@ -126,7 +127,7 @@ const CommunityCourses = ({
 
   const isShowCreateButton = coursePermissionUi.showCreateButton;
 
-  useEffect(() => {
+  const fetchInitialData = useCallback(() => {
     if (!communityId) return;
     setIsInitialLoading(true);
     const query = `?community=${communityId}`;
@@ -150,6 +151,12 @@ const CommunityCourses = ({
         setIsInitialLoading(false);
       });
   }, [communityId, currentUserIdStr]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchInitialData();
+    }, [fetchInitialData]),
+  );
 
   const onChangeSearch = query => setSearchQuery(query);
 

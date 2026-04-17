@@ -101,4 +101,5 @@ export const ApiEndPoints = {
   videoBank: 'video-bank/community/:communityId',
   videoBankItem: 'video-bank/:videoId',
   videoBankUpload: 'video-bank/upload',
+  uploadPdf: 'upload/pdf',
 };

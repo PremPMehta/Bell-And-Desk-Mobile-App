@@ -35,7 +35,13 @@ const buildVideoSource = (url: string, videoType?: string) => {
   if (!url) return null;
   const type = (videoType || '').toLowerCase();
 
+  // If it's a PDF, we don't want to build a video source
+  if (type === 'pdf') {
+    return null;
+  }
+
   // --- Vimeo ---
+
   const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?([0-9]+)/);
   if (vimeoMatch || type === 'vimeo') {
     const vimeoId = vimeoMatch ? vimeoMatch[1] : url.split('/').pop();
@@ -156,10 +162,16 @@ const buildSummaryHtml = (htmlContent: string) => ({
 });
 
 // Helper to get video thumbnail from URL
-const getVideoThumbnail = (url: string) => {
+const getVideoThumbnail = (url: string, type?: string) => {
   if (!url) return null;
 
+  // Don't show video thumbnails for PDFs
+  if (type && type.toLowerCase() === 'pdf') {
+    return null;
+  }
+
   // YouTube
+
   const ytMatch = url.match(
     /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
   );
@@ -305,6 +317,25 @@ const CourseView = () => {
     const videoType = currentLesson.videoType || currentLesson.type || '';
     return buildVideoSource(url, videoType);
   }, [currentLesson]);
+
+  const isCurrentLessonPdf = useMemo(() => {
+    return (
+      currentLesson?.type === 'PDF' ||
+      currentLesson?.lessonType === 'pdf' ||
+      currentLesson?.contentType === 'pdf'
+    );
+  }, [currentLesson]);
+
+  const handleViewPdf = useCallback(() => {
+    if (!currentLesson) return;
+    const url = currentLesson.videoUrl || currentLesson.url || '';
+    if (!url) return;
+
+    navigation.navigate('PdfViewer', {
+      pdfUrl: getFullImageUrl(url),
+      title: currentLesson.title || 'Document',
+    });
+  }, [currentLesson, navigation]);
 
   // Build summary HTML only when lesson changes
   const summaryHtml = useMemo(() => {
@@ -478,9 +509,24 @@ const CourseView = () => {
         )}
         scrollEventThrottle={16}
       >
-        {/* VIDEO SECTION */}
+        {/* VIDEO / PDF SECTION */}
         <View style={styles.videoSection}>
-          {videoSource ? (
+          {isCurrentLessonPdf ? (
+            <View style={styles.pdfPlaceholder}>
+              <Icon name="FileText" size={64} color={COLORS.whiteLight} />
+              <Text style={styles.pdfPlaceholderText}>
+                This lesson contains a PDF document
+              </Text>
+              <TouchableOpacity
+                style={styles.pdfButton}
+                activeOpacity={0.8}
+                onPress={handleViewPdf}
+              >
+                <Icon name="Eye" size={18} color={COLORS.white} />
+                <Text style={styles.pdfButtonText}>View PDF Document</Text>
+              </TouchableOpacity>
+            </View>
+          ) : videoSource ? (
             <WebView
               key={`video-${currentLesson?._id}`}
               source={videoSource}
@@ -644,6 +690,9 @@ const CourseView = () => {
                                   {lesson.thumbnail ||
                                   getVideoThumbnail(
                                     lesson.videoUrl || lesson.url,
+                                    lesson.type ||
+                                      lesson.contentType ||
+                                      lesson.lessonType,
                                   ) ? (
                                     <View
                                       style={{ width: '100%', height: '100%' }}
@@ -654,6 +703,9 @@ const CourseView = () => {
                                             getFullImageUrl(lesson.thumbnail) ||
                                             getVideoThumbnail(
                                               lesson.videoUrl || lesson.url,
+                                              lesson.type ||
+                                                lesson.contentType ||
+                                                lesson.lessonType,
                                             ) ||
                                             '',
                                         }}
@@ -692,7 +744,11 @@ const CourseView = () => {
                                     >
                                       <Icon
                                         name={
-                                          isSelected
+                                          lesson.type === 'PDF' ||
+                                          lesson.lessonType === 'pdf' ||
+                                          lesson.contentType === 'pdf'
+                                            ? 'FileText'
+                                            : isSelected
                                             ? 'CirclePause'
                                             : 'CirclePlay'
                                         }
@@ -711,11 +767,16 @@ const CourseView = () => {
                                     {lesson.title}
                                   </Text>
                                   <Text style={styles.lessonDuration}>
-                                    {lesson.duration
+                                    {lesson.type === 'PDF' ||
+                                    lesson.lessonType === 'pdf' ||
+                                    lesson.contentType === 'pdf'
+                                      ? 'PDF Document'
+                                      : lesson.duration
                                       ? `${lesson.duration} min`
                                       : 'Video'}
                                   </Text>
                                 </View>
+
                                 {/* Completed checkmark badge */}
                                 {isCompleted && (
                                   <View
