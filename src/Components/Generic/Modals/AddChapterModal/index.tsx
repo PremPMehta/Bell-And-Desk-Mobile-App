@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Modal from 'react-native-modal';
 import { COLORS } from '@/Assets/Theme/colors';
 import styles from './style';
@@ -36,22 +36,58 @@ const AddChapterModal: React.FC<Props> = ({
   onAddChapter = () => { },
   buttonLabel = 'Add Chapter',
 }) => {
+  const [isDismissEnabled, setIsDismissEnabled] = useState(false);
+  const enableDismissTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
+  useEffect(() => {
+    return () => {
+      if (enableDismissTimeoutRef.current) {
+        clearTimeout(enableDismissTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     // <View>
     //   <Text>AddChapterModal</Text>
     // </View>
     <Modal
       isVisible={isModalVisible} // isLogoutModalVisible
-      onSwipeComplete={onHandleCancel}
-      onBackdropPress={onHandleCancel}
+      onSwipeComplete={() => {
+        if (isDismissEnabled) onHandleCancel();
+      }}
+      onBackdropPress={() => {
+        if (isDismissEnabled) onHandleCancel();
+      }}
       swipeDirection="down"
       animationIn="slideInUp"
       animationOut="slideOutDown"
       // backdropColor={THEME.COLORS.modalBackdropColor}
       animationInTiming={500}
       animationOutTiming={500}
-      backdropTransitionInTiming={1000}
-      backdropTransitionOutTiming={1000}
+      useNativeDriver
+      useNativeDriverForBackdrop
+      backdropTransitionOutTiming={0}
+      onModalWillShow={() => {
+        setIsDismissEnabled(false);
+        if (enableDismissTimeoutRef.current) {
+          clearTimeout(enableDismissTimeoutRef.current);
+        }
+      }}
+      onModalShow={() => {
+        enableDismissTimeoutRef.current = setTimeout(() => {
+          setIsDismissEnabled(true);
+        }, 250);
+      }}
+      onModalHide={() => {
+        setIsDismissEnabled(false);
+        if (enableDismissTimeoutRef.current) {
+          clearTimeout(enableDismissTimeoutRef.current);
+          enableDismissTimeoutRef.current = null;
+        }
+      }}
       style={styles.modalContainer}
       avoidKeyboard={true}
     >

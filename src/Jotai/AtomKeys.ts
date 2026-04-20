@@ -227,4 +227,8 @@ export const AtomKeys = {
   // Upload PDF
   apiUploadPdfLoading: 'apiUploadPdfLoading',
   apiUploadPdf: 'apiUploadPdf',
+
+  // Upload Video
+  apiUploadVideoLoading: 'apiUploadVideoLoading',
+  apiUploadVideo: 'apiUploadVideo',
 };

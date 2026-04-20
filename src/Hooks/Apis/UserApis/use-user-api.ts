@@ -217,6 +217,14 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiUploadPdf),
   );
 
+  // Upload Video Apis
+  const [apiUploadVideoLoading, setApiUploadVideoLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiUploadVideoLoading),
+  );
+  const [apiUploadVideo, setApiUploadVideo] = useAtom(
+    objectAtomFamily(AtomKeys.apiUploadVideo),
+  );
+
   // Vote on Poll Post Apis
   const [apiVoteOnPollLoading, setApiVoteOnPollLoading] = useAtom(
     booleanDefaultFalseAtomFamily(AtomKeys.apiVoteOnPollLoading),
@@ -2165,7 +2173,24 @@ const useUserApi = () => {
       setApiUploadPdfLoading(false);
     }
   }
-
+  // Upload Video
+  async function uploadVideo(body: any) {
+    const header = {'Content-Type': 'multipart/form-data'};
+    try {
+      setApiUploadVideoLoading(true);
+      const res: any = await api.post(ApiEndPoints.uploadVideo, body, header);
+      console.log('🚀 ~ uploadVideo ~ res:', res);
+      setApiUploadVideo(res);
+      setApiUploadVideoLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error uploading video:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiUploadVideoLoading(false);
+    }
+  }
   return {
     // Auth Apis
     getUserUnifiedLogin,
@@ -2548,6 +2573,11 @@ const useUserApi = () => {
     uploadPdf,
     apiUploadPdfLoading,
     apiUploadPdf,
+
+    // Upload Video
+    uploadVideo,
+    apiUploadVideoLoading,
+    apiUploadVideo,
 
     // User
     user,
