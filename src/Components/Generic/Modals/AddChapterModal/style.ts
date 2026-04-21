@@ -28,6 +28,12 @@ const styles = StyleSheet.create({
     ...THEME.fontStyle.h3Bold,
     alignSelf: 'center',
   },
+  loaderContainer: {
+    paddingVertical: ms(20),
+  },
+  contentContainerStyle: {
+    paddingBottom: ms(20),
+  },
 
   inputStyle: {
     backgroundColor: COLORS.cardBG,

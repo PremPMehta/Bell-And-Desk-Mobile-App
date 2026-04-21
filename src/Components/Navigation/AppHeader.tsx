@@ -145,7 +145,8 @@ const styles = StyleSheet.create({
   headerTitle: {
     ...THEME.fontStyle.h4SemiBold,
     color: COLORS.white,
-    letterSpacing: 0.5,
+    // letterSpacing: 0.5,
+    textTransform: 'capitalize',
   },
   logo: {
     width: sc(100),

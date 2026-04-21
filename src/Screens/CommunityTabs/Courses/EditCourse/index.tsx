@@ -743,13 +743,13 @@ const EditCourse = () => {
             style={styles.iconButton}
             onPress={() => handleEditChapter(chapter)}
           >
-            <Icon name="Pencil" size={16} color={COLORS.white} />
+            <Icon name="Pencil" size={16} color={COLORS.subText} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconButton}
             onPress={() => handleDeleteChapter(chapter)}
           >
-            <Icon name="Trash2" size={16} color={COLORS.white} />
+            <Icon name="Trash2" size={16} color={COLORS.red} />
           </TouchableOpacity>
         </View>
       </View>
@@ -831,7 +831,7 @@ const EditCourse = () => {
                       handleEditLesson(chapter.id || chapter._id, video)
                     }
                   >
-                    <Icon name="Pencil" size={16} color={COLORS.white} />
+                    <Icon name="Pencil" size={16} color={COLORS.subText} />
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.iconButton}
@@ -839,7 +839,7 @@ const EditCourse = () => {
                       handleDeleteLesson(chapter.id || chapter._id, video)
                     }
                   >
-                    <Icon name="Trash2" size={16} color={COLORS.white} />
+                    <Icon name="Trash2" size={16} color={COLORS.red} />
                   </TouchableOpacity>
                 </View>
               </View>

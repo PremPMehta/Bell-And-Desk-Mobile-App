@@ -41,6 +41,7 @@ const MyCommunities = () => {
   const [planEntitlements, setPlanEntitlements] = useState<any[]>([]);
   const [reservations, setReservations] = useState<any[]>([]);
   const [screenLoading, setScreenLoading] = useState(true);
+  const [activePlanId, setActivePlanId] = useState<string | null>(null);
 
   // Filter communities by search query (name or description)
   const filteredCommunities = communities.filter(c => {
@@ -95,6 +96,11 @@ const MyCommunities = () => {
         setReservations(response.data.reservations);
       } else {
         setReservations([]);
+      }
+      if (response?.data?.activePlanId) {
+        setActivePlanId(response.data.activePlanId);
+      } else {
+        setActivePlanId(null);
       }
     } catch (error) {
       console.error('Error in fetchUserData:', error);
@@ -244,8 +250,10 @@ const MyCommunities = () => {
     navigation.goBack();
   };
 
-  // Pick the first entitlement that has a remaining count
-  const activeEntitlement = planEntitlements?.[0] ?? null;
+  // Pick the active entitlement based on activePlanId, or fallback to the first one
+  const activeEntitlement = activePlanId
+    ? planEntitlements?.find(plan => plan?.planId === activePlanId || plan?._id === activePlanId) ?? planEntitlements?.[0] ?? null
+    : planEntitlements?.[0] ?? null;
   const remainingSlots = activeEntitlement?.remaining ?? 0;
   const planName = activeEntitlement?.planName ?? activeEntitlement?.name ?? '';
 

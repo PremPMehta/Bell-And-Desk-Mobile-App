@@ -24,6 +24,8 @@ import {
   CONTENT_TYPE_DATA,
 } from '@/Constants/customData';
 import { launchImageLibrary } from 'react-native-image-picker';
+import CreateCourseModalSkeleton from './CreateCourseModalSkeleton';
+
 
 interface CreateCourseModalProps {
   visible: boolean;
@@ -60,6 +62,18 @@ const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
   const [thumbnail, setThumbnail] = useState<string | null>(editCourseData?.thumbnail || null);
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [isContentReady, setIsContentReady] = useState(false);
+  const [isDismissEnabled, setIsDismissEnabled] = useState(false);
+  const contentReadyTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const enableDismissTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (contentReadyTimeoutRef.current) clearTimeout(contentReadyTimeoutRef.current);
+      if (enableDismissTimeoutRef.current) clearTimeout(enableDismissTimeoutRef.current);
+    };
+  }, []);
+
 
   React.useEffect(() => {
     if (editCourseData) {
@@ -158,10 +172,39 @@ const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
   return (
     <Modal
       isVisible={visible}
-      onSwipeComplete={handleClose}
-      onBackdropPress={handleClose}
+      onSwipeComplete={() => {
+        if (isDismissEnabled) handleClose();
+      }}
+      onBackdropPress={() => {
+        if (isDismissEnabled) handleClose();
+      }}
       swipeDirection="down"
       style={styles.modalContainer}
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      animationInTiming={500}
+      animationOutTiming={500}
+      useNativeDriver
+      useNativeDriverForBackdrop
+      backdropTransitionOutTiming={0}
+      onModalWillShow={() => {
+        setIsDismissEnabled(false);
+        setIsContentReady(false);
+        if (enableDismissTimeoutRef.current) clearTimeout(enableDismissTimeoutRef.current);
+        if (contentReadyTimeoutRef.current) clearTimeout(contentReadyTimeoutRef.current);
+      }}
+      onModalShow={() => {
+        contentReadyTimeoutRef.current = setTimeout(() => {
+          setIsContentReady(true);
+        }, 300);
+        enableDismissTimeoutRef.current = setTimeout(() => {
+          setIsDismissEnabled(true);
+        }, 250);
+      }}
+      onModalHide={() => {
+        setIsDismissEnabled(false);
+        setIsContentReady(false);
+      }}
     >
       <View style={styles.mainModalView}>
         <View style={styles.header}>
@@ -173,166 +216,173 @@ const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
           </TouchableOpacity>
         </View>
 
-        <ScrollView
-          style={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View>
-            <Text style={styles.sectionTitle}>Course Basic Information</Text>
-            <Text style={styles.sectionDescription}>
-              Provide the essential details to set up your course foundation.
-            </Text>
-          </View>
+        {!isContentReady ? (
+          <CreateCourseModalSkeleton backgroundColor={COLORS.cardBG} />
+        ) : (
+          <>
+            <ScrollView
+              style={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <View>
+                <Text style={styles.sectionTitle}>Course Basic Information</Text>
+                <Text style={styles.sectionDescription}>
+                  Provide the essential details to set up your course foundation.
+                </Text>
+              </View>
 
-          <TextInputField
-            label="Course title"
-            placeholder="Enter course title"
-            value={title}
-            onChangeText={text => {
-              setTitle(text);
-              if (errors.title) setErrors({ ...errors, title: '' });
-            }}
-            error={errors.title}
-            touched={!!errors.title}
-            style={styles.inputStyle}
-            theme={{
-              colors: {
-                background: COLORS.cardBG,
-                text: COLORS.white,
-                placeholder: COLORS.outlineGrey,
-              },
-            }}
-            textColor={COLORS.white}
-            outlineColor={COLORS.outlineGrey}
-            activeOutlineColor={COLORS.white}
-          />
+              <TextInputField
+                label="Course title"
+                placeholder="Enter course title"
+                value={title}
+                onChangeText={text => {
+                  setTitle(text);
+                  if (errors.title) setErrors({ ...errors, title: '' });
+                }}
+                error={errors.title}
+                touched={!!errors.title}
+                style={styles.inputStyle}
+                theme={{
+                  colors: {
+                    background: COLORS.cardBG,
+                    text: COLORS.white,
+                    placeholder: COLORS.outlineGrey,
+                  },
+                }}
+                textColor={COLORS.white}
+                outlineColor={COLORS.outlineGrey}
+                activeOutlineColor={COLORS.white}
+              />
 
-          <TextInputField
-            label="Course Description"
-            placeholder="Enter course description"
-            value={description}
-            onChangeText={text => {
-              setDescription(text);
-              if (errors.description) setErrors({ ...errors, description: '' });
-            }}
-            multiline
-            numberOfLines={4}
-            error={errors.description}
-            touched={!!errors.description}
-            style={[styles.inputStyle, styles.descriptionStyle]}
-            theme={{
-              colors: {
-                background: COLORS.cardBG,
-                text: COLORS.white,
-                placeholder: COLORS.outlineGrey,
-              },
-            }}
-            textColor={COLORS.white}
-            outlineColor={COLORS.outlineGrey}
-            activeOutlineColor={COLORS.white}
-          />
+              <TextInputField
+                label="Course Description"
+                placeholder="Enter course description"
+                value={description}
+                onChangeText={text => {
+                  setDescription(text);
+                  if (errors.description) setErrors({ ...errors, description: '' });
+                }}
+                multiline
+                numberOfLines={4}
+                error={errors.description}
+                touched={!!errors.description}
+                style={[styles.inputStyle, styles.descriptionStyle]}
+                theme={{
+                  colors: {
+                    background: COLORS.cardBG,
+                    text: COLORS.white,
+                    placeholder: COLORS.outlineGrey,
+                  },
+                }}
+                textColor={COLORS.white}
+                outlineColor={COLORS.outlineGrey}
+                activeOutlineColor={COLORS.white}
+              />
 
-          <View style={styles.row}>
-            <View style={styles.halfInput}>
+              <View style={styles.row}>
+                <View style={styles.halfInput}>
+                  <CommonListModal
+                    textInputLabel={'Target Audience'}
+                    placeholder={'Select target audience'}
+                    textInputValue={targetAudience}
+                    error={errors.targetAudience}
+                    touched={!!errors.targetAudience}
+                    type="dropdown"
+                    dropDownData={TARGET_AUDIENCE_DATA}
+                    dropDownSelectedValue={targetAudience}
+                    onDropDownSelect={item => {
+                      setTargetAudience(item.value);
+                      if (errors.targetAudience)
+                        setErrors({ ...errors, targetAudience: '' });
+                    }}
+                  />
+                </View>
+                <View style={styles.halfInput}>
+                  <CommonListModal
+                    textInputLabel={'Category'}
+                    placeholder={'Select category'}
+                    textInputValue={category}
+                    error={errors.category}
+                    touched={!!errors.category}
+                    type="dropdown"
+                    dropDownData={CATEGORY_DATA}
+                    dropDownSelectedValue={category}
+                    onDropDownSelect={item => {
+                      setCategory(item.value);
+                      if (errors.category) setErrors({ ...errors, category: '' });
+                    }}
+                  />
+                </View>
+              </View>
+
               <CommonListModal
-                textInputLabel={'Target Audience'}
-                placeholder={'Select target audience'}
-                textInputValue={targetAudience}
-                error={errors.targetAudience}
-                touched={!!errors.targetAudience}
+                textInputLabel={'Course Type'}
+                placeholder={'Select course type'}
+                textInputValue={courseType}
+                error={errors.courseType}
+                touched={!!errors.courseType}
                 type="dropdown"
-                dropDownData={TARGET_AUDIENCE_DATA}
-                dropDownSelectedValue={targetAudience}
+                dropDownData={COURSE_TYPE_DATA}
+                dropDownSelectedValue={courseType}
                 onDropDownSelect={item => {
-                  setTargetAudience(item.value);
-                  if (errors.targetAudience)
-                    setErrors({ ...errors, targetAudience: '' });
+                  setCourseType(item.value);
+                  if (errors.courseType) setErrors({ ...errors, courseType: '' });
                 }}
               />
-            </View>
-            <View style={styles.halfInput}>
+
+              <Text style={styles.primaryContentTitle}>Primary Content Type</Text>
+
               <CommonListModal
-                textInputLabel={'Category'}
-                placeholder={'Select category'}
-                textInputValue={category}
-                error={errors.category}
-                touched={!!errors.category}
+                textInputLabel={'Content Type'}
+                placeholder={'Select content type'}
+                textInputValue={contentType}
+                error={errors.contentType}
+                touched={!!errors.contentType}
                 type="dropdown"
-                dropDownData={CATEGORY_DATA}
-                dropDownSelectedValue={category}
+                dropDownData={CONTENT_TYPE_DATA}
+                dropDownSelectedValue={contentType}
                 onDropDownSelect={item => {
-                  setCategory(item.value);
-                  if (errors.category) setErrors({ ...errors, category: '' });
+                  setContentType(item.value);
+                  if (errors.contentType) setErrors({ ...errors, contentType: '' });
                 }}
               />
+
+              <Text style={styles.thumbnailLabel}>Course Thumbnail</Text>
+              <ImageUploadField
+                label=""
+                buttonText="Upload Thumbnail"
+                imageUri={thumbnail}
+                onPress={handleImageUpload}
+                onRemoveImgPress={handleRemoveImage}
+              />
+            </ScrollView>
+
+            <View style={styles.footer}>
+              <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.saveButton,
+                  apiCreateCourseLoading && { opacity: 0.7 },
+                ]}
+                onPress={handleSave}
+                disabled={apiCreateCourseLoading}
+              >
+                {apiCreateCourseLoading || apiUpdateCourseLoading ? (
+                  <ActivityIndicator color={COLORS.white} size="small" />
+                ) : (
+                  <Text style={styles.saveButtonText}>
+                    {editCourseData ? 'Update Course' : 'Save'}
+                  </Text>
+                )}
+              </TouchableOpacity>
             </View>
-          </View>
-
-          <CommonListModal
-            textInputLabel={'Course Type'}
-            placeholder={'Select course type'}
-            textInputValue={courseType}
-            error={errors.courseType}
-            touched={!!errors.courseType}
-            type="dropdown"
-            dropDownData={COURSE_TYPE_DATA}
-            dropDownSelectedValue={courseType}
-            onDropDownSelect={item => {
-              setCourseType(item.value);
-              if (errors.courseType) setErrors({ ...errors, courseType: '' });
-            }}
-          />
-
-          <Text style={styles.primaryContentTitle}>Primary Content Type</Text>
-
-          <CommonListModal
-            textInputLabel={'Content Type'}
-            placeholder={'Select content type'}
-            textInputValue={contentType}
-            error={errors.contentType}
-            touched={!!errors.contentType}
-            type="dropdown"
-            dropDownData={CONTENT_TYPE_DATA}
-            dropDownSelectedValue={contentType}
-            onDropDownSelect={item => {
-              setContentType(item.value);
-              if (errors.contentType) setErrors({ ...errors, contentType: '' });
-            }}
-          />
-
-          <Text style={styles.thumbnailLabel}>Course Thumbnail</Text>
-          <ImageUploadField
-            label=""
-            buttonText="Upload Thumbnail"
-            imageUri={thumbnail}
-            onPress={handleImageUpload}
-            onRemoveImgPress={handleRemoveImage}
-          />
-        </ScrollView>
-
-        <View style={styles.footer}>
-          <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.saveButton,
-              apiCreateCourseLoading && { opacity: 0.7 },
-            ]}
-            onPress={handleSave}
-            disabled={apiCreateCourseLoading}
-          >
-            {apiCreateCourseLoading || apiUpdateCourseLoading ? (
-              <ActivityIndicator color={COLORS.white} size="small" />
-            ) : (
-              <Text style={styles.saveButtonText}>
-                {editCourseData ? 'Update Course' : 'Save'}
-              </Text>
-            )}
-          </TouchableOpacity>
-        </View>
+          </>
+        )}
       </View>
     </Modal>
+
   );
 };
 

@@ -76,6 +76,7 @@ const styles = StyleSheet.create({
     ...THEME.fontStyle.h4Bold,
     color: COLORS.white,
     marginBottom: ms(4),
+    textTransform: 'capitalize',
   },
   description: {
     ...THEME.fontStyle.h6Regular,

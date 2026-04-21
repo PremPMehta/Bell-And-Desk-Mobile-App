@@ -180,52 +180,61 @@ const CommunityCourses = ({
     });
   };
 
-  const renderItem = ({ item }: { item: any }) => {
-    const isLocked =
-      communityRole === 'member' &&
-      item.courseType === 'paid' &&
-      item.isFree === false;
+  const renderItem = useCallback(
+    ({ item }: { item: any }) => {
+      const isLocked =
+        communityRole === 'member' &&
+        item.courseType === 'paid' &&
+        item.isFree === false;
 
-    const { showEye, showEdit, showDelete } =
-      coursePermissionUi.cardFlags(isLocked);
+      const { showEye, showEdit, showDelete } =
+        coursePermissionUi.cardFlags(isLocked);
 
-    const handleCardPress = () => {
-      if (isLocked) {
-        setSelectedCourse(item);
-        setIsSubscriptionModalVisible(true);
-      } else {
-        handleViewCourse(item._id || item.id);
-      }
-    };
+      const handleCardPress = () => {
+        if (isLocked) {
+          setSelectedCourse(item);
+          setIsSubscriptionModalVisible(true);
+        } else {
+          handleViewCourse(item._id || item.id);
+        }
+      };
 
-    return (
-      <Pressable onPress={handleCardPress}>
-        <CoursesCard
-          name={item.title}
-          description={item.description}
-          bannerImage={item.thumbnail}
-          category={item.category}
-          contentType={item.contentType}
-          targetAudience={item.targetAudience}
-          community={communityDetails}
-          role={communityRole}
-          isLocked={isLocked}
-          showEyeButton={showEye}
-          showEditButton={showEdit}
-          showDeleteButton={showDelete}
-          onEyePress={() => handleEditCourse(item)}
-          onEditPress={() => {
-            setEditCourseData(item);
-            setIsCreateModalVisible(true);
-          }}
-          onDeletePress={() => {
-            setSelectedCourse(item);
-            setIsDeleteModalVisible(true);
-          }}
-        />
-      </Pressable>
-    );
-  };
+      return (
+        <Pressable onPress={handleCardPress}>
+          <CoursesCard
+            name={item.title}
+            description={item.description}
+            bannerImage={item.thumbnail}
+            category={item.category}
+            contentType={item.contentType}
+            targetAudience={item.targetAudience}
+            community={communityDetails}
+            role={communityRole}
+            isLocked={isLocked}
+            showEyeButton={showEye}
+            showEditButton={showEdit}
+            showDeleteButton={showDelete}
+            onEyePress={() => handleEditCourse(item)}
+            onEditPress={() => {
+              setEditCourseData(item);
+              setIsCreateModalVisible(true);
+            }}
+            onDeletePress={() => {
+              setSelectedCourse(item);
+              setIsDeleteModalVisible(true);
+            }}
+          />
+        </Pressable>
+      );
+    },
+    [
+      communityRole,
+      coursePermissionUi,
+      communityDetails,
+      handleEditCourse,
+      handleViewCourse,
+    ],
+  );
 
   const handleCreateCourse = () => {
     setEditCourseData(null);
@@ -362,7 +371,13 @@ const CommunityCourses = ({
         onSwipeComplete={() => setIsDeleteModalVisible(false)}
         swipeDirection="down"
         style={styles.modalContainer}
-        avoidKeyboard
+        useNativeDriver
+        useNativeDriverForBackdrop
+        hideModalContentWhileAnimating
+        backdropTransitionOutTiming={0}
+        backdropTransitionInTiming={0}
+        animationInTiming={300}
+        animationOutTiming={300}
       >
         <View style={styles.mainModalView}>
           <View style={styles.modalHeader}>

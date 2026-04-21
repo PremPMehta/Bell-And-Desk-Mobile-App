@@ -154,6 +154,11 @@ export default StyleSheet.create({
   addVideoButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.outlineGrey,
+    paddingVertical: vs(4),
+    paddingHorizontal: ms(8),
+    borderRadius: ms(20),
   },
   addVideoText: {
     ...THEME.fontStyle.h5Medium,

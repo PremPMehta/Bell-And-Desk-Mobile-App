@@ -197,9 +197,12 @@ const CourseSubscriptionModal: React.FC<Props> = ({
       animationInTiming={400}
       animationOutTiming={400}
       backdropTransitionInTiming={400}
-      backdropTransitionOutTiming={400}
+      backdropTransitionOutTiming={0}
       style={styles.modalContainer}
       propagateSwipe
+      useNativeDriver
+      useNativeDriverForBackdrop
+      hideModalContentWhileAnimating
     >
       <View style={styles.mainModalView}>
         {/* Drag indicator */}

@@ -43,11 +43,12 @@ const styles = StyleSheet.create({
     color: COLORS.white,
   },
   planDescription: {
-    ...THEME.fontStyle.h6Regular,
+    ...THEME.fontStyle.h6Bold,
     backgroundColor: COLORS.primary,
     borderRadius: ms(20),
     paddingHorizontal: ms(14),
     paddingVertical: ms(4),
+    textTransform: 'capitalize',
   },
 
   durationContainer: {

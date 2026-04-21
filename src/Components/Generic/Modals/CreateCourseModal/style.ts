@@ -15,7 +15,7 @@ export default StyleSheet.create({
     borderTopLeftRadius: ms(16),
     borderTopRightRadius: ms(16),
     paddingTop: ms(20),
-    maxHeight: height * 0.9,
+    height: '90%',
   },
   header: {
     flexDirection: 'row',
