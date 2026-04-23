@@ -103,4 +103,7 @@ export const ApiEndPoints = {
   videoBankUpload: 'video-bank/upload',
   uploadPdf: 'upload/pdf',
   uploadVideo: 'upload/video',
+  getComments: 'comments/video/:videoId',
+  likeComment: 'comments/:commentId/like',
+  comments: 'comments',
 };

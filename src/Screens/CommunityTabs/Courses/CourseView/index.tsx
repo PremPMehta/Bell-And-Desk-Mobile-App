@@ -5,14 +5,14 @@ import React, {
   useMemo,
   useCallback,
 } from 'react';
+import { useAtom } from 'jotai';
+import { userAtom } from '@/Jotai/Atoms';
 import { api } from '@/ApiService';
 import { ApiEndPoints } from '@/ApiService/api-end-points';
 import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
-  Image,
   Animated,
   Platform,
   ActivityIndicator,
@@ -29,6 +29,8 @@ import { vs } from '@/Assets/Theme/fontStyle';
 import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 import { useRoute } from '@react-navigation/native';
 import CourseViewSkeleton from '@/Components/Core/Skeleton/CourseViewSkeleton';
+import CommentSection from './Components/CommentSection';
+import LessonList from './Components/LessonList';
 
 // Build a WebView-compatible video source from a URL based on its type
 const buildVideoSource = (url: string, videoType?: string) => {
@@ -161,37 +163,11 @@ const buildSummaryHtml = (htmlContent: string) => ({
 </html>`,
 });
 
-// Helper to get video thumbnail from URL
-const getVideoThumbnail = (url: string, type?: string) => {
-  if (!url) return null;
-
-  // Don't show video thumbnails for PDFs
-  if (type && type.toLowerCase() === 'pdf') {
-    return null;
-  }
-
-  // YouTube
-
-  const ytMatch = url.match(
-    /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
-  );
-  if (ytMatch) {
-    return `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;
-  }
-
-  // Vimeo
-  const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?([0-9]+)/);
-  if (vimeoMatch) {
-    return `https://vumbnail.com/${vimeoMatch[1]}.jpg`;
-  }
-
-  return getFullImageUrl(url);
-};
-
 const CourseView = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
   const { courseId } = route.params || {};
+  const [user]: [any, any] = useAtom(userAtom);
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -207,11 +183,7 @@ const CourseView = () => {
   } = useUserApi();
 
   const [selectedTab, setSelectedTab] = useState('lessons');
-  const [comment, setComment] = useState('');
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
-  const [expandedChapters, setExpandedChapters] = useState<
-    Record<string, boolean>
-  >({});
   const [summaryWebHeight, setSummaryWebHeight] = useState(1);
   const isUpdatingHeightRef = useRef(false);
 
@@ -236,14 +208,6 @@ const CourseView = () => {
 
   useEffect(() => {
     if (chapters.length > 0) {
-      // Expand all chapters by default
-      const initialExpanded: Record<string, boolean> = {};
-      chapters.forEach((chapter: any, idx: number) => {
-        const key = chapter._id || String(idx);
-        initialExpanded[key] = true;
-      });
-      setExpandedChapters(initialExpanded);
-
       // Auto-select first video of first chapter if nothing is selected
       if (!selectedLessonId) {
         const firstChapter = chapters[0];
@@ -346,13 +310,6 @@ const CourseView = () => {
     return buildSummaryHtml(summary);
   }, [currentLesson]);
 
-  const toggleChapter = (chapterId: string) => {
-    setExpandedChapters(prev => ({
-      ...prev,
-      [chapterId]: !prev[chapterId],
-    }));
-  };
-
   // Toggle lesson complete / incomplete — optimistic update + silent API call
   const handleToggleComplete = useCallback(
     async (lessonId: string, isCurrentlyCompleted: boolean) => {
@@ -400,7 +357,7 @@ const CourseView = () => {
 
   const tabs = [
     { id: 'lessons', title: 'Lessons' },
-    { id: 'comments', title: 'Comment' },
+    { id: 'comments', title: 'Comments' },
   ];
 
   const headerBgColor = scrollY.interpolate({
@@ -644,185 +601,23 @@ const CourseView = () => {
 
           <View style={styles.tabContent}>
             {selectedTab === 'lessons' ? (
-              /* LESSONS LIST - CHAPTER WISE with Accordion */
-              <View>
-                {chapters.map((chapter: any, chapterIdx: number) => {
-                  const chapterKey = chapter._id || String(chapterIdx);
-                  const isExpanded = expandedChapters[chapterKey] !== false;
-                  const videos = chapter.videos || [];
-
-                  return (
-                    <View key={chapterKey} style={styles.chapterContainer}>
-                      {/* Chapter Header - tap to expand/collapse */}
-                      <TouchableOpacity
-                        style={styles.chapterHeader}
-                        onPress={() => toggleChapter(chapterKey)}
-                        activeOpacity={0.8}
-                      >
-                        <Text style={styles.chapterTitleText}>
-                          {chapter.title}
-                        </Text>
-                        <Icon
-                          name={isExpanded ? 'ChevronUp' : 'ChevronDown'}
-                          size={16}
-                          color={COLORS.white}
-                        />
-                      </TouchableOpacity>
-
-                      {/* Videos under this chapter */}
-                      {isExpanded && (
-                        <View style={styles.lessonsContainer}>
-                          {videos.map((lesson: any) => {
-                            const isSelected =
-                              currentLesson?._id === lesson._id;
-                            const isCompleted =
-                              !!completedLessonIds[lesson._id];
-                            return (
-                              <TouchableOpacity
-                                key={lesson._id}
-                                style={[
-                                  styles.lessonItem,
-                                  isSelected && styles.activeLesson,
-                                ]}
-                                onPress={() => setSelectedLessonId(lesson._id)}
-                              >
-                                <View style={styles.lessonThumbnail}>
-                                  {lesson.thumbnail ||
-                                  getVideoThumbnail(
-                                    lesson.videoUrl || lesson.url,
-                                    lesson.type ||
-                                      lesson.contentType ||
-                                      lesson.lessonType,
-                                  ) ? (
-                                    <View
-                                      style={{ width: '100%', height: '100%' }}
-                                    >
-                                      <Image
-                                        source={{
-                                          uri:
-                                            getFullImageUrl(lesson.thumbnail) ||
-                                            getVideoThumbnail(
-                                              lesson.videoUrl || lesson.url,
-                                              lesson.type ||
-                                                lesson.contentType ||
-                                                lesson.lessonType,
-                                            ) ||
-                                            '',
-                                        }}
-                                        style={{
-                                          width: '100%',
-                                          height: '100%',
-                                          borderRadius: 8,
-                                        }}
-                                      />
-                                      <View style={styles.playIconOverlay}>
-                                        <Icon
-                                          name={
-                                            isSelected
-                                              ? 'CirclePause'
-                                              : 'CirclePlay'
-                                          }
-                                          size={24}
-                                          color={
-                                            isSelected
-                                              ? COLORS.primary
-                                              : COLORS.white
-                                          }
-                                        />
-                                      </View>
-                                    </View>
-                                  ) : (
-                                    <View
-                                      style={{
-                                        width: '100%',
-                                        height: '100%',
-                                        borderRadius: 8,
-                                        backgroundColor: COLORS.innerCardBG,
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                      }}
-                                    >
-                                      <Icon
-                                        name={
-                                          lesson.type === 'PDF' ||
-                                          lesson.lessonType === 'pdf' ||
-                                          lesson.contentType === 'pdf'
-                                            ? 'FileText'
-                                            : isSelected
-                                            ? 'CirclePause'
-                                            : 'CirclePlay'
-                                        }
-                                        size={24}
-                                        color={
-                                          isSelected
-                                            ? COLORS.primary
-                                            : COLORS.whiteLight
-                                        }
-                                      />
-                                    </View>
-                                  )}
-                                </View>
-                                <View style={styles.lessonInfo}>
-                                  <Text style={styles.lessonTitle}>
-                                    {lesson.title}
-                                  </Text>
-                                  <Text style={styles.lessonDuration}>
-                                    {lesson.type === 'PDF' ||
-                                    lesson.lessonType === 'pdf' ||
-                                    lesson.contentType === 'pdf'
-                                      ? 'PDF Document'
-                                      : lesson.duration
-                                      ? `${lesson.duration} min`
-                                      : 'Video'}
-                                  </Text>
-                                </View>
-
-                                {/* Completed checkmark badge */}
-                                {isCompleted && (
-                                  <View
-                                    style={{
-                                      marginLeft: 6,
-                                      alignSelf: 'center',
-                                    }}
-                                  >
-                                    <Icon
-                                      name="CircleCheck"
-                                      size={18}
-                                      color="#22c55e"
-                                    />
-                                  </View>
-                                )}
-                              </TouchableOpacity>
-                            );
-                          })}
-                        </View>
-                      )}
-                    </View>
-                  );
-                })}
-              </View>
+              <LessonList
+                chapters={chapters}
+                currentLessonId={selectedLessonId}
+                completedLessonIds={completedLessonIds}
+                onLessonPress={setSelectedLessonId}
+              />
             ) : (
-              /* COMMENTS LIST */
-              <View style={styles.commentSection}>
-                <View style={styles.commentInputContainer}>
-                  <TextInput
-                    style={styles.commentInput}
-                    placeholder="Add a comment..."
-                    placeholderTextColor={COLORS.placeholder}
-                    value={comment}
-                    onChangeText={setComment}
-                  />
-                  <TouchableOpacity style={styles.sendButton}>
-                    <Icon name="Send" color={COLORS.primary} size={24} />
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.commentItem}>
-                  <Text style={styles.commentUser}>User Name</Text>
-                  <Text style={styles.commentText}>
-                    No comments yet. Be the first to comment!
-                  </Text>
-                </View>
-              </View>
+              selectedLessonId && (
+                <CommentSection
+                  videoId={selectedLessonId}
+                  courseId={courseId}
+                  communityId={
+                    apiGetCourseDetails?.data?.communityId ||
+                    apiGetCourseDetails?.data?.community?._id
+                  }
+                />
+              )
             )}
           </View>
         </View>
