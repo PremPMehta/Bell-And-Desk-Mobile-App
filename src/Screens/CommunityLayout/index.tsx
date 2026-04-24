@@ -165,6 +165,7 @@ const CommunityLayout = () => {
             selectedTab={selectedTab}
             communityId={communityId}
             slug={slug}
+            userRole={userRole}
             onScroll={handleScroll}
             scrollEventThrottle={16}
           />

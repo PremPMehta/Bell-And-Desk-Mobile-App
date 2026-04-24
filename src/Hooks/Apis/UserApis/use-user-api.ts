@@ -460,10 +460,12 @@ const useUserApi = () => {
   );
 
   // Get Subscription Details Apis (member role)
-  const [apiGetSubscriptionDetailsLoading, setApiGetSubscriptionDetailsLoading] =
-    useAtom(
-      booleanDefaultFalseAtomFamily(AtomKeys.apiGetSubscriptionDetailsLoading),
-    );
+  const [
+    apiGetSubscriptionDetailsLoading,
+    setApiGetSubscriptionDetailsLoading,
+  ] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetSubscriptionDetailsLoading),
+  );
   const [apiGetSubscriptionDetails, setApiGetSubscriptionDetails] = useAtom(
     objectAtomFamily(AtomKeys.apiGetSubscriptionDetails),
   );
@@ -640,6 +642,14 @@ const useUserApi = () => {
   );
   const [apiAddVideoBankItem, setApiAddVideoBankItem] = useAtom(
     objectAtomFamily(AtomKeys.apiAddVideoBankItem),
+  );
+
+  // Get Live Stream List Apis
+  const [apiGetLiveStreamListLoading, setApiGetLiveStreamListLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetLiveStreamListLoading),
+  );
+  const [apiGetLiveStreamList, setApiGetLiveStreamList] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetLiveStreamList),
   );
 
   // User Unified Login
@@ -2067,6 +2077,27 @@ const useUserApi = () => {
     setApiGetReferralCodeLoading(false);
   }
 
+  // Get Live Stream List
+  async function getLiveStreamList(communityId: string, query: string = '') {
+    try {
+      setApiGetLiveStreamListLoading(true);
+      const url =
+        ApiEndPoints.liveStreamList.replace(':communityId', communityId) +
+        query;
+      const res: any = await api.get(url);
+      console.log('🚀 ~ getLiveStreamList ~ res:', res);
+      setApiGetLiveStreamList(res);
+      setApiGetLiveStreamListLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching live stream list:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiGetLiveStreamListLoading(false);
+    }
+  }
+
   // Get Video Bank
   async function getVideoBank(communityId: string, query: string) {
     try {
@@ -2175,7 +2206,7 @@ const useUserApi = () => {
   }
   // Upload Video
   async function uploadVideo(body: any) {
-    const header = {'Content-Type': 'multipart/form-data'};
+    const header = { 'Content-Type': 'multipart/form-data' };
     try {
       setApiUploadVideoLoading(true);
       const res: any = await api.post(ApiEndPoints.uploadVideo, body, header);
@@ -2578,6 +2609,11 @@ const useUserApi = () => {
     uploadVideo,
     apiUploadVideoLoading,
     apiUploadVideo,
+
+    // Live Stream List
+    getLiveStreamList,
+    apiGetLiveStreamListLoading,
+    apiGetLiveStreamList,
 
     // User
     user,

@@ -106,4 +106,7 @@ export const ApiEndPoints = {
   getComments: 'comments/video/:videoId',
   likeComment: 'comments/:commentId/like',
   comments: 'comments',
+
+  // Live Stream
+  liveStreamList: 'livestream/list/:communityId',
 };

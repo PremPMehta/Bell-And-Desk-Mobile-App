@@ -231,4 +231,8 @@ export const AtomKeys = {
   // Upload Video
   apiUploadVideoLoading: 'apiUploadVideoLoading',
   apiUploadVideo: 'apiUploadVideo',
+
+  // Live Stream
+  apiGetLiveStreamListLoading: 'apiGetLiveStreamListLoading',
+  apiGetLiveStreamList: 'apiGetLiveStreamList',
 };

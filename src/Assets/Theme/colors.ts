@@ -53,4 +53,9 @@ export const COLORS = {
   dashedBorder: '#414141',
   updateBtn: '#4B5563',
   arrow: '#38383A',
+
+  // LIVE STREAM / SESSION
+  upcoming: '#1A2A47',
+  live: '#FF0000',
+  completed: '#28C76F',
 };

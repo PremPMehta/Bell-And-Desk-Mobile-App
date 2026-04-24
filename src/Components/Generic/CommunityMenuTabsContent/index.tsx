@@ -21,6 +21,7 @@ interface Props {
   selectedTab: string;
   communityId?: string;
   slug?: string;
+  userRole?: string;
   onScroll?: (...args: any[]) => void;
   scrollEventThrottle?: number;
 }
@@ -29,6 +30,7 @@ const CommunityMenuTabsContent = ({
   selectedTab,
   communityId,
   slug,
+  userRole,
   onScroll,
   scrollEventThrottle,
 }: Props) => {
@@ -45,7 +47,13 @@ const CommunityMenuTabsContent = ({
     case 'courses':
       return <CommunityCourses communityId={communityId} {...scrollProps} />;
     case 'livestream':
-      return <CommunityLiveStream {...scrollProps} />;
+      return (
+        <CommunityLiveStream
+          communityId={communityId}
+          userRole={userRole}
+          {...scrollProps}
+        />
+      );
     case 'board':
       return <CommunityBoard communityId={communityId} {...scrollProps} />;
     case 'videos':
