@@ -235,4 +235,6 @@ export const AtomKeys = {
   // Live Stream
   apiGetLiveStreamListLoading: 'apiGetLiveStreamListLoading',
   apiGetLiveStreamList: 'apiGetLiveStreamList',
+  apiGetLiveStreamTokenLoading: 'apiGetLiveStreamTokenLoading',
+  apiGetLiveStreamToken: 'apiGetLiveStreamToken',
 };

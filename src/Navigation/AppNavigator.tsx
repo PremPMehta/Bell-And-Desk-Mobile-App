@@ -24,6 +24,7 @@ import BlogDetails from '@/Screens/BlogDetails';
 import CreateCommunity from '@/Screens/CreateCommunity';
 import VideoBankDetails from '@/Screens/VideoBankDetails';
 import PdfViewer from '@/Screens/Shared/PdfViewer';
+import LiveStream from '@/Screens/LiveStream';
 
 
 export type StackNavigationProp<T> = any;
@@ -233,6 +234,11 @@ const AppNavigator = () => {
         <MainStack.Screen
           name="PdfViewer"
           component={PdfViewer}
+          options={{ headerShown: false }}
+        />
+        <MainStack.Screen
+          name="LiveStream"
+          component={LiveStream}
           options={{ headerShown: false }}
         />
 

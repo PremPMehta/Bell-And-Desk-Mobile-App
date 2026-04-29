@@ -652,6 +652,15 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiGetLiveStreamList),
   );
 
+  // Get Live Stream Token Apis
+  const [apiGetLiveStreamTokenLoading, setApiGetLiveStreamTokenLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiGetLiveStreamTokenLoading),
+    );
+  const [apiGetLiveStreamToken, setApiGetLiveStreamToken] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetLiveStreamToken),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -2098,6 +2107,24 @@ const useUserApi = () => {
     }
   }
 
+  // Get Live Stream Token
+  async function getLiveStreamToken(body: any) {
+    try {
+      setApiGetLiveStreamTokenLoading(true);
+      const res: any = await api.post(ApiEndPoints.getLiveStreamToken, body);
+      console.log('🚀 ~ getLiveStreamToken ~ res:', res);
+      setApiGetLiveStreamToken(res);
+      setApiGetLiveStreamTokenLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching live stream token:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      setApiGetLiveStreamTokenLoading(false);
+    }
+  }
+
   // Get Video Bank
   async function getVideoBank(communityId: string, query: string) {
     try {
@@ -2614,6 +2641,9 @@ const useUserApi = () => {
     getLiveStreamList,
     apiGetLiveStreamListLoading,
     apiGetLiveStreamList,
+    getLiveStreamToken,
+    apiGetLiveStreamTokenLoading,
+    apiGetLiveStreamToken,
 
     // User
     user,

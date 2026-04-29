@@ -7,8 +7,10 @@ import {
   Image,
   RefreshControl,
   ImageBackground,
+  Alert,
 } from 'react-native';
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import { styles } from './style';
 import Icon from '@/Components/Core/Icons';
 import { COLORS } from '@/Assets/Theme/colors';
@@ -31,6 +33,7 @@ const CommunityLiveStream = ({
   onScroll,
   scrollEventThrottle,
 }: Props) => {
+  const navigation = useNavigation<any>();
   const { getLiveStreamList, apiGetLiveStreamListLoading } = useUserApi();
   const [streams, setStreams] = useState<any[]>([]);
   const [activeFilter, setActiveFilter] = useState('Upcoming');
@@ -112,6 +115,26 @@ const CommunityLiveStream = ({
     } catch (e) {
       return dateString;
     }
+  };
+
+  const handleStreamPress = (stream: any) => {
+    const status = stream?.status?.toLowerCase();
+    const isLive = status === 'live' || status === 'running';
+
+    if (!isLive) {
+      const statusLabel =
+        status === 'upcoming' || status === 'scheduled'
+          ? 'not started yet'
+          : 'already ended';
+      Alert.alert(
+        'Stream Unavailable',
+        `This stream has ${statusLabel}. Only live streams can be joined.`,
+        [{ text: 'OK' }],
+      );
+      return;
+    }
+
+    navigation.navigate('LiveStream', { streamData: stream });
   };
 
   const renderHeader = () => (
@@ -348,7 +371,10 @@ const CommunityLiveStream = ({
                 <Text style={styles.liveNowDescription} numberOfLines={1}>
                   {liveNowStream.description}
                 </Text>
-                <TouchableOpacity style={styles.watchNowButton}>
+                <TouchableOpacity
+                  style={styles.watchNowButton}
+                  onPress={() => handleStreamPress(liveNowStream)}
+                >
                   <Icon
                     name="Play"
                     color={COLORS.white}
@@ -405,7 +431,11 @@ const CommunityLiveStream = ({
                     ? filteredStreams.map(stream => {
                         const statusConfig = getStatusConfig(stream.status);
                         return (
-                          <View key={stream._id} style={styles.streamCard}>
+                          <TouchableOpacity
+                            key={stream._id}
+                            style={styles.streamCard}
+                            onPress={() => handleStreamPress(stream)}
+                          >
                             <View style={styles.thumbnailContainer}>
                               <Image
                                 source={{
@@ -444,7 +474,7 @@ const CommunityLiveStream = ({
                                 </Text>
                               </View>
                             </View>
-                          </View>
+                          </TouchableOpacity>
                         );
                       })
                     : renderEmptyState()}

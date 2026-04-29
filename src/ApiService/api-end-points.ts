@@ -109,4 +109,5 @@ export const ApiEndPoints = {
 
   // Live Stream
   liveStreamList: 'livestream/list/:communityId',
+  getLiveStreamToken: 'livestream/get-token',
 };
