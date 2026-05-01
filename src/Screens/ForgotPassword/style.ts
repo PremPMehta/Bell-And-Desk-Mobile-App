@@ -7,15 +7,21 @@ const styles = StyleSheet.create({
   imgBgStyle: {
     flex: 1,
   },
+  backgroundImage: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+  },
   gradientStyle: {
     flex: 1,
   },
   kbContentStyle: {
+    flexGrow: 1,
     padding: ms(20),
+    justifyContent: 'center',
   },
   middileViewStyle: {
-    minHeight: vs(height * 0.7),
-    justifyContent: 'center',
+    // paddingVertical: vs(20),
   },
   logoStyle: {
     width: sc(175),

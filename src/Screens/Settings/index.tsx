@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import React from 'react';
+import React, { useMemo } from 'react';
 import AppHeader from '@/Components/Navigation/AppHeader';
 import styles from './style';
 import Icon from '@/Components/Core/Icons';
@@ -53,6 +53,25 @@ const Settings = () => {
   const navigation = useNavigation();
   const [, setIsLogoutModalVisible] = useAtom(logoutVisibleAtom);
   const userToken = useAtomValue(userTokenAtom);
+  const isLoggedIn = !!userToken;
+
+  const accountSettings = useMemo(() => {
+    return ACCOUNT_SETTINGS.filter(item => {
+      if (item.label === 'Edit Profile') {
+        return isLoggedIn;
+      }
+      return true;
+    });
+  }, [isLoggedIn]);
+
+  const communitySettings = useMemo(() => {
+    return COMMUNITY_SETTINGS.filter(item => {
+      if (item.label === 'My Referral') {
+        return isLoggedIn;
+      }
+      return true;
+    });
+  }, [isLoggedIn]);
 
   const handleNavigation = (routeName?: string) => {
     if (routeName) {
@@ -95,34 +114,36 @@ const Settings = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('settings.account')}</Text>
           <View style={styles.itemsCard}>
-            {ACCOUNT_SETTINGS.map((item, index) => (
+            {accountSettings.map((item, index) => (
               <SettingItem
                 key={item.label}
                 icon={item.icon}
                 label={getTranslatedLabel(item.label)}
                 iconBgColor={item.bgColor}
-                isLast={index === ACCOUNT_SETTINGS.length - 1}
+                isLast={index === accountSettings.length - 1}
                 onPress={() => handleNavigation(item.routeName)}
               />
             ))}
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('settings.community')}</Text>
-          <View style={styles.itemsCard}>
-            {COMMUNITY_SETTINGS.map((item, index) => (
-              <SettingItem
-                key={item.label}
-                icon={item.icon}
-                label={getTranslatedLabel(item.label)}
-                iconBgColor={item.bgColor}
-                isLast={index === COMMUNITY_SETTINGS.length - 1}
-                onPress={() => handleNavigation(item.routeName)}
-              />
-            ))}
+        {communitySettings.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t('settings.community')}</Text>
+            <View style={styles.itemsCard}>
+              {communitySettings.map((item, index) => (
+                <SettingItem
+                  key={item.label}
+                  icon={item.icon}
+                  label={getTranslatedLabel(item.label)}
+                  iconBgColor={item.bgColor}
+                  isLast={index === communitySettings.length - 1}
+                  onPress={() => handleNavigation(item.routeName)}
+                />
+              ))}
+            </View>
           </View>
-        </View>
+        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('settings.supportInfo')}</Text>

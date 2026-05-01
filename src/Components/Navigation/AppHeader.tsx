@@ -1,5 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { useNavigation } from '@/Hooks/Utils/use-navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +21,8 @@ import { getFullImageUrl } from '@/Utils/ImageUtils';
 import { useAtomValue } from 'jotai';
 import { userTokenAtom, userAtom } from '@/Jotai/Atoms';
 import { useRequireAuth } from '@/Hooks/Utils/use-require-auth';
+
+const HEADER_CONTENT_HEIGHT = vs(50);
 
 const AppHeader = () => {
   const insets = useSafeAreaInsets();
@@ -76,8 +85,20 @@ const AppHeader = () => {
   const title = getHeaderTitle();
   const isHome = route.name === 'Home' || !title;
 
+  // Calculate safe area top padding
+  const safeAreaTop =
+    Platform.OS === 'ios' ? insets.top : insets.top > 0 ? insets.top : 0;
+
   return (
-    <View style={[styles.header, { paddingTop: Math.max(insets.top, 30) }]}>
+    <View
+      style={[
+        styles.header,
+        {
+          paddingTop: safeAreaTop,
+          height: HEADER_CONTENT_HEIGHT + safeAreaTop,
+        },
+      ]}
+    >
       <TouchableOpacity
         onPress={handleMenuPress}
         style={styles.menuButton}
@@ -132,10 +153,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: ms(12),
-    paddingBottom: ms(12),
     backgroundColor: COLORS.header,
-    // borderBottomWidth: 1,
-    // borderBottomColor: COLORS.border,
   },
   menuButton: {},
   logoContainer: {

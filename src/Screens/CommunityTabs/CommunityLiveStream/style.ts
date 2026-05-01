@@ -321,7 +321,7 @@ export const styles = StyleSheet.create({
   },
   liveNowCard: {
     width: '100%',
-    height: vs(150),
+    height: vs(160),
     borderRadius: ms(12),
     overflow: 'hidden',
     marginBottom: mvs(24),

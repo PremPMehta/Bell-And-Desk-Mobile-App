@@ -1,11 +1,5 @@
 import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ImageBackground,
-  Image,
-} from 'react-native';
+import { View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { useNavigation } from '@/Hooks/Utils/use-navigation';
 import { useRoute } from '@react-navigation/native';
 import { useAtomValue } from 'jotai';
@@ -21,6 +15,7 @@ import styles from './style';
 import { COLORS } from '@/Assets/Theme/colors';
 import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 
+const { height: screenHeight } = Dimensions.get('screen');
 const SignIn = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
@@ -78,20 +73,23 @@ const SignIn = () => {
   }, [userToken]);
 
   return (
-    <ImageBackground
-      source={AppImages.authBG}
-      style={styles.imgBgStyle}
-      resizeMode="cover"
-    >
+    <View style={styles.imgBgStyle}>
+      <Image
+        source={AppImages.authBG}
+        style={[styles.backgroundImage, { height: screenHeight }]}
+        resizeMode="cover"
+      />
       <LinearGradient
         colors={[COLORS.grDark, COLORS.grMedium, COLORS.grDark]}
         style={styles.gradientStyle}
       >
         <KeyboardAwareScrollView
           enableOnAndroid
-          extraScrollHeight={90}
+          extraScrollHeight={0}
+          enableAutomaticScroll={true}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.kbContentStyle}
+          showsVerticalScrollIndicator={false}
         >
           <View style={styles.middileViewStyle}>
             {/* LOGO */}
@@ -193,7 +191,7 @@ const SignIn = () => {
           </View>
         </KeyboardAwareScrollView>
       </LinearGradient>
-    </ImageBackground>
+    </View>
   );
 };
 

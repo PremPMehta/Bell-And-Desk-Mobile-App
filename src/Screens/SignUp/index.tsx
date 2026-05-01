@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ImageBackground,
-  Image,
-} from 'react-native';
+import { View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { AppImages } from '@/Assets/Images';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
@@ -24,6 +18,7 @@ import { useRoute } from '@react-navigation/native';
 import { useAtomValue } from 'jotai';
 import { userTokenAtom } from '@/Jotai/Atoms';
 
+const { height: screenHeight } = Dimensions.get('screen');
 const SignUp = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
@@ -117,20 +112,23 @@ const SignUp = () => {
   };
 
   return (
-    <ImageBackground
-      source={AppImages.authBG}
-      style={styles.imgBgStyle}
-      resizeMode="cover"
-    >
+    <View style={styles.imgBgStyle}>
+      <Image
+        source={AppImages.authBG}
+        style={[styles.backgroundImage, { height: screenHeight }]}
+        resizeMode="cover"
+      />
       <LinearGradient
         colors={[COLORS.grDark, COLORS.grMedium, COLORS.grDark]}
         style={styles.gradientStyle}
       >
         <KeyboardAwareScrollView
           enableOnAndroid
-          extraScrollHeight={90}
+          extraScrollHeight={0}
+          enableAutomaticScroll={true}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.kbContentStyle}
+          showsVerticalScrollIndicator={false}
         >
           <View style={styles.middileViewStyle}>
             {/* LOGO */}
@@ -298,7 +296,7 @@ const SignUp = () => {
           </View>
         </KeyboardAwareScrollView>
       </LinearGradient>
-    </ImageBackground>
+    </View>
   );
 };
 

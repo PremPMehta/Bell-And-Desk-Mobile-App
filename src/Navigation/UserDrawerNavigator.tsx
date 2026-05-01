@@ -13,6 +13,8 @@ import Settings from '@/Screens/Settings';
 import Profile from '@/Screens/Profile';
 import Blogs from '@/Screens/Blogs';
 import { THEME } from '@/Assets/Theme';
+import { useAtomValue } from 'jotai';
+import { userTokenAtom } from '@/Jotai/Atoms';
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -72,6 +74,9 @@ const MyCommunitiesStack = () => {
    Drawer Navigator
 ================================ */
 const UserDrawerNavigator = () => {
+  const userToken = useAtomValue(userTokenAtom);
+  const isLoggedIn = !!userToken;
+
   return (
     <Drawer.Navigator
       drawerContent={props => <CustomDrawerContent {...props} />}
@@ -104,6 +109,16 @@ const UserDrawerNavigator = () => {
       <Drawer.Screen
         name="MyCommunities"
         component={MyCommunitiesStack}
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            if (!isLoggedIn) {
+              e.preventDefault();
+              navigation.navigate('SignIn', {
+                redirectTo: 'MyCommunities',
+              });
+            }
+          },
+        })}
         options={{
           drawerLabel: 'My Communities',
           drawerIcon: ({ color }) => (

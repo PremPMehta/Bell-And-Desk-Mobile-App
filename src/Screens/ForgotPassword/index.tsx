@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ImageBackground, Image } from 'react-native';
+import { View, Text, Image, Dimensions } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { AppImages } from '@/Assets/Images';
 import { useNavigation } from '@/Hooks/Utils/use-navigation';
@@ -12,6 +12,7 @@ import { COLORS } from '@/Assets/Theme/colors';
 import PrimaryButton from '@/Components/Core/PrimaryButton';
 import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 
+const { height: screenHeight } = Dimensions.get('screen');
 const ForgotPassword = () => {
   const navigation = useNavigation();
   const { getUserForgotPassword, apiForgotPasswordLoading } = useUserApi();
@@ -24,20 +25,23 @@ const ForgotPassword = () => {
   });
 
   return (
-    <ImageBackground
-      source={AppImages.authBG}
-      style={styles.imgBgStyle}
-      resizeMode="cover"
-    >
+    <View style={styles.imgBgStyle}>
+      <Image
+        source={AppImages.authBG}
+        style={[styles.backgroundImage, { height: screenHeight }]}
+        resizeMode="cover"
+      />
       <LinearGradient
         colors={[COLORS.grDark, COLORS.grMedium, COLORS.grDark]}
         style={styles.gradientStyle}
       >
         <KeyboardAwareScrollView
           enableOnAndroid
-          extraScrollHeight={90}
+          extraScrollHeight={0}
+          enableAutomaticScroll={true}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.kbContentStyle}
+          showsVerticalScrollIndicator={false}
         >
           <View style={styles.middileViewStyle}>
             {/* LOGO */}
@@ -112,7 +116,7 @@ const ForgotPassword = () => {
           </View>
         </KeyboardAwareScrollView>
       </LinearGradient>
-    </ImageBackground>
+    </View>
   );
 };
 
