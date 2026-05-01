@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SignIn from '@/Screens/SignIn';
 import SignUp from '@/Screens/SignUp';
@@ -26,7 +26,7 @@ import VideoBankDetails from '@/Screens/VideoBankDetails';
 import PdfViewer from '@/Screens/Shared/PdfViewer';
 import LiveStream from '@/Screens/LiveStream';
 import HLSPlayerScreen from '@/Screens/HLSPlayerScreen';
-
+import { hideSplash } from 'react-native-splash-view';
 
 export type StackNavigationProp<T> = any;
 export type RootStackParamList = {
@@ -47,6 +47,12 @@ const getDefaultStackHeaderOptions = () => ({
 });
 
 const AppNavigator = () => {
+  useEffect(() => {
+    setTimeout(() => {
+      hideSplash(); // Hide after some time
+    }, 5000);
+  }, []);
+
   return (
     <>
       <MainStack.Navigator
@@ -249,7 +255,6 @@ const AppNavigator = () => {
           component={HLSPlayerScreen}
           options={{ headerShown: false }}
         />
-
       </MainStack.Navigator>
       <ModalLayout />
     </>
