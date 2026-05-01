@@ -134,7 +134,16 @@ const CommunityLiveStream = ({
       return;
     }
 
-    navigation.navigate('LiveStream', { streamData: stream });
+    // ── Navigation: HLS Player flow (new) ──────────────────────────────────
+    // Navigates to the new HLSPlayerScreen which uses HMSHLSPlayer for
+    // low-latency HLS playback. The full streamData object is forwarded so
+    // the player can access viewerRoomCode, title, hostName, etc.
+    navigation.navigate('HLSPlayerScreen', { streamData: stream });
+
+    // ── Navigation: Legacy peer-track viewer (original – kept for reference) ─
+    // Uncomment the line below and comment the one above to revert to the
+    // original HMSSDK peer-track rendering flow.
+    // navigation.navigate('LiveStream', { streamData: stream });
   };
 
   const renderHeader = () => (

@@ -25,6 +25,7 @@ import CreateCommunity from '@/Screens/CreateCommunity';
 import VideoBankDetails from '@/Screens/VideoBankDetails';
 import PdfViewer from '@/Screens/Shared/PdfViewer';
 import LiveStream from '@/Screens/LiveStream';
+import HLSPlayerScreen from '@/Screens/HLSPlayerScreen';
 
 
 export type StackNavigationProp<T> = any;
@@ -239,6 +240,13 @@ const AppNavigator = () => {
         <MainStack.Screen
           name="LiveStream"
           component={LiveStream}
+          options={{ headerShown: false }}
+        />
+
+        {/* HLS Player Screen – new viewer flow using HMSHLSPlayer */}
+        <MainStack.Screen
+          name="HLSPlayerScreen"
+          component={HLSPlayerScreen}
           options={{ headerShown: false }}
         />
 
