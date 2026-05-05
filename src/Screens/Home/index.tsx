@@ -216,28 +216,30 @@ const Home = () => {
         contentContainerStyle={styles.contentContainerStyle}
       >
         {isLoading ? (
-          <HomeSkeleton />
+          <HomeSkeleton isLoggedIn={isLoggedIn} />
         ) : (
           <>
             {/* VIDEO BANNER */}
-            <View style={styles.videoContainer}>
-              <VideoPlayer
-                source={AppImages.videoBanner}
-                autoPlay={videoVisible}
-                loop={true}
-                controls={false}
-                muted={true}
-                resizeMode="cover"
-                style={styles.videoBanner}
-              />
+            {!isLoggedIn && (
+              <View style={styles.videoContainer}>
+                <VideoPlayer
+                  source={AppImages.videoBanner}
+                  autoPlay={videoVisible}
+                  loop={true}
+                  controls={false}
+                  muted={true}
+                  resizeMode="cover"
+                  style={styles.videoBanner}
+                />
 
-              {/* Bottom Gradient Shadow */}
-              <LinearGradient
-                colors={[COLORS.transparent, COLORS.grMedium2, COLORS.grDark]}
-                style={styles.bottomShadow}
-                pointerEvents="none"
-              />
-            </View>
+                {/* Bottom Gradient Shadow */}
+                <LinearGradient
+                  colors={[COLORS.transparent, COLORS.grMedium2, COLORS.grDark]}
+                  style={styles.bottomShadow}
+                  pointerEvents="none"
+                />
+              </View>
+            )}
 
             <View style={styles.container}>
               {/* CAROUSEL CONTAINER */}

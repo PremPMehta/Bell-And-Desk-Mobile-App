@@ -22,7 +22,7 @@ import styles from './style';
 import { COLORS } from '@/Assets/Theme/colors';
 import { useNavigation } from '@/Hooks/Utils/use-navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { vs } from '@/Assets/Theme/fontStyle';
+import { ms, vs } from '@/Assets/Theme/fontStyle';
 import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 import { useRoute } from '@react-navigation/native';
 import { Config } from '@/Config';
@@ -79,6 +79,17 @@ const CategoryDetails = () => {
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
   const [activeIndex, setActiveIndex] = useState(0);
+
+  // Stable header metrics: never subtract from safe area (causes clipping on some devices),
+  // and keep the nav row tall enough for ms(36) back button + vertical breathing room.
+  const headerMetrics = useMemo(() => {
+    const safeTop = Math.max(insets.top, vs(12));
+    const navRowHeight = Math.max(vs(48), ms(44));
+    return {
+      paddingTop: safeTop,
+      height: safeTop + navRowHeight,
+    };
+  }, [insets.top]);
 
   const isStaging = Config.APP_ENV === 'staging';
   const copyUrl = isStaging ? Config.STAGING_URL : Config.LIVE_URL;
@@ -466,9 +477,10 @@ const CategoryDetails = () => {
         style={[
           styles.header,
           {
-            paddingTop: insets.top - vs(5),
+            paddingTop: headerMetrics.paddingTop,
             backgroundColor: headerBgColor,
-            height: insets.top + vs(32),
+            height: headerMetrics.height,
+            minHeight: headerMetrics.height,
           },
         ]}
       >
@@ -492,14 +504,22 @@ const CategoryDetails = () => {
             />
           </TouchableOpacity>
         </Animated.View>
-        <Animated.Text
+        <Animated.View
           style={[
-            styles.headerTitle,
-            { opacity: headerTitleOpacity, color: COLORS.white },
+            styles.headerTitleWrap,
+            { top: headerMetrics.paddingTop },
           ]}
         >
-          {communityData?.name || 'Category Details'}
-        </Animated.Text>
+          <Animated.Text
+            numberOfLines={1}
+            style={[
+              styles.headerTitle,
+              { opacity: headerTitleOpacity, color: COLORS.white },
+            ]}
+          >
+            {communityData?.name || 'Category Details'}
+          </Animated.Text>
+        </Animated.View>
       </Animated.View>
 
       <Animated.ScrollView

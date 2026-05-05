@@ -33,6 +33,7 @@ import {
   useHMSHLSPlayerPlaybackState,
   useHMSHLSPlayerStats,
 } from '@100mslive/react-native-hms';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from '@/Components/Core/Icons';
 import { COLORS } from '@/Assets/Theme/colors';
 import HLSBufferingUI from './HLSBufferingUI';
@@ -165,6 +166,7 @@ const HLSVideoPlayer = ({
   onToggleRaiseHand,
 }: Props) => {
   const playerRef = useRef<any>(null);
+  const insets = useSafeAreaInsets();
 
   // ── 100ms playback hooks ──────────────────────────────────────────────────
   const playbackState = useHMSHLSPlayerPlaybackState();
@@ -188,6 +190,48 @@ const HLSVideoPlayer = ({
   // ── UI state ──────────────────────────────────────────────────────────────
   const [chatOpen, setChatOpen] = useState(false);
   const [reactionBarOpen, setReactionBarOpen] = useState(false);
+
+  // ── Unread message count ──────────────────────────────────────────────────
+  // Tracks the message count at the moment the user last had the chat open.
+  // The unread badge = total messages − last-seen count (only chat-type msgs).
+  const lastSeenMsgCount = useRef(0);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Recompute unread count whenever messages change and chat is closed
+  useEffect(() => {
+    if (chatOpen) return; // chat is open → nothing to badge
+    // Count only incoming chat messages (exclude own messages and emoji/reactions)
+    const incomingMessages = messages.filter(
+      m =>
+        m.senderId !== localPeerId &&
+        m.type !== 'emoji' &&
+        m.type !== 'reaction' &&
+        m.type !== 'hms-reaction',
+    );
+    const newUnread = Math.max(0, incomingMessages.length - lastSeenMsgCount.current);
+    setUnreadCount(newUnread);
+  }, [messages, chatOpen, localPeerId]);
+
+  /** Open chat and mark all current incoming messages as seen */
+  const openChat = useCallback(() => {
+    // Snapshot only incoming (other users') chat messages so that our own
+    // sent messages are never counted against the unread baseline.
+    const incomingMessages = messages.filter(
+      m =>
+        m.senderId !== localPeerId &&
+        m.type !== 'emoji' &&
+        m.type !== 'reaction' &&
+        m.type !== 'hms-reaction',
+    );
+    lastSeenMsgCount.current = incomingMessages.length;
+    setUnreadCount(0);
+    setChatOpen(true);
+  }, [messages, localPeerId]);
+
+  /** Close chat (no count reset needed — stays at 0 until new messages arrive) */
+  const closeChat = useCallback(() => {
+    setChatOpen(false);
+  }, []);
 
   // Floating emoji stack
   const [floaters, setFloaters] = useState<any[]>([]);
@@ -274,7 +318,7 @@ const HLSVideoPlayer = ({
   return (
     <View style={styles.container}>
       {/* ── TOP BAR ──────────────────────────────────────────────────── */}
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 20) }]}>
         {/* Left: Exit + LIVE + timer */}
         <View style={styles.topLeft}>
           <TouchableOpacity style={styles.exitBtn} onPress={onLeave}>
@@ -320,9 +364,18 @@ const HLSVideoPlayer = ({
 
           <TouchableOpacity
             style={[styles.iconAction, chatOpen && styles.iconActive]}
-            onPress={() => setChatOpen(prev => !prev)}
+            onPress={chatOpen ? closeChat : openChat}
           >
-            <Icon name="MessageSquare" color="#fff" size={20} />
+            <View style={styles.chatIconWrapper}>
+              <Icon name="MessageSquare" color="#fff" size={20} />
+              {!chatOpen && unreadCount > 0 && (
+                <View style={styles.unreadBadge}>
+                  <Text style={styles.unreadBadgeText}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
+              )}
+            </View>
           </TouchableOpacity>
         </View>
       </View>
@@ -370,6 +423,7 @@ const HLSVideoPlayer = ({
               left: f.x,
               opacity: f.opacity,
               transform: [{ translateY: f.anim }],
+              bottom: 120 + insets.bottom,
             },
           ]}
         >
@@ -379,7 +433,7 @@ const HLSVideoPlayer = ({
 
       {/* ── REACTION BAR ─────────────────────────────────────────────── */}
       {reactionBarOpen && (
-        <View style={styles.reactionBar}>
+        <View style={[styles.reactionBar, { bottom: 100 + insets.bottom }]}>
           {REACTIONS.map(emoji => (
             <TouchableOpacity
               key={emoji}
@@ -393,7 +447,7 @@ const HLSVideoPlayer = ({
       )}
 
       {/* ── BOTTOM BAR ───────────────────────────────────────────────── */}
-      <View style={styles.bottomBar}>
+      <View style={[styles.bottomBar, { bottom: Math.max(insets.bottom, 20) }]}>
         <TouchableOpacity
           style={[styles.bottomBtn, reactionBarOpen && styles.bottomBtnActive]}
           onPress={() => setReactionBarOpen(prev => !prev)}
@@ -412,7 +466,7 @@ const HLSVideoPlayer = ({
         messages={messages}
         localPeerId={localPeerId}
         onSendMessage={onSendMessage}
-        onClose={() => setChatOpen(false)}
+        onClose={closeChat}
       />
     </View>
   );
@@ -428,7 +482,6 @@ const styles = StyleSheet.create({
 
   // ── Top Bar ──
   topBar: {
-    paddingTop: Platform.OS === 'ios' ? 60 : 20,
     paddingHorizontal: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -510,6 +563,35 @@ const styles = StyleSheet.create({
   },
   iconActive: {
     opacity: 1,
+  },
+
+  // ── Chat icon badge ──
+  chatIconWrapper: {
+    position: 'relative',
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  unreadBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -8,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#ff4d4d',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: '#0a0b14',
+  },
+  unreadBadgeText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '700',
+    lineHeight: 12,
   },
   netBadge: {
     width: 24,
@@ -638,7 +720,6 @@ const styles = StyleSheet.create({
   // ── Floating Emoji ──
   floatingEmoji: {
     position: 'absolute',
-    bottom: 120,
     fontSize: 32,
     zIndex: 100,
   },
@@ -646,7 +727,6 @@ const styles = StyleSheet.create({
   // ── Reaction Bar ──
   reactionBar: {
     position: 'absolute',
-    bottom: 100,
     alignSelf: 'center',
     flexDirection: 'row',
     backgroundColor: 'rgba(26, 27, 38, 0.95)',
@@ -670,7 +750,6 @@ const styles = StyleSheet.create({
   // ── Bottom Bar ──
   bottomBar: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 40 : 20,
     left: 0,
     right: 0,
     flexDirection: 'row',

@@ -1,44 +1,25 @@
-/**
- * HLSChatPanel
- *
- * Slide-in chat panel for HLS viewers.
- * Messages are sent via HMSSDK.sendBroadcastMessage (type = 'chat').
- * Emoji reactions use type = 'emoji'.
- * Raise-hand uses type = 'raise-hand'.
- *
- * Props:
- *   visible        – whether the panel is open
- *   messages       – array of received HMSMessage-shaped objects
- *   localPeerId    – peerID of the local viewer (to distinguish own messages)
- *   onSendMessage  – sends a plain-text broadcast message
- *   onClose        – closes the panel
- */
-
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  View,
+  FlatList,
+  Keyboard,
+  Platform,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  Animated,
-  Dimensions,
-  StyleSheet,
+  View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Modal from 'react-native-modal';
 import Icon from '@/Components/Core/Icons';
 import { COLORS } from '@/Assets/Theme/colors';
 
-const { width: SW } = Dimensions.get('window');
-const PANEL_WIDTH = SW * 0.82;
-
 export interface ChatMessage {
-  id: string;          // messageId from HMSMessage
-  senderName: string;  // sender?.name
-  senderId: string;    // sender?.peerID
-  text: string;        // message
-  type: string;        // 'chat' | 'emoji' | 'raise-hand'
+  id: string;
+  senderName: string;
+  senderId: string;
+  text: string;
+  type: string;
   time: Date;
 }
 
@@ -59,25 +40,50 @@ const HLSChatPanel = ({
 }: Props) => {
   const [inputText, setInputText] = useState('');
   const [sending, setSending] = useState(false);
-  const slideX = useRef(new Animated.Value(PANEL_WIDTH)).current;
+
+  const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList>(null);
 
-  // Slide in/out
-  useEffect(() => {
-    Animated.timing(slideX, {
-      toValue: visible ? 0 : PANEL_WIDTH,
-      duration: 260,
-      useNativeDriver: true,
-    }).start();
-  }, [visible, slideX]);
+  // ── Helper: scroll to the last message ───────────────────────────────────
+  const scrollToBottom = (delay = 100) => {
+    const id = setTimeout(
+      () => listRef.current?.scrollToEnd({ animated: true }),
+      delay,
+    );
+    return id;
+  };
 
-  // Auto-scroll on new messages
+  // Dismiss keyboard when the panel closes
+  useEffect(() => {
+    if (!visible) {
+      Keyboard.dismiss();
+    }
+  }, [visible]);
+
+  // ── Scroll to bottom when keyboard opens (user taps the input) ────────────
+  useEffect(() => {
+    if (!visible) return undefined;
+
+    // Give the layout time to resize before scrolling
+    const showSub = Keyboard.addListener('keyboardDidShow', () => {
+      scrollToBottom(150);
+    });
+
+    return () => {
+      showSub.remove();
+    };
+  }, [visible]);
+
+  // ── Auto-scroll on new messages ───────────────────────────────────────────
   useEffect(() => {
     if (visible && messages.length > 0) {
-      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
+      const id = scrollToBottom(100);
+      return () => clearTimeout(id);
     }
+    return undefined;
   }, [messages.length, visible]);
 
+  // ── Send ──────────────────────────────────────────────────────────────────
   const handleSend = async () => {
     const txt = inputText.trim();
     if (!txt || sending) return;
@@ -90,7 +96,6 @@ const HLSChatPanel = ({
     }
   };
 
-  // Only show plain chat messages in the panel (not emoji/raise-hand)
   const chatMessages = messages.filter(m => !m.type || m.type === 'chat');
 
   const renderItem = ({ item }: { item: ChatMessage }) => {
@@ -104,7 +109,9 @@ const HLSChatPanel = ({
             </Text>
           </View>
         )}
-        <View style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleThem]}>
+        <View
+          style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleThem]}
+        >
           {!isMe && <Text style={styles.senderName}>{item.senderName}</Text>}
           <Text style={styles.msgText}>{item.text}</Text>
         </View>
@@ -112,113 +119,200 @@ const HLSChatPanel = ({
     );
   };
 
+  // Bottom padding for home indicator / soft nav bar
+  const composerBottom = Math.max(insets.bottom, 8);
+
   return (
-    <Animated.View
-      style={[styles.panel, { transform: [{ translateX: slideX }] }]}
-      pointerEvents={visible ? 'auto' : 'none'}
+    <Modal
+      isVisible={visible}
+      onBackdropPress={onClose}
+      onSwipeComplete={onClose}
+      swipeDirection="down"
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      animationInTiming={320}
+      animationOutTiming={280}
+      useNativeDriver
+      useNativeDriverForBackdrop
+      backdropTransitionInTiming={320}
+      backdropTransitionOutTiming={0}
+      avoidKeyboard={Platform.OS === 'ios'}
+      style={styles.modalStyle}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Live Chat</Text>
-        <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-          <Icon name="X" color={COLORS.white} size={18} />
-        </TouchableOpacity>
-      </View>
+      <View style={styles.sheet}>
+        {/* Drag handle */}
+        <View style={styles.handle} />
 
-      {/* Message list */}
-      <FlatList
-        ref={listRef}
-        data={chatMessages}
-        keyExtractor={item => item.id}
-        renderItem={renderItem}
-        style={styles.list}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>No messages yet. Say hi! 👋</Text>
-          </View>
-        }
-      />
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Live Chat</Text>
+          <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <Icon name="X" color={COLORS.white} size={18} />
+          </TouchableOpacity>
+        </View>
 
-      {/* Input */}
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={styles.inputRow}>
+        {/* Messages */}
+        <FlatList
+          ref={listRef}
+          data={chatMessages}
+          keyExtractor={item => item.id}
+          renderItem={renderItem}
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Text style={styles.emptyText}>No messages yet. Say hi! 👋</Text>
+            </View>
+          }
+        />
+
+        {/* Composer */}
+        <View style={[styles.inputRow, { paddingBottom: composerBottom }]}>
           <TextInput
             style={styles.input}
-            placeholder="Type a message…"
+            placeholder="Type a message..."
             placeholderTextColor="rgba(255,255,255,0.35)"
             value={inputText}
             onChangeText={setInputText}
             onSubmitEditing={handleSend}
             returnKeyType="send"
             maxLength={300}
+            blurOnSubmit={false}
           />
           <TouchableOpacity
-            style={[styles.sendBtn, (!inputText.trim() || sending) && styles.sendBtnOff]}
+            style={[
+              styles.sendBtn,
+              (!inputText.trim() || sending) && styles.sendBtnOff,
+            ]}
             onPress={handleSend}
             disabled={!inputText.trim() || sending}
           >
             <Icon name="Send" color={COLORS.white} size={16} />
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
-    </Animated.View>
+      </View>
+    </Modal>
   );
 };
 
 export default HLSChatPanel;
 
 const styles = StyleSheet.create({
-  panel: {
-    position: 'absolute',
-    top: 0, right: 0, bottom: 0,
-    width: PANEL_WIDTH,
-    backgroundColor: 'rgba(10,10,26,0.97)',
-    borderLeftWidth: 1,
-    borderLeftColor: 'rgba(255,255,255,0.08)',
-    zIndex: 100,
+  modalStyle: {
+    justifyContent: 'flex-end',
+    margin: 0,
   },
+
+  // Visible chat sheet
+  sheet: {
+    backgroundColor: 'rgba(10,10,26,0.99)',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '85%',
+    minHeight: '55%',
+    overflow: 'hidden',
+  },
+
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignSelf: 'center',
+    marginTop: 10,
+    marginBottom: 4,
+  },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    paddingTop: Platform.OS === 'android' ? 20 : 52,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.08)',
   },
-  headerTitle: { color: COLORS.white, fontSize: 16, fontWeight: '700' },
-  closeBtn: {
-    width: 30, height: 30, borderRadius: 15,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    justifyContent: 'center', alignItems: 'center',
+  headerTitle: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '700',
   },
+  closeBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
   list: { flex: 1 },
-  listContent: { padding: 12, gap: 8, flexGrow: 1 },
-  empty: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 60 },
-  emptyText: { color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center' },
-  row: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 6, gap: 8 },
+  listContent: {
+    padding: 12,
+    gap: 8,
+    flexGrow: 1,
+  },
+  empty: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 60,
+  },
+  emptyText: {
+    color: 'rgba(255,255,255,0.3)',
+    fontSize: 13,
+    textAlign: 'center',
+  },
+
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginBottom: 6,
+    gap: 8,
+  },
   rowMe: { flexDirection: 'row-reverse' },
   avatar: {
-    width: 26, height: 26, borderRadius: 13,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: COLORS.primary ?? '#6C63FF',
-    justifyContent: 'center', alignItems: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   avatarText: { color: '#fff', fontSize: 11, fontWeight: '700' },
-  bubble: { maxWidth: '74%', paddingHorizontal: 11, paddingVertical: 8, borderRadius: 14 },
-  bubbleThem: { backgroundColor: 'rgba(255,255,255,0.1)', borderBottomLeftRadius: 4 },
-  bubbleMe: { backgroundColor: COLORS.primary ?? '#6C63FF', borderBottomRightRadius: 4 },
-  senderName: { color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: '600', marginBottom: 3 },
+  bubble: {
+    maxWidth: '74%',
+    paddingHorizontal: 11,
+    paddingVertical: 8,
+    borderRadius: 14,
+  },
+  bubbleThem: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderBottomLeftRadius: 4,
+  },
+  bubbleMe: {
+    backgroundColor: COLORS.primary ?? '#6C63FF',
+    borderBottomRightRadius: 4,
+  },
+  senderName: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 10,
+    fontWeight: '600',
+    marginBottom: 3,
+  },
   msgText: { color: '#fff', fontSize: 13, lineHeight: 18 },
+
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.08)',
     gap: 8,
+    backgroundColor: 'rgba(10,10,26,0.99)',
   },
   input: {
     flex: 1,
@@ -230,9 +324,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   sendBtn: {
-    width: 38, height: 38, borderRadius: 19,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: COLORS.primary ?? '#6C63FF',
-    justifyContent: 'center', alignItems: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   sendBtnOff: { opacity: 0.4 },
 });

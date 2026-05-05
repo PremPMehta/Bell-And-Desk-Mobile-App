@@ -176,7 +176,6 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: vs(60),
     zIndex: 10,
     flexDirection: 'row',
     alignItems: 'center',
@@ -190,14 +189,23 @@ const styles = StyleSheet.create({
     borderRadius: ms(18),
     zIndex: 11,
   },
-  headerTitle: {
-    ...THEME.fontStyle.h3Bold,
+  /** Full-width band under safe area; title is centered inside (see index). */
+  headerTitleWrap: {
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: ms(12),
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    pointerEvents: 'none',
+    // Same horizontal reserve on both sides so the title sits on the true screen center
+    // (back control is ~ms(36) + header padding).
+    paddingHorizontal: ms(52),
+  },
+  headerTitle: {
+    ...THEME.fontStyle.h3Bold,
+    width: '100%',
     textAlign: 'center',
-    paddingHorizontal: ms(60),
   },
 });
 

@@ -5,11 +5,17 @@ import { ms, width } from '@/Assets/Theme/fontStyle';
 
 const CARD_WIDTH = (width - 50) / 2;
 
-const HomeSkeleton = () => {
+const HomeSkeleton = ({ isLoggedIn = false }: { isLoggedIn?: boolean }) => {
   return (
     <View style={styles.container}>
       {/* Video Banner Skeleton */}
-      <Skeleton height={ms(200)} borderRadius={0} style={styles.videoBanner} />
+      {!isLoggedIn && (
+        <Skeleton
+          height={ms(200)}
+          borderRadius={0}
+          style={styles.videoBanner}
+        />
+      )}
 
       <View style={styles.innerContainer}>
         {/* Carousel/Hero Skeleton */}
