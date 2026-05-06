@@ -26,6 +26,7 @@ import VideoBankDetails from '@/Screens/VideoBankDetails';
 import PdfViewer from '@/Screens/Shared/PdfViewer';
 import LiveStream from '@/Screens/LiveStream';
 import HLSPlayerScreen from '@/Screens/HLSPlayerScreen';
+import ChannelChat from '@/Screens/CommunityTabs/CommunityChat/ChannelChat';
 import { hideSplash } from 'react-native-splash-view';
 
 export type StackNavigationProp<T> = any;
@@ -253,6 +254,11 @@ const AppNavigator = () => {
         <MainStack.Screen
           name="HLSPlayerScreen"
           component={HLSPlayerScreen}
+          options={{ headerShown: false }}
+        />
+        <MainStack.Screen
+          name="ChannelChat"
+          component={ChannelChat}
           options={{ headerShown: false }}
         />
       </MainStack.Navigator>

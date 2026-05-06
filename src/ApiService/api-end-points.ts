@@ -110,4 +110,11 @@ export const ApiEndPoints = {
   // Live Stream
   liveStreamList: 'livestream/list/:communityId',
   getLiveStreamToken: 'livestream/get-token',
+
+  // Chat
+  chatChannels: 'chat/channels/:communityId',
+  chatConversations: 'chat/conversations/:communityId',
+  markChannelRead: 'chat/channels/:channelId/read',
+  chatCommunityMembers: 'chat/community/:communityId/members',
+  chatMessages: 'chat/messages/channel/:channelId',
 };

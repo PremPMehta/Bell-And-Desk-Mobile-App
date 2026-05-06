@@ -237,4 +237,16 @@ export const AtomKeys = {
   apiGetLiveStreamList: 'apiGetLiveStreamList',
   apiGetLiveStreamTokenLoading: 'apiGetLiveStreamTokenLoading',
   apiGetLiveStreamToken: 'apiGetLiveStreamToken',
+
+  // Chat
+  apiGetChatChannelsLoading: 'apiGetChatChannelsLoading',
+  apiGetChatChannels: 'apiGetChatChannels',
+  apiGetChatConversationsLoading: 'apiGetChatConversationsLoading',
+  apiGetChatConversations: 'apiGetChatConversations',
+  apiGetChatMessagesLoading: 'apiGetChatMessagesLoading',
+  apiGetChatMessages: 'apiGetChatMessages',
+  apiGetChatCommunityMembersLoading: 'apiGetChatCommunityMembersLoading',
+  apiGetChatCommunityMembers: 'apiGetChatCommunityMembers',
+  apiSendChatMessageLoading: 'apiSendChatMessageLoading',
+  apiSendChatMessage: 'apiSendChatMessage',
 };

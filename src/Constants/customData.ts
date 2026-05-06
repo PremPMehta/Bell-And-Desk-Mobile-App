@@ -230,6 +230,7 @@ export const COMMUNITY_MENU_TABS = [
   { id: 'courses', title: 'Courses' },
   { id: 'livestream', title: 'Live Stream' },
   { id: 'board', title: 'Board' },
+  { id: 'chat', title: 'Chat' },
   { id: 'members', title: 'Members' },
   { id: 'about', title: 'About' },
   { id: 'videos', title: 'Videos' },

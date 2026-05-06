@@ -9,6 +9,8 @@ import './i18n'; // Initialize i18n
 import { useAtom } from 'jotai';
 import { languageAtom } from './Jotai/Atoms';
 import { useTranslation } from 'react-i18next';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
+import { StatusBar } from 'react-native';
 
 const NavTheme = {
   ...DefaultTheme,
@@ -23,7 +25,11 @@ const LanguageInitializer = () => {
   const [language] = useAtom(languageAtom);
 
   useEffect(() => {
-    if (language && typeof language === 'string' && i18n.language !== language) {
+    if (
+      language &&
+      typeof language === 'string' &&
+      i18n.language !== language
+    ) {
       i18n.changeLanguage(language);
     }
   }, [language, i18n]);
@@ -41,11 +47,15 @@ const AppWrapper = () => {
 };
 
 const App = () => {
+  StatusBar.setTranslucent(true);
+
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <AppWrapper />
-        <Toast />
+        <KeyboardProvider navigationBarTranslucent statusBarTranslucent>
+          <AppWrapper />
+          <Toast />
+        </KeyboardProvider>
       </GestureHandlerRootView>
     </SafeAreaProvider>
   );

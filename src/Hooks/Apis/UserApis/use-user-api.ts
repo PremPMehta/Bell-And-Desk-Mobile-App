@@ -661,6 +661,55 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiGetLiveStreamToken),
   );
 
+  // Get Chat Channels Apis
+  const [apiGetChatChannelsLoading, setApiGetChatChannelsLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetChatChannelsLoading),
+  );
+  const [apiGetChatChannels, setApiGetChatChannels] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetChatChannels),
+  );
+
+  // Get Chat Conversations Apis
+  const [apiGetChatConversationsLoading, setApiGetChatConversationsLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiGetChatConversationsLoading),
+    );
+  const [apiGetChatConversations, setApiGetChatConversations] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetChatConversations),
+  );
+
+  // Get Chat Messages Apis
+  const [apiGetChatMessagesLoading, setApiGetChatMessagesLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetChatMessagesLoading),
+  );
+  const [apiGetChatMessages, setApiGetChatMessages] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetChatMessages),
+  );
+
+  // Get Chat Community Members Apis
+  const [
+    apiGetChatCommunityMembersLoading,
+    setApiGetChatCommunityMembersLoading,
+  ] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetChatCommunityMembersLoading),
+  );
+  const [apiGetChatCommunityMembers, setApiGetChatCommunityMembers] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetChatCommunityMembers),
+  );
+
+  // Mark Channel Read Apis
+  const [apiMarkChannelReadLoading, setApiMarkChannelReadLoading] = useAtom(
+    booleanDefaultFalseAtomFamily('apiMarkChannelReadLoading'),
+  );
+  
+  // Send Chat Message Apis
+  const [apiSendChatMessageLoading, setApiSendChatMessageLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiSendChatMessageLoading),
+  );
+  const [apiSendChatMessage, setApiSendChatMessage] = useAtom(
+    objectAtomFamily(AtomKeys.apiSendChatMessage),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -2125,6 +2174,106 @@ const useUserApi = () => {
     }
   }
 
+  // Get Chat Channels
+  async function getChatChannels(communityId: string) {
+    try {
+      setApiGetChatChannelsLoading(true);
+      const url = ApiEndPoints.chatChannels.replace(':communityId', communityId);
+      const res: any = await api.get(url);
+      console.log('🚀 ~ getChatChannels ~ res:', res);
+      setApiGetChatChannels(res);
+      setApiGetChatChannelsLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching chat channels:', error);
+      setApiGetChatChannelsLoading(false);
+    }
+  }
+
+  // Get Chat Conversations
+  async function getChatConversations(communityId: string) {
+    try {
+      setApiGetChatConversationsLoading(true);
+      const url = ApiEndPoints.chatConversations.replace(
+        ':communityId',
+        communityId,
+      );
+      const res: any = await api.get(url);
+      console.log('🚀 ~ getChatConversations ~ res:', res);
+      setApiGetChatConversations(res);
+      setApiGetChatConversationsLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching chat conversations:', error);
+      setApiGetChatConversationsLoading(false);
+    }
+  }
+
+  // Get Chat Messages
+  async function getChatMessages(channelId: string) {
+    try {
+      setApiGetChatMessagesLoading(true);
+      const url = ApiEndPoints.chatMessages.replace(':channelId', channelId);
+      const res: any = await api.get(url);
+      setApiGetChatMessages(res);
+      setApiGetChatMessagesLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching chat messages:', error);
+      setApiGetChatMessagesLoading(false);
+    }
+  }
+
+  // Get Chat Community Members
+  async function getChatCommunityMembers(communityId: string) {
+    try {
+      setApiGetChatCommunityMembersLoading(true);
+      const url = ApiEndPoints.chatCommunityMembers.replace(
+        ':communityId',
+        communityId,
+      );
+      const res: any = await api.get(url);
+      setApiGetChatCommunityMembers(res);
+      setApiGetChatCommunityMembersLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching chat community members:', error);
+      setApiGetChatCommunityMembersLoading(false);
+    }
+  }
+
+  // Mark Channel Read
+  async function markChannelRead(channelId: string) {
+    try {
+      setApiMarkChannelReadLoading(true);
+      const url = ApiEndPoints.markChannelRead.replace(':channelId', channelId);
+      const res: any = await api.post(url, {});
+      setApiMarkChannelReadLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error marking channel as read:', error);
+      setApiMarkChannelReadLoading(false);
+    }
+  }
+
+  // Send Chat Message
+  async function sendChatMessage(channelId: string, content: string) {
+    try {
+      setApiSendChatMessageLoading(true);
+      const url = ApiEndPoints.chatMessages.replace(':channelId', channelId);
+      const res: any = await api.post(url, { content });
+      setApiSendChatMessage(res);
+      setApiSendChatMessageLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error sending chat message:', error);
+      setApiSendChatMessageLoading(false);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+    }
+  }
+
   // Get Video Bank
   async function getVideoBank(communityId: string, query: string) {
     try {
@@ -2644,6 +2793,26 @@ const useUserApi = () => {
     getLiveStreamToken,
     apiGetLiveStreamTokenLoading,
     apiGetLiveStreamToken,
+
+    // Chat
+    getChatChannels,
+    apiGetChatChannelsLoading,
+    apiGetChatChannels,
+    getChatConversations,
+    apiGetChatConversationsLoading,
+    apiGetChatConversations,
+    getChatMessages,
+    apiGetChatMessagesLoading,
+    apiGetChatMessages,
+    getChatCommunityMembers,
+    apiGetChatCommunityMembersLoading,
+    apiGetChatCommunityMembers,
+    markChannelRead,
+    apiMarkChannelReadLoading,
+
+    sendChatMessage,
+    apiSendChatMessageLoading,
+    apiSendChatMessage,
 
     // User
     user,

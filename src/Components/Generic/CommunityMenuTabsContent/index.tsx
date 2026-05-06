@@ -1,5 +1,6 @@
 import CommunityAbout from '@/Screens/CommunityTabs/CommunityAbout';
 import CommunityBoard from '@/Screens/CommunityTabs/CommunityBoard';
+import CommunityChat from '@/Screens/CommunityTabs/CommunityChat';
 import CommunityCourses from '@/Screens/CommunityTabs/Courses/CommunityCourses';
 import CommunityLiveStream from '@/Screens/CommunityTabs/CommunityLiveStream';
 import CommunityMembers from '@/Screens/CommunityTabs/CommunityMembers';
@@ -56,6 +57,8 @@ const CommunityMenuTabsContent = ({
       );
     case 'board':
       return <CommunityBoard communityId={communityId} {...scrollProps} />;
+    case 'chat':
+      return <CommunityChat communityId={communityId} {...scrollProps} />;
     case 'videos':
       return <CommunityVideos communityId={communityId} {...scrollProps} />;
     case 'members':
