@@ -116,3 +116,8 @@ export const apiGetOwnerDashboardBillingAtomFamily = objectAtomFamily(AtomKeys.a
 // Incremented by CreateCommunity after a successful community update.
 // CommunityAbout watches this to know when to re-fetch.
 export const communityRefreshAtom = atom<number>(0);
+
+// Real-time Chat Atoms
+export const chatMessagesAtom = atom<Record<string, any[]>>({});
+export const typingUsersAtom = atom<Record<string, any[]>>({});
+export const activeChannelIdAtom = atom<string | null>(null);

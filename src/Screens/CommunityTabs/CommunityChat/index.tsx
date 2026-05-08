@@ -15,6 +15,7 @@ import { COLORS } from '@/Assets/Theme/colors';
 import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 import CommunityChatSkeleton from '@/Components/Core/Skeleton/CommunityChatSkeleton';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import SocketService from '@/Services/SocketService';
 
 interface Props {
   communityId?: string;
@@ -45,6 +46,9 @@ const CommunityChat = ({
   // Reset isFirstLoad when communityId changes to show loader for new community
   useEffect(() => {
     setIsFirstLoad(true);
+    if (communityId) {
+      SocketService.setCommunityId(communityId);
+    }
   }, [communityId]);
 
   const fetchData = useCallback(async () => {
@@ -176,7 +180,7 @@ const CommunityChat = ({
           <FlatList
             data={channels}
             renderItem={renderChannelItem}
-            keyExtractor={item => item._id || item.id}
+            keyExtractor={(item, index) => (item._id || item.id || index).toString()}
             scrollEnabled={false}
             contentContainerStyle={styles.listContainer}
             ListEmptyComponent={
@@ -198,7 +202,7 @@ const CommunityChat = ({
           <FlatList
             data={conversations}
             renderItem={renderDMItem}
-            keyExtractor={item => item._id || item.id}
+            keyExtractor={(item, index) => (item._id || item.id || index).toString()}
             scrollEnabled={false}
             contentContainerStyle={styles.listContainer}
             ListEmptyComponent={

@@ -701,7 +701,7 @@ const useUserApi = () => {
   const [apiMarkChannelReadLoading, setApiMarkChannelReadLoading] = useAtom(
     booleanDefaultFalseAtomFamily('apiMarkChannelReadLoading'),
   );
-  
+
   // Send Chat Message Apis
   const [apiSendChatMessageLoading, setApiSendChatMessageLoading] = useAtom(
     booleanDefaultFalseAtomFamily(AtomKeys.apiSendChatMessageLoading),
@@ -2178,7 +2178,10 @@ const useUserApi = () => {
   async function getChatChannels(communityId: string) {
     try {
       setApiGetChatChannelsLoading(true);
-      const url = ApiEndPoints.chatChannels.replace(':communityId', communityId);
+      const url = ApiEndPoints.chatChannels.replace(
+        ':communityId',
+        communityId,
+      );
       const res: any = await api.get(url);
       console.log('🚀 ~ getChatChannels ~ res:', res);
       setApiGetChatChannels(res);
@@ -2257,11 +2260,21 @@ const useUserApi = () => {
   }
 
   // Send Chat Message
-  async function sendChatMessage(channelId: string, content: string) {
+  async function sendChatMessage(
+    channelId: string,
+    content: string,
+    attachments: any[] = [],
+  ) {
     try {
       setApiSendChatMessageLoading(true);
       const url = ApiEndPoints.chatMessages.replace(':channelId', channelId);
-      const res: any = await api.post(url, { content });
+      // Backend expects payload exactly like:
+      // { content: "text", attachments: [] }
+      const payload = {
+        content,
+        attachments: Array.isArray(attachments) ? attachments : [],
+      };
+      const res: any = await api.post(url, payload);
       setApiSendChatMessage(res);
       setApiSendChatMessageLoading(false);
       return res;

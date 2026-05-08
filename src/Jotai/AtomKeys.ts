@@ -249,4 +249,9 @@ export const AtomKeys = {
   apiGetChatCommunityMembers: 'apiGetChatCommunityMembers',
   apiSendChatMessageLoading: 'apiSendChatMessageLoading',
   apiSendChatMessage: 'apiSendChatMessage',
+
+  // Real-time Chat (Socket)
+  chatMessages: 'chatMessages',
+  typingUsers: 'typingUsers',
+  activeChannelId: 'activeChannelId',
 };
