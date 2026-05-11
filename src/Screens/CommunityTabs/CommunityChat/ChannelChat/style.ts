@@ -160,6 +160,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.black,
   },
+  dateSeparator: {
+    alignItems: 'center',
+    marginVertical: mvs(20),
+  },
+  dateSeparatorText: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    ...THEME.fontStyle.h6Bold,
+    color: COLORS.white,
+    paddingHorizontal: ms(12),
+    paddingVertical: mvs(4),
+    borderRadius: ms(12),
+    overflow: 'hidden',
+  },
 });
 
 export default styles;

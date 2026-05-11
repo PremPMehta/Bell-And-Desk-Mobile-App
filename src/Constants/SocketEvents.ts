@@ -17,6 +17,17 @@ export const SOCKET_EVENTS = {
   USER_TYPING: 'user_typing',
   USER_STOPPED_TYPING: 'user_stopped_typing',
   MESSAGE_RECEIVED: 'message_received',
+  /**
+   * Optional aliases — many backends use a different name than `message_received`.
+   * All are wired in SocketService to the same inbound handler as MESSAGE_RECEIVED.
+   */
+  MESSAGE_RECEIVED_ALIASES: [
+    'receive_message',
+    'receiveMessage',
+    'incoming_message',
+    'chat_message',
+    'message_received_client',
+  ] as const,
   MESSAGE_UPDATED_CLIENT: 'message_updated',
   MESSAGE_DELETED_CLIENT: 'message_deleted',
   CHANNEL_CREATED: 'channel_created',

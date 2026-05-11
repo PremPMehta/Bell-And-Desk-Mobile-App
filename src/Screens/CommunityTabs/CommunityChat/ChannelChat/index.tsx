@@ -146,6 +146,37 @@ const ChannelChat = () => {
 
   const messages = liveMessages || [];
 
+  const formatDateLabel = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+
+    const isSameDay = (d1: Date, d2: Date) =>
+      d1.getFullYear() === d2.getFullYear() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getDate() === d2.getDate();
+
+    if (isSameDay(date, now)) return 'Today';
+
+    const yesterday = new Date();
+    yesterday.setDate(now.getDate() - 1);
+    if (isSameDay(date, yesterday)) return 'Yesterday';
+
+    return date.toLocaleDateString([], {
+      day: 'numeric',
+      month: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  const formatTime = (dateString: string) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   const typingUsers = liveTypingUsers || [];
 
   const members = apiGetChatCommunityMembers?.data || [];
@@ -320,7 +351,7 @@ const ChannelChat = () => {
     }
   };
 
-  const renderMessage = ({ item }: { item: any }) => {
+  const renderMessage = ({ item, index }: { item: any; index: number }) => {
     const myId = user?._id || user?.id;
 
     const senderId = item.sender?._id || item.sender?.id || item.senderId;
@@ -331,33 +362,52 @@ const ChannelChat = () => {
 
     const initials = sender.firstName ? sender.firstName[0] : 'U';
 
+    const currentMsgDate = new Date(item.createdAt).toDateString();
+    const nextMsgDate = messages[index + 1]
+      ? new Date(messages[index + 1].createdAt).toDateString()
+      : null;
+
+    const showDateSeparator = currentMsgDate !== nextMsgDate;
+
     return (
-      <View style={[styles.messageRow, isMe && styles.messageRowMe]}>
-        {!isMe && (
-          <View style={styles.avatar}>
-            {sender.profilePicture?.url ? (
-              <Image
-                source={{
-                  uri: sender.profilePicture.url,
-                }}
-                style={styles.avatarImage}
-              />
-            ) : (
-              <Text style={styles.avatarText}>{initials}</Text>
-            )}
+      <View>
+        {showDateSeparator && (
+          <View style={styles.dateSeparator}>
+            <Text style={styles.dateSeparatorText}>
+              {formatDateLabel(item.createdAt)}
+            </Text>
           </View>
         )}
 
-        <View
-          style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleThem]}
-        >
+        <View style={[styles.messageRow, isMe && styles.messageRowMe]}>
           {!isMe && (
-            <Text style={styles.senderName}>
-              {sender.firstName} {sender.lastName}
-            </Text>
+            <View style={styles.avatar}>
+              {sender.profilePicture?.url ? (
+                <Image
+                  source={{
+                    uri: sender.profilePicture.url,
+                  }}
+                  style={styles.avatarImage}
+                />
+              ) : (
+                <Text style={styles.avatarText}>{initials}</Text>
+              )}
+            </View>
           )}
 
-          <Text style={styles.msgText}>{item.content || item.text}</Text>
+          <View
+            style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleThem]}
+          >
+            {!isMe && (
+              <Text style={styles.senderName}>
+                {sender.firstName} {sender.lastName}
+              </Text>
+            )}
+
+            <Text style={styles.msgText}>{item.content || item.text}</Text>
+
+            <Text style={styles.timeText}>{formatTime(item.createdAt)}</Text>
+          </View>
         </View>
       </View>
     );

@@ -6,16 +6,17 @@ import {
   TouchableOpacity,
   Image,
   FlatList,
-  ActivityIndicator,
   RefreshControl,
 } from 'react-native';
 import styles from './style';
-import Icon from '@/Components/Core/Icons';
 import { COLORS } from '@/Assets/Theme/colors';
 import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 import CommunityChatSkeleton from '@/Components/Core/Skeleton/CommunityChatSkeleton';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import SocketService from '@/Services/SocketService';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { activeChannelIdAtom, objectAtomFamily, userAtom } from '@/Jotai/Atoms';
+import { AtomKeys } from '@/Jotai/AtomKeys';
 
 interface Props {
   communityId?: string;
@@ -29,6 +30,7 @@ const CommunityChat = ({
   scrollEventThrottle,
 }: Props) => {
   const navigation = useNavigation<any>();
+
   const {
     getChatChannels,
     apiGetChatChannelsLoading,
@@ -38,8 +40,79 @@ const CommunityChat = ({
     apiGetChatConversations,
   } = useUserApi();
 
-  const channels = apiGetChatChannels?.data || [];
-  const conversations = apiGetChatConversations?.data || [];
+  const currentUser: any = useAtomValue(userAtom);
+  const currentUserId = currentUser?._id || currentUser?.id;
+
+  const setActiveChannelId = useSetAtom(activeChannelIdAtom);
+
+  // --- REALTIME FIX (1/3) ---
+  // Subscribe directly to the same atoms that SocketService writes to via
+  // store.set(). This gives CommunityChat its own subscription so it
+  // re-renders immediately when a socket message arrives, independently of
+  // whatever useUserApi does.
+  const liveChannelsData = useAtomValue(
+    objectAtomFamily(AtomKeys.apiGetChatChannels),
+  );
+  const liveConversationsData = useAtomValue(
+    objectAtomFamily(AtomKeys.apiGetChatConversations),
+  );
+
+  // Always prefer the live atom values over the hook-returned values so the
+  // UI reflects the most recent socket write without waiting for an API call.
+  const channels: any[] =
+    liveChannelsData?.data ||
+    liveChannelsData?.channels ||
+    apiGetChatChannels?.data ||
+    apiGetChatChannels?.channels ||
+    [];
+  const conversations: any[] =
+    liveConversationsData?.data ||
+    liveConversationsData?.channels ||
+    apiGetChatConversations?.data ||
+    apiGetChatConversations?.channels ||
+    [];
+
+  // lastSocketUpdate is bumped by SocketService on every incoming message.
+  // Using it in dependency arrays ensures memos and extraData re-compute
+  // even when individual item object-references haven't changed.
+  const channelsSocketUpdate: number = liveChannelsData?.lastSocketUpdate ?? 0;
+  const conversationsSocketUpdate: number =
+    liveConversationsData?.lastSocketUpdate ?? 0;
+
+  const totalChannelsUnread = React.useMemo(
+    () =>
+      channels.reduce(
+        (acc: number, c: any) => acc + Number(c.unreadCount || 0),
+        0,
+      ),
+    [channels, channelsSocketUpdate],
+  );
+
+  const totalDMsUnread = React.useMemo(
+    () =>
+      conversations.reduce(
+        (acc: number, c: any) => acc + Number(c.unreadCount || 0),
+        0,
+      ),
+    [conversations, conversationsSocketUpdate],
+  );
+
+  // --- REALTIME FIX (2/3) ---
+  // Pass enriched extraData objects (not just the data arrays) to both
+  // FlatLists. The socket-update timestamp changes on every incoming message,
+  // so FlatList cells are forced to re-render even when item references are
+  // the same (which happens when the channel-ID matching in SocketService
+  // returns the unchanged `c` reference for non-matching channels).
+  const channelsExtraData = React.useMemo(
+    () => ({ channels, channelsSocketUpdate }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [channels, channelsSocketUpdate],
+  );
+  const conversationsExtraData = React.useMemo(
+    () => ({ conversations, conversationsSocketUpdate }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [conversations, conversationsSocketUpdate],
+  );
 
   const [isFirstLoad, setIsFirstLoad] = React.useState(true);
 
@@ -68,10 +141,22 @@ const CommunityChat = ({
     }
   }, [communityId]);
 
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     fetchData();
+  //   }, [fetchData]),
+  // );
+
   useFocusEffect(
     useCallback(() => {
+      // VERY IMPORTANT
+      // User is NOT inside any specific channel now
+      setActiveChannelId(null);
+
       fetchData();
-    }, [fetchData]),
+
+      return () => {};
+    }, [fetchData, setActiveChannelId]),
   );
 
   const onRefresh = async () => {
@@ -83,36 +168,70 @@ const CommunityChat = ({
     return <CommunityChatSkeleton />;
   }
 
-  const renderChannelItem = ({ item }: { item: any }) => (
-    <TouchableOpacity
-      style={styles.itemCard}
-      onPress={() =>
-        navigation.navigate('ChannelChat', {
-          channelData: item,
-          communityId: communityId,
-        })
-      }>
-      <View style={styles.iconContainer}>
-        <Text style={styles.channelHash}>#</Text>
-      </View>
-      <View style={styles.itemInfo}>
-        <Text style={styles.itemName} numberOfLines={1}>
-          {item.name || 'General Channel'}
-        </Text>
-        <Text style={styles.itemLastMessage} numberOfLines={1}>
-          {item.description || 'No description available'}
-        </Text>
-      </View>
-      <View style={styles.itemMeta}>
-        {item.unreadCount > 0 && (
-          <View style={styles.unreadBadge}>
-            <Text style={styles.unreadText}>{item.unreadCount}</Text>
-          </View>
-        )}
-        <Icon name="ChevronRight" size={18} color={COLORS.outlineGrey} />
-      </View>
-    </TouchableOpacity>
-  );
+  const renderChannelItem = ({ item }: { item: any }) => {
+    console.log('🚀 ~ renderChannelItem ~ item:', item);
+    return (
+      <TouchableOpacity
+        style={styles.itemCard}
+        onPress={() =>
+          navigation.navigate('ChannelChat', {
+            channelData: item,
+            communityId: communityId,
+          })
+        }
+      >
+        <View style={styles.iconContainer}>
+          <Text style={styles.channelHash}>#</Text>
+        </View>
+        <View style={styles.itemInfo}>
+          <Text style={styles.itemName} numberOfLines={1}>
+            {item.name ||
+              item.title ||
+              item.channel?.name ||
+              item.channel?.title ||
+              'General Channel'}
+          </Text>
+          <Text style={styles.itemLastMessage} numberOfLines={1}>
+            {item.lastMessage ? (
+              <Text>
+                {item.lastMessage.sender?._id === currentUserId ||
+                item.lastMessage.sender?.id === currentUserId ||
+                item.lastMessage.senderId === currentUserId
+                  ? 'You'
+                  : item.lastMessage.sender?.firstName || 'User'}
+                : {item.lastMessage.content || item.lastMessage.text}
+              </Text>
+            ) : (
+              item.description || 'No messages yet'
+            )}
+          </Text>
+        </View>
+        <View style={styles.itemMeta}>
+          {item.lastMessage?.createdAt && (
+            <Text
+              style={[
+                styles.itemTime,
+                Number(item.unreadCount) > 0 && {
+                  fontWeight: 'bold',
+                  color: COLORS.white,
+                },
+              ]}
+            >
+              {new Date(item.lastMessage.createdAt).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </Text>
+          )}
+          {Number(item.unreadCount) > 0 && (
+            <View style={styles.unreadBadge}>
+              <Text style={styles.unreadText}>{item.unreadCount}</Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const renderDMItem = ({ item }: { item: any }) => {
     const participant = item.participants?.[0] || {};
@@ -130,7 +249,8 @@ const CommunityChat = ({
             },
             communityId: communityId,
           })
-        }>
+        }
+      >
         <View style={styles.avatarContainer}>
           {avatar ? (
             <Image source={{ uri: avatar }} style={styles.avatarImage} />
@@ -144,7 +264,18 @@ const CommunityChat = ({
             {participant.firstName} {participant.lastName}
           </Text>
           <Text style={styles.itemLastMessage} numberOfLines={1}>
-            {item.lastMessage?.content || 'Tap to start chatting'}
+            {item.lastMessage ? (
+              <Text>
+                {item.lastMessage.sender?._id === currentUserId ||
+                item.lastMessage.sender?.id === currentUserId ||
+                item.lastMessage.senderId === currentUserId
+                  ? 'You'
+                  : item.lastMessage.sender?.firstName || 'User'}
+                : {item.lastMessage.content || item.lastMessage.text}
+              </Text>
+            ) : (
+              'Tap to start chatting'
+            )}
           </Text>
         </View>
         <View style={styles.itemMeta}>
@@ -156,7 +287,7 @@ const CommunityChat = ({
               })}
             </Text>
           )}
-          {item.unreadCount > 0 && (
+          {Number(item.unreadCount) > 0 && (
             <View style={styles.unreadBadge}>
               <Text style={styles.unreadText}>{item.unreadCount}</Text>
             </View>
@@ -173,14 +304,40 @@ const CommunityChat = ({
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>CHANNELS</Text>
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>{channels.length}</Text>
+            <View
+              style={[
+                styles.countBadge,
+                totalChannelsUnread > 0 && { backgroundColor: COLORS.primary },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.countText,
+                  totalChannelsUnread > 0 && { color: COLORS.white },
+                ]}
+              >
+                {totalChannelsUnread}
+              </Text>
             </View>
           </View>
           <FlatList
             data={channels}
             renderItem={renderChannelItem}
-            keyExtractor={(item, index) => (item._id || item.id || index).toString()}
+            // REALTIME FIX (2/3): enriched extraData includes lastSocketUpdate
+            // so FlatList cells re-render on every socket event even when
+            // individual item references haven't changed.
+            extraData={channelsExtraData}
+            keyExtractor={(item, index) =>
+              // REALTIME FIX (3/3): also check nested channel._id so the key
+              // is stable and matches what SocketService uses for ID matching.
+              (
+                item._id ||
+                item.id ||
+                item.channelId ||
+                item.channel?._id ||
+                index
+              ).toString()
+            }
             scrollEnabled={false}
             contentContainerStyle={styles.listContainer}
             ListEmptyComponent={
@@ -195,14 +352,35 @@ const CommunityChat = ({
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>DIRECT MESSAGES</Text>
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>{conversations.length}</Text>
+            <View
+              style={[
+                styles.countBadge,
+                totalDMsUnread > 0 && { backgroundColor: COLORS.primary },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.countText,
+                  totalDMsUnread > 0 && { color: COLORS.white },
+                ]}
+              >
+                {totalDMsUnread}
+              </Text>
             </View>
           </View>
           <FlatList
             data={conversations}
             renderItem={renderDMItem}
-            keyExtractor={(item, index) => (item._id || item.id || index).toString()}
+            extraData={conversationsExtraData}
+            keyExtractor={(item, index) =>
+              (
+                item._id ||
+                item.id ||
+                item.channelId ||
+                item.channel?._id ||
+                index
+              ).toString()
+            }
             scrollEnabled={false}
             contentContainerStyle={styles.listContainer}
             ListEmptyComponent={

@@ -8,6 +8,7 @@ import {
   activeChannelIdAtom,
   objectAtomFamily,
   userTokenAtom,
+  userAtom,
 } from '@/Jotai/Atoms';
 import { AtomKeys } from '@/Jotai/AtomKeys';
 
@@ -36,19 +37,74 @@ class SocketService {
   /** Resolve channel list key consistently with ChannelChat (`_id`, `channel`, refs). */
   private resolveChannelId(payload: any, message: any): string | undefined {
     const fromPayload = this.normalizeId(payload?.channelId);
-    if (fromPayload) return fromPayload;
-    if (payload?.channel != null) return this.normalizeId(payload.channel);
+    if (fromPayload) return fromPayload.trim();
+    if (payload?.channel != null) {
+      const p = this.normalizeId(payload.channel);
+      if (p) return p.trim();
+    }
+    const fromPayloadConv = this.normalizeId(
+      payload?.conversationId ?? payload?.conversation?._id ?? payload?.conversation?.id,
+    );
+    if (fromPayloadConv) return fromPayloadConv.trim();
     const fromMsg = this.normalizeId(
       message?.channelId ??
         message?.channel_id ??
+        message?.conversationId ??
+        message?.roomId ??
         (typeof message?.channel === 'string'
           ? message.channel
           : message?.channel),
     );
-    if (fromMsg) return fromMsg;
+    if (fromMsg) return fromMsg.trim();
     const nested = message?.channel;
-    return this.normalizeId(nested?._id ?? nested?.id ?? nested);
+    const nestedId = this.normalizeId(nested?._id ?? nested?.id ?? nested);
+    return nestedId ? nestedId.trim() : undefined;
   }
+
+  /** GET /chat/channels response may use `data` or `channels` — socket patches must match. */
+  private getChannelListPack(prev: any): { rows: any[]; key: 'data' | 'channels' } | null {
+    if (!prev || typeof prev !== 'object') return null;
+    if (Array.isArray(prev.data)) return { rows: prev.data, key: 'data' };
+    if (Array.isArray(prev.channels)) return { rows: prev.channels, key: 'channels' };
+    return null;
+  }
+
+  private getConversationListPack(prev: any): {
+    rows: any[];
+    key: 'data' | 'conversations';
+  } | null {
+    if (!prev || typeof prev !== 'object') return null;
+    if (Array.isArray(prev.data)) return { rows: prev.data, key: 'data' };
+    if (Array.isArray(prev.conversations)) {
+      return { rows: prev.conversations, key: 'conversations' };
+    }
+    return null;
+  }
+
+  /**
+   * Single entry for server → client chat payloads (same as legacy name `handleReceive`
+   * in many backends). Log here in __DEV__ — the handler implementation is
+   * `handleMessageReceived` below.
+   */
+  private onInboundChatPayload = (payload: any) => {
+    if (__DEV__) {
+      console.log('[SocketService] onInboundChatPayload (chat receive)', payload);
+    }
+    this.handleMessageReceived(payload);
+  };
+
+  /** __DEV__ only: log likely chat-related socket.io events so you can match server names. */
+  private boundOnAnyChatRelatedDebug = (eventName: string, ...args: any[]) => {
+    if (!__DEV__) return;
+    if (/^(connect|disconnect|ping|pong)$/i.test(eventName)) return;
+    if (
+      /message|chat|channel|conversation|receive|incoming|reply|send/i.test(
+        eventName,
+      )
+    ) {
+      console.log('[SocketService] socket.io event:', eventName, args?.[0]);
+    }
+  };
 
   /** After creating the socket connection, subscribe to inbound chat events exactly once */
   private wireInboundChatRelay() {
@@ -66,10 +122,20 @@ class SocketService {
       (message.channelId ||
         message.channel_id ||
         message.channel ||
+        message.conversationId ||
+        message.roomId ||
         message.content != null ||
-        message.text != null);
+        message.text != null ||
+        message.type === 'channel' ||
+        message.type === 'dm' ||
+        message.type === 'direct');
     if (looksLikeChat) {
-      this.handleMessageReceived(payload);
+      this.onInboundChatPayload(payload);
+    } else if (__DEV__) {
+      console.log(
+        '[SocketService] new_message ignored (does not look like chat payload)',
+        message,
+      );
     }
   };
 
@@ -122,6 +188,9 @@ class SocketService {
     // Remove all previous listeners before setting up new ones to avoid duplication
     this.socket.removeAllListeners(SOCKET_EVENTS.INBOUND_NEW_MESSAGE_ALIAS);
     this.socket.removeAllListeners(SOCKET_EVENTS.MESSAGE_RECEIVED);
+    for (const ev of SOCKET_EVENTS.MESSAGE_RECEIVED_ALIASES) {
+      this.socket.removeAllListeners(ev);
+    }
     this.socket.removeAllListeners(SOCKET_EVENTS.MESSAGE_UPDATED_CLIENT);
     this.socket.removeAllListeners(SOCKET_EVENTS.MESSAGE_DELETED_CLIENT);
     this.socket.removeAllListeners(SOCKET_EVENTS.USER_TYPING);
@@ -134,15 +203,21 @@ class SocketService {
 
     this.setupGlobalListeners();
     this.wireInboundChatRelay();
+
+    if (__DEV__ && this.socket) {
+      this.socket.offAny(this.boundOnAnyChatRelatedDebug);
+      this.socket.onAny(this.boundOnAnyChatRelatedDebug);
+    }
   }
 
   private setupGlobalListeners() {
     if (!this.socket) return;
 
-    // Server -> Client Listeners
-    this.socket.on(SOCKET_EVENTS.MESSAGE_RECEIVED, message => {
-      this.handleMessageReceived(message);
-    });
+    // Server -> Client Listeners (chat inbound + common backend aliases)
+    this.socket.on(SOCKET_EVENTS.MESSAGE_RECEIVED, this.onInboundChatPayload);
+    for (const ev of SOCKET_EVENTS.MESSAGE_RECEIVED_ALIASES) {
+      this.socket.on(ev, this.onInboundChatPayload);
+    }
 
     this.socket.on(SOCKET_EVENTS.MESSAGE_UPDATED_CLIENT, message => {
       this.handleMessageUpdated(message);
@@ -258,8 +333,6 @@ class SocketService {
 
   // Event Handlers that update Jotai state
   private handleMessageReceived(payload: any) {
-    console.log('Socket: Received message payload', payload);
-
     const message = payload?.message ?? payload?.data ?? payload;
     const channelId = this.resolveChannelId(payload, message);
 
@@ -270,35 +343,27 @@ class SocketService {
 
     const currentMessages = store.get(chatMessagesAtom);
     const channelMessages = currentMessages[channelId] || [];
-    console.log(
-      '🚀 ~ SocketService ~ handleMessageReceived ~ currentMessages:',
-      currentMessages,
-    );
-    console.log(
-      '🚀 ~ SocketService ~ handleMessageReceived ~ channelMessages:',
-      channelMessages,
-    );
 
-    // Avoid duplicates for permanent messages.
-    // IMPORTANT: only dedupe when the incoming message has a real id.
-    // If `_id/id` is missing/undefined, the old check could match unrelated messages
-    // and cause an early return (blocking real-time UI updates).
+    // Avoid duplicate rows in the per-channel transcript only.
+    // Do NOT return early: channel / DM list atoms (unread, lastMessage) must still
+    // update so CommunityChat reflects new activity while the user is on that screen.
     const incomingId = message?._id ?? message?.id;
-    if (incomingId) {
-      const exists = channelMessages.some(
+    const isDuplicateInChat =
+      !!incomingId &&
+      channelMessages.some(
         (m: any) =>
           !m?.isOptimistic &&
-          ((m?._id && m._id === incomingId) || (m?.id && m.id === incomingId)),
+          ((m?._id != null &&
+            String(m._id) === String(incomingId)) ||
+            (m?.id != null && String(m.id) === String(incomingId))),
       );
-      if (exists) {
-        console.log(
-          'Socket: Duplicate message ignored for channel',
-          channelId,
-          'id=',
-          incomingId,
-        );
-        return;
-      }
+    if (isDuplicateInChat) {
+      console.log(
+        'Socket: Duplicate message skipped for transcript only',
+        channelId,
+        'id=',
+        incomingId,
+      );
     }
 
     // Replace optimistic message if it exists
@@ -313,56 +378,119 @@ class SocketService {
           m.senderId === senderId) &&
         m.content === message.content,
     );
-    console.log(
-      '🚀 ~ SocketService ~ handleMessageReceived ~ senderId:',
-      senderId,
-    );
-    console.log(
-      '🚀 ~ SocketService ~ handleMessageReceived ~ optimisticIndex:',
-      optimisticIndex,
-    );
+    if (!isDuplicateInChat) {
+      let updatedChannelMessages;
+      if (optimisticIndex !== -1) {
+        updatedChannelMessages = [...channelMessages];
+        updatedChannelMessages[optimisticIndex] = message;
+      } else {
+        updatedChannelMessages = [...channelMessages, message];
+      }
 
-    let updatedChannelMessages;
-    if (optimisticIndex !== -1) {
-      updatedChannelMessages = [...channelMessages];
-      updatedChannelMessages[optimisticIndex] = message;
-    } else {
-      updatedChannelMessages = [...channelMessages, message];
+      updatedChannelMessages.sort((a: any, b: any) => {
+        const ta = new Date(a?.createdAt ?? 0).getTime();
+        const tb = new Date(b?.createdAt ?? 0).getTime();
+        return tb - ta;
+      });
+
+      const updatedMessages = {
+        ...currentMessages,
+        [channelId]: updatedChannelMessages,
+      };
+
+      console.log(
+        `Socket: writing chatMessagesAtom channel[${channelId}] -> ${updatedChannelMessages.length}`,
+      );
+      store.set(chatMessagesAtom, updatedMessages);
     }
 
-    updatedChannelMessages.sort((a: any, b: any) => {
-      const ta = new Date(a?.createdAt ?? 0).getTime();
-      const tb = new Date(b?.createdAt ?? 0).getTime();
-      return tb - ta;
+    const apiGetChatChannelsAtom = objectAtomFamily(
+      AtomKeys.apiGetChatChannels,
+    );
+
+    const targetId = this.normalizeId(channelId);
+
+    store.set(apiGetChatChannelsAtom, (prev: any) => {
+      const pack = this.getChannelListPack(prev);
+      if (!pack) return prev;
+      const updatedChannels = pack.rows.map((c: any) => {
+        const cIds = [
+          c._id,
+          c.id,
+          c.channelId,
+          c.conversationId,
+          c.conversation?._id,
+          c.conversation?.id,
+          c.channel?._id,
+          c.channel?.id,
+        ].map(id => this.normalizeId(id));
+
+        if (cIds.includes(targetId)) {
+          return {
+            ...c,
+            lastMessage: message,
+            lastMessageAt: message.createdAt ?? c.lastMessageAt,
+            unreadCount: this.computeRowUnreadAfterSocketPatch({
+              row: c,
+              patch: {
+                lastMessage: message,
+                lastMessageAt: message.createdAt ?? c.lastMessageAt,
+              },
+              targetId,
+            }),
+          };
+        }
+        return c;
+      });
+      return {
+        ...prev,
+        [pack.key]: updatedChannels,
+        lastSocketUpdate: Date.now(),
+      };
     });
 
-    console.log(
-      '🚀 ~ SocketService ~ handleMessageReceived ~ updatedChannelMessages:',
-      updatedChannelMessages,
-    );
-    const updatedMessages = {
-      ...currentMessages,
-      [channelId]: updatedChannelMessages,
-    };
-    console.log(
-      '🚀 ~ SocketService ~ handleMessageReceived ~ updatedMessages:',
-      updatedMessages,
+    const apiGetChatConversationsAtom = objectAtomFamily(
+      AtomKeys.apiGetChatConversations,
     );
 
-    console.log(
-      `Socket: writing chatMessagesAtom channel[${channelId}] -> ${updatedChannelMessages.length}`,
-    );
-    store.set(chatMessagesAtom, updatedMessages);
+    store.set(apiGetChatConversationsAtom, (prev: any) => {
+      const convPack = this.getConversationListPack(prev);
+      if (!convPack) return prev;
+      const updatedConversations = convPack.rows.map((c: any) => {
+        const cIds = [
+          c._id,
+          c.id,
+          c.channelId,
+          c.channel?._id,
+          c.channel?.id,
+          c.conversationId,
+          c.conversation?._id,
+          c.conversation?.id,
+        ].map(id => this.normalizeId(id));
 
-    // Debug: confirm store writes are visible immediately
-    try {
-      const after = store.get(chatMessagesAtom);
-      console.log(
-        `Socket: stored message in channel[${channelId}] -> ${
-          after?.[channelId]?.length ?? 0
-        }`,
-      );
-    } catch {}
+        if (cIds.includes(targetId)) {
+          return {
+            ...c,
+            lastMessage: message,
+            lastMessageAt: message.createdAt ?? c.lastMessageAt,
+            unreadCount: this.computeRowUnreadAfterSocketPatch({
+              row: c,
+              patch: {
+                lastMessage: message,
+                lastMessageAt: message.createdAt ?? c.lastMessageAt,
+              },
+              targetId,
+            }),
+          };
+        }
+        return c;
+      });
+      return {
+        ...prev,
+        [convPack.key]: updatedConversations,
+        lastSocketUpdate: Date.now(),
+      };
+    });
   }
 
   private handleMessageUpdated(payload: any) {
@@ -435,14 +563,62 @@ class SocketService {
       AtomKeys.apiGetChatChannels,
     );
     const currentChannelsRes = store.get(apiGetChatChannelsAtom);
+    const pack = this.getChannelListPack(currentChannelsRes);
+    if (!pack) return;
+    const updatedChannels = [...pack.rows, channel];
+    store.set(apiGetChatChannelsAtom, {
+      ...currentChannelsRes,
+      [pack.key]: updatedChannels,
+    });
+  }
 
-    if (currentChannelsRes?.data) {
-      const updatedChannels = [...currentChannelsRes.data, channel];
-      store.set(apiGetChatChannelsAtom, {
-        ...currentChannelsRes,
-        data: updatedChannels,
-      });
+  /**
+   * List APIs / `channel_updated` often omit unreadCount. When lastMessage advances,
+   * bump locally using the same rules as handleMessageReceived.
+   */
+  private computeRowUnreadAfterSocketPatch(opts: {
+    row: any;
+    patch: any;
+    targetId?: string;
+  }): number {
+    const { row, patch, targetId } = opts;
+    const mergedPreview = { ...row, ...patch };
+    const msg = mergedPreview.lastMessage;
+    const newMid = this.normalizeId(msg?._id ?? msg?.id);
+    const cMid = this.normalizeId(row.lastMessage?._id ?? row.lastMessage?.id);
+
+    const alreadyAppliedToRow =
+      !!newMid && !!cMid && newMid === cMid;
+
+    const myUser: any = store.get(userAtom);
+    const myId = this.normalizeId(myUser?._id || myUser?.id);
+    const senderId = this.normalizeId(
+      msg?.sender?._id || msg?.sender?.id || msg?.senderId,
+    );
+    const isFromMe = !!myId && !!senderId && myId === senderId;
+
+    const activeChannelId = this.normalizeId(store.get(activeChannelIdAtom));
+    const viewingThisChannel =
+      !!targetId && !!activeChannelId && targetId === activeChannelId;
+
+    const hasNewMessage = !!newMid && (!cMid || newMid !== cMid);
+    const shouldIncrementUnread =
+      hasNewMessage &&
+      !viewingThisChannel &&
+      !isFromMe &&
+      !alreadyAppliedToRow;
+
+    const currentCount = Number(row.unreadCount || 0);
+    const patchUnread =
+      patch.unreadCount != null ? Number(patch.unreadCount) : null;
+
+    if (patchUnread != null && !Number.isNaN(patchUnread)) {
+      if (shouldIncrementUnread) {
+        return Math.max(currentCount + 1, patchUnread);
+      }
+      return Math.max(currentCount, patchUnread);
     }
+    return shouldIncrementUnread ? currentCount + 1 : currentCount;
   }
 
   private handleChannelDeleted(data: any) {
@@ -451,33 +627,51 @@ class SocketService {
       AtomKeys.apiGetChatChannels,
     );
     const currentChannelsRes = store.get(apiGetChatChannelsAtom);
-
-    if (currentChannelsRes?.data) {
-      const updatedChannels = currentChannelsRes.data.filter(
-        (c: any) => c._id !== channelId && c.id !== channelId,
-      );
-      store.set(apiGetChatChannelsAtom, {
-        ...currentChannelsRes,
-        data: updatedChannels,
-      });
-    }
+    const pack = this.getChannelListPack(currentChannelsRes);
+    if (!pack) return;
+    const updatedChannels = pack.rows.filter(
+      (c: any) => c._id !== channelId && c.id !== channelId,
+    );
+    store.set(apiGetChatChannelsAtom, {
+      ...currentChannelsRes,
+      [pack.key]: updatedChannels,
+    });
   }
 
-  private handleChannelUpdated(channel: any) {
+  private handleChannelUpdated(raw: any) {
+    const channel = raw?.channel ?? raw?.data?.channel ?? raw?.data ?? raw;
     const apiGetChatChannelsAtom = objectAtomFamily(
       AtomKeys.apiGetChatChannels,
     );
     const currentChannelsRes = store.get(apiGetChatChannelsAtom);
-
-    if (currentChannelsRes?.data) {
-      const updatedChannels = currentChannelsRes.data.map((c: any) =>
-        c._id === channel._id || c.id === channel.id ? channel : c,
-      );
-      store.set(apiGetChatChannelsAtom, {
-        ...currentChannelsRes,
-        data: updatedChannels,
+    const pack = this.getChannelListPack(currentChannelsRes);
+    if (!pack) return;
+    const targetId = this.normalizeId(
+      channel._id || channel.id || channel.channelId,
+    );
+    if (!targetId) return;
+    const updatedChannels = pack.rows.map((c: any) => {
+      const cIds = [
+        c._id,
+        c.id,
+        c.channelId,
+        c.channel?._id,
+        c.channel?.id,
+      ].map(id => this.normalizeId(id));
+      if (!cIds.includes(targetId)) return c;
+      const merged = { ...c, ...channel };
+      merged.unreadCount = this.computeRowUnreadAfterSocketPatch({
+        row: c,
+        patch: channel,
+        targetId,
       });
-    }
+      return merged;
+    });
+    store.set(apiGetChatChannelsAtom, {
+      ...currentChannelsRes,
+      [pack.key]: updatedChannels,
+      lastSocketUpdate: Date.now(),
+    });
   }
 
   private handleChannelMembersUpdated(data: any) {
@@ -486,35 +680,61 @@ class SocketService {
       AtomKeys.apiGetChatChannels,
     );
     const currentChannelsRes = store.get(apiGetChatChannelsAtom);
-
-    if (currentChannelsRes?.data) {
-      const updatedChannels = currentChannelsRes.data.map((c: any) =>
-        c._id === channelId || c.id === channelId ? { ...c, memberCount } : c,
-      );
-      store.set(apiGetChatChannelsAtom, {
-        ...currentChannelsRes,
-        data: updatedChannels,
-      });
-    }
+    const pack = this.getChannelListPack(currentChannelsRes);
+    if (!pack) return;
+    const updatedChannels = pack.rows.map((c: any) => {
+      const targetId = this.normalizeId(channelId);
+      const cIds = [c._id, c.id, c.channelId].map(id => this.normalizeId(id));
+      return cIds.includes(targetId) ? { ...c, memberCount } : c;
+    });
+    store.set(apiGetChatChannelsAtom, {
+      ...currentChannelsRes,
+      [pack.key]: updatedChannels,
+      lastSocketUpdate: Date.now(),
+    });
   }
 
-  private handleConversationUpdated(conversation: any) {
+  private handleConversationUpdated(raw: any) {
+    const conversation =
+      raw?.conversation ?? raw?.data?.conversation ?? raw?.data ?? raw;
     const apiGetChatConversationsAtom = objectAtomFamily(
       AtomKeys.apiGetChatConversations,
     );
     const currentConversationsRes = store.get(apiGetChatConversationsAtom);
-
-    if (currentConversationsRes?.data) {
-      const updatedConversations = currentConversationsRes.data.map((c: any) =>
-        c._id === conversation._id || c.id === conversation.id
-          ? conversation
-          : c,
+    const pack = this.getConversationListPack(currentConversationsRes);
+    if (!pack) return;
+    const updatedConversations = pack.rows.map((c: any) => {
+      const targetId = this.normalizeId(
+        conversation._id ||
+          conversation.id ||
+          conversation.conversationId ||
+          conversation.channelId,
       );
-      store.set(apiGetChatConversationsAtom, {
-        ...currentConversationsRes,
-        data: updatedConversations,
+      if (!targetId) return c;
+      const cIds = [
+        c._id,
+        c.id,
+        c.channelId,
+        c.conversationId,
+        c.channel?._id,
+        c.channel?.id,
+        c.conversation?._id,
+        c.conversation?.id,
+      ].map(id => this.normalizeId(id));
+      if (!cIds.includes(targetId)) return c;
+      const merged = { ...c, ...conversation };
+      merged.unreadCount = this.computeRowUnreadAfterSocketPatch({
+        row: c,
+        patch: conversation,
+        targetId,
       });
-    }
+      return merged;
+    });
+    store.set(apiGetChatConversationsAtom, {
+      ...currentConversationsRes,
+      [pack.key]: updatedConversations,
+      lastSocketUpdate: Date.now(),
+    });
   }
 }
 

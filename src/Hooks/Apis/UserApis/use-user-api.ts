@@ -11,6 +11,148 @@ import {
 } from '@/Jotai/Atoms';
 import { useAtom, useSetAtom } from 'jotai';
 
+/** Canonical row id for chat channel / DM list rows (aligned with SocketService matching). */
+function chatListRowId(row: any): string | undefined {
+  if (!row || typeof row !== 'object') return undefined;
+  const candidates = [
+    row._id,
+    row.id,
+    row.channelId,
+    row.conversationId,
+    row.channel?._id,
+    row.channel?.id,
+    row.conversation?._id,
+    row.conversation?.id,
+  ];
+  for (const x of candidates) {
+    if (x != null && String(x).trim() !== '') {
+      return String(x).trim();
+    }
+  }
+  return undefined;
+}
+
+function lastMessageTimestamp(row: any): number {
+  const t = row?.lastMessage?.createdAt;
+  if (t == null) return 0;
+  const n = new Date(t).getTime();
+  return Number.isFinite(n) ? n : 0;
+}
+
+function lastMessageId(row: any): string | undefined {
+  const m = row?.lastMessage;
+  if (!m || typeof m !== 'object') return undefined;
+  const id = m._id ?? m.id;
+  if (id == null) return undefined;
+  return String(id);
+}
+
+function getChatListRows(payload: any): any[] | null {
+  if (!payload || typeof payload !== 'object') return null;
+  if (Array.isArray(payload.data)) return payload.data;
+  if (Array.isArray(payload.channels)) return payload.channels;
+  return null;
+}
+
+function rowIdSetsOverlap(prevRows: any[], nextRows: any[]): boolean {
+  const nextIds = new Set<string>();
+  for (const r of nextRows) {
+    const id = chatListRowId(r);
+    if (id) nextIds.add(id);
+  }
+  if (nextIds.size === 0) return false;
+  for (const r of prevRows) {
+    const id = chatListRowId(r);
+    if (id && nextIds.has(id)) return true;
+  }
+  return false;
+}
+
+/**
+ * After GET chat channels/conversations, merge with the Jotai atom so a slow/stale
+ * HTTP response cannot overwrite real-time socket updates (unread + lastMessage)
+ * while the user stays on Community Chat.
+ */
+function mergeChatListResponsePreservingNewerActivity(
+  prev: any,
+  incoming: any,
+): any {
+  if (!incoming || typeof incoming !== 'object') return incoming;
+  const prevRows = getChatListRows(prev);
+  const nextRows = getChatListRows(incoming);
+  if (!nextRows) return incoming;
+  if (!prevRows || prevRows.length === 0) return incoming;
+  if (!rowIdSetsOverlap(prevRows, nextRows)) return incoming;
+
+  const prevById = new Map<string, any>();
+  for (const r of prevRows) {
+    const id = chatListRowId(r);
+    if (id) prevById.set(id, r);
+  }
+
+  const merged = nextRows.map((row: any) => {
+    const id = chatListRowId(row);
+    const p = id ? prevById.get(id) : undefined;
+    if (!p) return row;
+    const pTime = lastMessageTimestamp(p);
+    const rTime = lastMessageTimestamp(row);
+    if (pTime > rTime) {
+      return {
+        ...row,
+        lastMessage: p.lastMessage,
+        unreadCount: p.unreadCount,
+      };
+    }
+    if (pTime < rTime) {
+      return row;
+    }
+    // Same lastMessage timestamp (common when socket + GET share the same message time).
+    const pMid = lastMessageId(p);
+    const rMid = lastMessageId(row);
+    const pu = Number(p.unreadCount || 0);
+    const ru = Number(row.unreadCount || 0);
+
+    if (pMid && rMid && pMid !== rMid) {
+      if (pu > ru) {
+        return {
+          ...row,
+          lastMessage: p.lastMessage,
+          unreadCount: p.unreadCount,
+        };
+      }
+      return row;
+    }
+    // Same message id (or missing ids): list GET often returns unreadCount 0 while the
+    // client already incremented from the socket — take the max so we don't show N-1.
+    return {
+      ...row,
+      lastMessage: p.lastMessage ?? row.lastMessage,
+      unreadCount: Math.max(pu, ru),
+    };
+  });
+
+  const socketTick =
+    typeof prev?.lastSocketUpdate === 'number'
+      ? prev.lastSocketUpdate
+      : undefined;
+
+  if (Array.isArray(incoming.data)) {
+    return {
+      ...incoming,
+      data: merged,
+      ...(socketTick != null ? { lastSocketUpdate: socketTick } : {}),
+    };
+  }
+  if (Array.isArray(incoming.channels)) {
+    return {
+      ...incoming,
+      channels: merged,
+      ...(socketTick != null ? { lastSocketUpdate: socketTick } : {}),
+    };
+  }
+  return incoming;
+}
+
 const useUserApi = () => {
   const navigation = useNavigation();
   const setUserToken = useSetAtom(userTokenAtom);
@@ -2184,7 +2326,9 @@ const useUserApi = () => {
       );
       const res: any = await api.get(url);
       console.log('🚀 ~ getChatChannels ~ res:', res);
-      setApiGetChatChannels(res);
+      setApiGetChatChannels(prev =>
+        mergeChatListResponsePreservingNewerActivity(prev, res),
+      );
       setApiGetChatChannelsLoading(false);
       return res;
     } catch (error: any) {
@@ -2203,7 +2347,9 @@ const useUserApi = () => {
       );
       const res: any = await api.get(url);
       console.log('🚀 ~ getChatConversations ~ res:', res);
-      setApiGetChatConversations(res);
+      setApiGetChatConversations(prev =>
+        mergeChatListResponsePreservingNewerActivity(prev, res),
+      );
       setApiGetChatConversationsLoading(false);
       return res;
     } catch (error: any) {
@@ -2247,9 +2393,29 @@ const useUserApi = () => {
 
   // Mark Channel Read
   async function markChannelRead(channelId: string) {
+    const cid = String(channelId ?? '').trim();
+    if (!cid) return;
     try {
       setApiMarkChannelReadLoading(true);
-      const url = ApiEndPoints.markChannelRead.replace(':channelId', channelId);
+      setApiGetChatChannels((prev: any) => {
+        const rows = getChatListRows(prev);
+        if (!rows) return prev;
+        const key = Array.isArray(prev?.data)
+          ? 'data'
+          : Array.isArray(prev?.channels)
+            ? 'channels'
+            : 'data';
+        const next = rows.map((c: any) => {
+          const id = chatListRowId(c);
+          return id === cid ? { ...c, unreadCount: 0 } : c;
+        });
+        return {
+          ...prev,
+          [key]: next,
+          lastSocketUpdate: Date.now(),
+        };
+      });
+      const url = ApiEndPoints.markChannelRead.replace(':channelId', cid);
       const res: any = await api.post(url, {});
       setApiMarkChannelReadLoading(false);
       return res;
