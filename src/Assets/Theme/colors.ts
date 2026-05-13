@@ -26,6 +26,7 @@ export const COLORS = {
   gold: '#D48D0B',
   walletLight: '#1c222e',
   walletBorder: '#2d3544',
+  input: 'rgba(255,255,255,0.08)',
 
   // PRIMARY COLORS
   primary: '#1B7CFF',

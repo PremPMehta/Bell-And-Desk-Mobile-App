@@ -98,7 +98,7 @@ class SocketService {
     if (!__DEV__) return;
     if (/^(connect|disconnect|ping|pong)$/i.test(eventName)) return;
     if (
-      /message|chat|channel|conversation|receive|incoming|reply|send/i.test(
+      /message|chat|channel|conversation|receive|incoming|reply|send|typing/i.test(
         eventName,
       )
     ) {
@@ -195,6 +195,12 @@ class SocketService {
     this.socket.removeAllListeners(SOCKET_EVENTS.MESSAGE_DELETED_CLIENT);
     this.socket.removeAllListeners(SOCKET_EVENTS.USER_TYPING);
     this.socket.removeAllListeners(SOCKET_EVENTS.USER_STOPPED_TYPING);
+    for (const ev of SOCKET_EVENTS.USER_TYPING_ALIASES) {
+      this.socket.removeAllListeners(ev);
+    }
+    for (const ev of SOCKET_EVENTS.USER_STOPPED_TYPING_ALIASES) {
+      this.socket.removeAllListeners(ev);
+    }
     this.socket.removeAllListeners(SOCKET_EVENTS.CHANNEL_CREATED);
     this.socket.removeAllListeners(SOCKET_EVENTS.CHANNEL_DELETED);
     this.socket.removeAllListeners(SOCKET_EVENTS.CHANNEL_UPDATED);
@@ -227,13 +233,22 @@ class SocketService {
       this.handleMessageDeleted(data);
     });
 
-    this.socket.on(SOCKET_EVENTS.USER_TYPING, data => {
-      this.handleUserTyping(data, true);
-    });
+    this.socket.on(SOCKET_EVENTS.USER_TYPING, this.boundUserTypingInbound);
+    this.socket.on(
+      SOCKET_EVENTS.USER_STOPPED_TYPING,
+      this.boundUserStoppedInbound,
+    );
 
-    this.socket.on(SOCKET_EVENTS.USER_STOPPED_TYPING, data => {
-      this.handleUserTyping(data, false);
-    });
+    for (const ev of SOCKET_EVENTS.USER_TYPING_ALIASES) {
+      if (ev === 'typing') {
+        this.socket.on(ev, this.boundFlexibleTypingInbound);
+      } else {
+        this.socket.on(ev, this.boundUserTypingInbound);
+      }
+    }
+    for (const ev of SOCKET_EVENTS.USER_STOPPED_TYPING_ALIASES) {
+      this.socket.on(ev, this.boundUserStoppedInbound);
+    }
 
     this.socket.on(SOCKET_EVENTS.CHANNEL_CREATED, channel => {
       this.handleChannelCreated(channel);
@@ -503,15 +518,52 @@ class SocketService {
     const currentMessages = store.get(chatMessagesAtom);
     const channelMessages = currentMessages[channelId] || [];
 
-    const updatedChannelMessages = channelMessages.map((m: any) =>
-      m._id === message._id || m.id === message.id ? message : m,
-    );
+    const updatedMessageId = this.normalizeId(message?._id ?? message?.id);
+    if (!updatedMessageId) {
+      console.warn(
+        'Socket: message_updated ignored (missing message id)',
+        message,
+      );
+      return;
+    }
+
+    const updatedChannelMessages = channelMessages.map((m: any) => {
+      const mid = this.normalizeId(m?._id ?? m?.id);
+      if (!mid || mid !== updatedMessageId) return m;
+
+      // Never blindly replace the whole object; socket payloads for reactions
+      // often include only partial fields. Merge to preserve existing content.
+      const merged = { ...m, ...message };
+      if (message?.reactions !== undefined) merged.reactions = message.reactions;
+      return merged;
+    });
 
     store.set(chatMessagesAtom, {
       ...currentMessages,
       [channelId]: updatedChannelMessages,
     });
   }
+
+  private boundUserTypingInbound = (payload: any) => {
+    this.handleUserTyping(payload, true);
+  };
+
+  private boundUserStoppedInbound = (payload: any) => {
+    this.handleUserTyping(payload, false);
+  };
+
+  /**
+   * Some servers use one event name `typing` with `{ typing: true|false }`.
+   */
+  private boundFlexibleTypingInbound = (payload: any) => {
+    const data = payload?.data ?? payload?.payload ?? payload;
+    const stop =
+      data?.typing === false ||
+      data?.isTyping === false ||
+      data?.stopped === true ||
+      data?.action === 'stop';
+    this.handleUserTyping(payload, !stop);
+  };
 
   private handleMessageDeleted(payload: any) {
     console.log('Socket: Received message deletion payload', payload);
@@ -534,21 +586,67 @@ class SocketService {
     });
   }
 
-  private handleUserTyping(data: any, isTyping: boolean) {
-    const { userId, user } = data;
-    const channelId = this.normalizeId(data?.channelId);
-    if (!channelId || !userId) return;
+  private handleUserTyping(payload: any, isTyping: boolean) {
+    const data =
+      payload?.data ??
+      payload?.payload ??
+      (payload?.user || payload?.channel ? payload : null) ??
+      payload;
+
+    // Backend often omits channelId on typing payloads and only sends { userId, user }.
+    // While the user is inside a channel screen we already set `activeChannelIdAtom` on join.
+    let channelId =
+      this.resolveChannelId(data, data)?.trim() ||
+      this.normalizeId(store.get(activeChannelIdAtom))?.trim();
+
+    const rawUser =
+      data?.user && typeof data.user === 'object'
+        ? data.user
+        : data?.sender && typeof data.sender === 'object'
+          ? data.sender
+          : {};
+
+    const userId = this.normalizeId(
+      data?.userId ??
+        data?.senderId ??
+        data?.memberId ??
+        data?.user_id ??
+        rawUser?._id ??
+        rawUser?.id,
+    );
+
+    if (!channelId || !userId) {
+      if (__DEV__) {
+        console.warn('[SocketService] handleUserTyping ignored (missing IDs)', {
+          channelId,
+          userId,
+          payload,
+        });
+      }
+      return;
+    }
 
     const currentTyping = store.get(typingUsersAtom);
     const channelTyping = currentTyping[channelId] || [];
 
     let updatedChannelTyping;
     if (isTyping) {
-      if (channelTyping.find((u: any) => u.userId === userId)) return;
-      updatedChannelTyping = [...channelTyping, { userId, ...user }];
+      const exists = channelTyping.some(
+        (u: any) => this.normalizeId(u.userId || u._id || u.id) === userId,
+      );
+      if (exists) return;
+
+      const mergeUser =
+        data?.user && typeof data.user === 'object'
+          ? { ...data.user, userId }
+          : Object.keys(rawUser).length > 0
+            ? { ...rawUser, userId }
+            : { userId };
+
+      updatedChannelTyping = [...channelTyping, mergeUser];
     } else {
       updatedChannelTyping = channelTyping.filter(
-        (u: any) => u.userId !== userId,
+        (u: any) => this.normalizeId(u.userId || u._id || u.id) !== userId,
       );
     }
 

@@ -852,6 +852,14 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiSendChatMessage),
   );
 
+  // React to Message Apis
+  const [apiReactToMessageLoading, setApiReactToMessageLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiReactToMessageLoading),
+  );
+  const [apiReactToMessage, setApiReactToMessage] = useAtom(
+    objectAtomFamily(AtomKeys.apiReactToMessage),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -2403,8 +2411,8 @@ const useUserApi = () => {
         const key = Array.isArray(prev?.data)
           ? 'data'
           : Array.isArray(prev?.channels)
-            ? 'channels'
-            : 'data';
+          ? 'channels'
+          : 'data';
         const next = rows.map((c: any) => {
           const id = chatListRowId(c);
           return id === cid ? { ...c, unreadCount: 0 } : c;
@@ -2447,6 +2455,25 @@ const useUserApi = () => {
     } catch (error: any) {
       console.error('Error sending chat message:', error);
       setApiSendChatMessageLoading(false);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+    }
+  }
+
+  // React to Message
+  async function reactToMessage(messageId: string, emoji: string) {
+    try {
+      setApiReactToMessageLoading(true);
+      const url = ApiEndPoints.chatReactions.replace(':messageId', messageId);
+      const payload = { emoji };
+      const res: any = await api.post(url, payload);
+      setApiReactToMessage(res);
+      setApiReactToMessageLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error reacting to message:', error);
+      setApiReactToMessageLoading(false);
       ToastModule.errorBottom({
         msg: error?.resError?.message || error?.message,
       });
@@ -2969,6 +2996,7 @@ const useUserApi = () => {
     getLiveStreamList,
     apiGetLiveStreamListLoading,
     apiGetLiveStreamList,
+
     getLiveStreamToken,
     apiGetLiveStreamTokenLoading,
     apiGetLiveStreamToken,
@@ -2977,21 +3005,29 @@ const useUserApi = () => {
     getChatChannels,
     apiGetChatChannelsLoading,
     apiGetChatChannels,
+
     getChatConversations,
     apiGetChatConversationsLoading,
     apiGetChatConversations,
+
     getChatMessages,
     apiGetChatMessagesLoading,
     apiGetChatMessages,
+
     getChatCommunityMembers,
     apiGetChatCommunityMembersLoading,
     apiGetChatCommunityMembers,
+
     markChannelRead,
     apiMarkChannelReadLoading,
 
     sendChatMessage,
     apiSendChatMessageLoading,
     apiSendChatMessage,
+
+    reactToMessage,
+    apiReactToMessageLoading,
+    apiReactToMessage,
 
     // User
     user,

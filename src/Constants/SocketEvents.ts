@@ -16,6 +16,24 @@ export const SOCKET_EVENTS = {
   // Server -> Client
   USER_TYPING: 'user_typing',
   USER_STOPPED_TYPING: 'user_stopped_typing',
+  /**
+   * Many backends broadcast typing on different names than `user_typing`.
+   * All are wired to the same handler in SocketService.
+   */
+  USER_TYPING_ALIASES: [
+    'typing',
+    'userTyping',
+    'typing_start',
+    'typingStarted',
+    'channel_user_typing',
+  ] as const,
+  USER_STOPPED_TYPING_ALIASES: [
+    'stop_typing',
+    'typing_stop',
+    'typingStopped',
+    'userStoppedTyping',
+    'channel_user_stop_typing',
+  ] as const,
   MESSAGE_RECEIVED: 'message_received',
   /**
    * Optional aliases — many backends use a different name than `message_received`.
