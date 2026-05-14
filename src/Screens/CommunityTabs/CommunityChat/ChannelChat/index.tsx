@@ -38,7 +38,6 @@ import { chatMessagesAtom, typingUsersAtom } from '@/Jotai/Atoms';
 import { store } from '@/Jotai/Store';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useSharedValue } from 'react-native-reanimated';
 
 const VirtualizedListScrollView = React.memo(
   React.forwardRef<any, any>((props, ref) => {
@@ -57,8 +56,6 @@ const ChannelChat = () => {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-
-  const extraPadding = useSharedValue(0);
 
   const { channelData, communityId } = route.params ?? {};
 
@@ -86,6 +83,8 @@ const ChannelChat = () => {
     width: number;
     height: number;
     isMe: boolean;
+    touchX?: number | null;
+    touchY?: number | null;
   } | null>(null);
 
   const [, setAllMessages] = useAtom(chatMessagesAtom);
@@ -201,7 +200,7 @@ const ChannelChat = () => {
 
     return date.toLocaleDateString([], {
       day: 'numeric',
-      month: 'numeric',
+      month: 'short',
       year: 'numeric',
     });
   };
@@ -286,6 +285,7 @@ const ChannelChat = () => {
 
     if (communityId) {
       SocketService.setCommunityId(communityId);
+      getChatCommunityMembers(communityId);
     }
 
     SocketService.joinChannel(channelId);
@@ -359,12 +359,11 @@ const ChannelChat = () => {
     (props: any) => (
       <VirtualizedListScrollView
         {...props}
-        extraContentPadding={extraPadding}
         keyboardLiftBehavior="always"
         inverted={true}
       />
     ),
-    [extraPadding],
+    [],
   );
 
   if (isInitialLoading && !messages.length) {
@@ -464,28 +463,50 @@ const ChannelChat = () => {
     }
   };
 
-  const handleHeaderPress = async () => {
+  const handleHeaderPress = () => {
     if (communityId) {
-      await getChatCommunityMembers(communityId);
-
       setIsDetailsVisible(true);
     }
   };
 
   const getMyReactionEmoji = (message: any): string | null => {
     const myUserId = normalizeId(user?._id || user?.id);
-    if (!myUserId) return null;
+    if (!myUserId || !message) return null;
     const reactions = Array.isArray(message?.reactions)
       ? message.reactions
       : [];
-    const found = reactions.find((r: any) => {
-      const sid = normalizeId(r?.senderId || r?.sender?._id || r?.sender?.id);
-      return !!sid && sid === myUserId && !!r?.emoji;
-    });
-    return found?.emoji ?? null;
+
+    for (const r of reactions) {
+      if (!r?.emoji) continue;
+
+      // Grouped format: { emoji, users: [...], count }
+      if (Array.isArray(r.users) && r.users.length > 0) {
+        const isInGroup = r.users.some((u: any) => {
+          if (typeof u === 'string') return normalizeId(u) === myUserId;
+          return normalizeId(u?._id || u?.id || u?.userId) === myUserId;
+        });
+        if (isInGroup) return r.emoji;
+      }
+
+      // Grouped format with reactedBy: { emoji, reactedBy: [...] }
+      if (Array.isArray(r.reactedBy) && r.reactedBy.length > 0) {
+        const isInGroup = r.reactedBy.some((u: any) => {
+          if (typeof u === 'string') return normalizeId(u) === myUserId;
+          return normalizeId(u?._id || u?.id || u?.userId) === myUserId;
+        });
+        if (isInGroup) return r.emoji;
+      }
+
+      // Flat format: { emoji, senderId / userId / sender }
+      const sid = normalizeId(
+        r?.senderId || r?.userId || r?.sender?._id || r?.sender?.id || r?.user,
+      );
+      if (sid && sid === myUserId) return r.emoji;
+    }
+    return null;
   };
 
-  const openEmojiPickerForMessage = (item: any) => {
+  const openEmojiPickerForMessage = (item: any, nativeEvent?: any) => {
     const messageId = normalizeId(item?._id || item?.id);
     if (!messageId || isEmojiPickerVisible) return;
 
@@ -500,32 +521,51 @@ const ChannelChat = () => {
     );
     const isMe = !!myId && !!senderId && myId === senderId;
 
+    // pageX/pageY from the long-press event are screen-absolute on both
+    // iOS and Android — far more reliable than measureInWindow on Android.
+    const touchX: number | null = nativeEvent?.pageX ?? null;
+    const touchY: number | null = nativeEvent?.pageY ?? null;
+
+    const showPicker = (
+      x: number,
+      y: number,
+      width: number,
+      height: number,
+    ) => {
+      setEmojiAnchor({ x, y, width, height, isMe, touchX, touchY });
+      setIsEmojiPickerVisible(true);
+      requestAnimationFrame(() => {
+        const off = freezeScrollOffsetRef.current;
+        if (off != null) {
+          flatListRef.current?.scrollToOffset?.({
+            offset: off,
+            animated: false,
+          });
+        }
+      });
+    };
+
     if (bubbleRef?.measureInWindow) {
       bubbleRef.measureInWindow(
         (x: number, y: number, width: number, height: number) => {
-          // Fallback if measurement returns zeros (can happen if view is off-screen)
-          if (x === 0 && y === 0) {
-            setEmojiAnchor({ x: 16, y: 120, width: 0, height: 0, isMe });
+          // On Android measureInWindow can return all zeros when the view
+          // is inside a FlatList that hasn't fully committed its layout yet.
+          // In that case, fall back to the touch coordinates.
+          const validMeasure = !(
+            x === 0 &&
+            y === 0 &&
+            width === 0 &&
+            height === 0
+          );
+          if (validMeasure) {
+            showPicker(x, y, width, height);
           } else {
-            setEmojiAnchor({ x, y, width, height, isMe });
+            showPicker(touchX ?? 20, touchY ?? 200, 0, 0);
           }
-          setIsEmojiPickerVisible(true);
-
-          requestAnimationFrame(() => {
-            const off = freezeScrollOffsetRef.current;
-            if (off != null) {
-              flatListRef.current?.scrollToOffset?.({
-                offset: off,
-                animated: false,
-              });
-            }
-          });
         },
       );
     } else {
-      // Fallback: show near top if ref missing
-      setEmojiAnchor({ x: 16, y: 120, width: 0, height: 0, isMe });
-      setIsEmojiPickerVisible(true);
+      showPicker(touchX ?? 20, touchY ?? 200, 0, 0);
     }
   };
 
@@ -751,7 +791,7 @@ const ChannelChat = () => {
             </View>
           )}
 
-          <View
+          {/* <View
             style={isMe ? styles.bubbleWrapperMe : styles.bubbleWrapperThem}
           >
             <Pressable
@@ -763,9 +803,17 @@ const ChannelChat = () => {
               }}
               collapsable={false}
               onPress={() => {}} // Empty onPress to help gesture responder
-              onLongPress={() => openEmojiPickerForMessage(item)}
-              delayLongPress={300}
-              hitSlop={5}
+              onLongPress={e => openEmojiPickerForMessage(item, e.nativeEvent)}
+              delayLongPress={350}
+              android_disableSound={true}
+              unstable_pressDelay={0}
+              pressRetentionOffset={{
+                top: 20,
+                left: 20,
+                right: 20,
+                bottom: 20,
+              }}
+              hitSlop={10}
               style={[
                 styles.bubble,
                 isMe ? styles.bubbleMe : styles.bubbleThem,
@@ -773,20 +821,99 @@ const ChannelChat = () => {
               ]}
             >
               {!isMe && (
-                <Text style={styles.senderName}>
+                <Text
+                  style={styles.senderName}
+                  selectable={false}
+                  suppressHighlighting
+                  onLongPress={e =>
+                    openEmojiPickerForMessage(item, e.nativeEvent)
+                  }
+                >
                   {sender.firstName} {sender.lastName}
                 </Text>
               )}
 
-              {/* Keep the timestamp inside the same text run. Non-breaking
-                  spaces prevent the time from wrapping onto its own line. */}
-              <Text style={styles.msgText}>
+              <Text
+                style={styles.msgText}
+                selectable={false}
+                suppressHighlighting
+                onLongPress={e =>
+                  openEmojiPickerForMessage(item, e.nativeEvent)
+                }
+              >
                 {item.content || item.text}
-                <Text style={styles.timeSpacer}>{'\u00A0\u00A0\u00A0'}</Text>
-                <Text style={styles.timeTextInline}>
+                <Text style={styles.timeSpacer} selectable={false}>
+                  {'   '}
+                </Text>
+                <Text style={styles.timeTextInline} selectable={false}>
                   {formatTime(item.createdAt)}
                 </Text>
               </Text>
+            </Pressable>
+
+            {renderReactions(item, isMe)}
+          </View> */}
+
+          <View
+            style={isMe ? styles.bubbleWrapperMe : styles.bubbleWrapperThem}
+          >
+            <Pressable
+              ref={(r: any) => {
+                const mid = normalizeId(item?._id || item?.id);
+
+                if (!mid) return;
+
+                if (r) {
+                  messageBubbleRefs.current.set(mid, r);
+                } else {
+                  messageBubbleRefs.current.delete(mid);
+                }
+              }}
+              collapsable={false}
+              android_disableSound={true}
+              delayLongPress={450}
+              hitSlop={12}
+              pressRetentionOffset={{
+                top: 40,
+                left: 40,
+                right: 40,
+                bottom: 40,
+              }}
+              onLongPress={e => {
+                openEmojiPickerForMessage(item, e.nativeEvent);
+              }}
+              style={[
+                styles.bubble,
+                isMe ? styles.bubbleMe : styles.bubbleThem,
+                hasReactions && styles.bubbleWithReaction,
+              ]}
+            >
+              {!isMe && (
+                <Text
+                  style={styles.senderName}
+                  selectable={false}
+                  suppressHighlighting
+                >
+                  {sender.firstName} {sender.lastName}
+                </Text>
+              )}
+
+              {/* <View style={styles.msgRow}> */}
+              <Text
+                style={styles.msgText}
+                selectable={false}
+                suppressHighlighting
+              >
+                {item.content || item.text}
+
+                <Text style={styles.timeSpacer} selectable={false}>
+                  {'   '}
+                </Text>
+                <Text style={styles.timeTextInline} selectable={false}>
+                  {formatTime(item.createdAt)}
+                </Text>
+              </Text>
+              {/* </View> */}
             </Pressable>
 
             {renderReactions(item, isMe)}
@@ -848,6 +975,7 @@ const ChannelChat = () => {
                 return id || `index-${index}`;
               }}
               keyboardShouldPersistTaps="handled"
+              removeClippedSubviews={false}
               scrollEnabled={!isEmojiPickerVisible}
               onScroll={e => {
                 scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
@@ -866,12 +994,6 @@ const ChannelChat = () => {
           {/* INPUT BAR */}
           <KeyboardStickyView>
             <View
-              onLayout={e => {
-                const height = e.nativeEvent.layout.height;
-                // Subtracting bottom inset to get the actual composer height above safe area if needed,
-                // but extraContentPadding usually works best with the full height of the sticky element.
-                extraPadding.value = height;
-              }}
               style={[
                 styles.inputMainContainer,
                 {
@@ -944,7 +1066,15 @@ const ChannelChat = () => {
         onClose={() => closeEmojiPicker()}
         onSelectEmoji={handleEmojiSelect}
         anchor={emojiAnchor}
-        selectedEmoji={getMyReactionEmoji(longPressedMessage)}
+        selectedEmoji={getMyReactionEmoji(
+          (longPressedMessage &&
+            messages.find(
+              m =>
+                normalizeId(m?._id || m?.id) ===
+                normalizeId(longPressedMessage?._id || longPressedMessage?.id),
+            )) ||
+            longPressedMessage,
+        )}
       />
     </View>
   );

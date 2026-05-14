@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Modal,
   Pressable,
   View,
   Text,
   TouchableOpacity,
-  Dimensions,
   StyleSheet,
+  useWindowDimensions,
+  Animated,
 } from 'react-native';
 import { ms } from '@/Assets/Theme/fontStyle';
+import { COLORS } from '@/Assets/Theme/colors';
 
 interface EmojiPickerModalProps {
   isVisible: boolean;
@@ -20,6 +22,8 @@ interface EmojiPickerModalProps {
     width: number;
     height: number;
     isMe: boolean;
+    touchX?: number | null;
+    touchY?: number | null;
   } | null;
   selectedEmoji?: string | null;
   emojis?: string[];
@@ -33,96 +37,177 @@ const EmojiPickerModal: React.FC<EmojiPickerModalProps> = ({
   selectedEmoji,
   emojis = ['👍', '❤️', '😂', '😮', '😢', '🙏'],
 }) => {
-  const renderContent = () => {
-    if (!anchor) return null;
+  const { width: screenW, height: screenH } = useWindowDimensions();
 
-    const { width: screenW, height: screenH } = Dimensions.get('window');
+  const [pickerSize, setPickerSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+  const [ready, setReady] = useState(false);
+  const scaleAnim = useState(() => new Animated.Value(0))[0];
 
-    // Approx emoji bar size (6 emojis, padding, gaps)
-    const approxPopoverW = 6 * 44 + 24;
-    const approxPopoverH = 56;
+  useEffect(() => {
+    if (isVisible) {
+      setPickerSize(null);
+      setReady(false);
+      scaleAnim.setValue(0);
+    }
+  }, [isVisible]);
 
-    const preferredLeft = anchor.isMe
-      ? anchor.x + anchor.width - approxPopoverW
-      : anchor.x;
+  useEffect(() => {
+    if (ready) {
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 6,
+        tension: 120,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [ready]);
 
-    const left = Math.max(
-      8,
-      Math.min(preferredLeft, screenW - approxPopoverW - 8),
-    );
+  const handleLayout = useCallback((e: any) => {
+    const { width, height } = e.nativeEvent.layout;
+    if (width > 0 && height > 0) {
+      setPickerSize({ width, height });
+      setReady(true);
+    }
+  }, []);
 
-    // Prefer showing above bubble; if not enough space, show below
-    const aboveTop = anchor.y - approxPopoverH - 10;
-    const belowTop = anchor.y + anchor.height + 10;
-    const top =
-      aboveTop >= 8
-        ? aboveTop
-        : Math.min(belowTop, screenH - approxPopoverH - 8);
+  const computePosition = (): { left: number; top: number } => {
+    if (!anchor) return { left: 8, top: 100 };
 
-    return (
-      <View style={[styles.emojiPopover, { left, top }]}>
-        <View style={styles.emojiPickerContainer}>
-          {emojis.map(emoji => (
-            <TouchableOpacity
-              key={emoji}
-              style={[
-                styles.emojiItem,
-                selectedEmoji === emoji && styles.emojiItemSelected,
-              ]}
-              onPress={() => onSelectEmoji(emoji)}
-            >
-              <Text style={styles.emojiText}>{emoji}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-    );
+    const popW = pickerSize?.width ?? emojis.length * 46 + 20;
+    const popH = pickerSize?.height ?? 60;
+
+    let anchorCenterX: number;
+    if (anchor.touchX != null) {
+      anchorCenterX = anchor.touchX;
+    } else if (anchor.width > 0) {
+      anchorCenterX = anchor.x + anchor.width / 2;
+    } else {
+      anchorCenterX = screenW / 2;
+    }
+
+    let left = anchorCenterX - popW / 2;
+    left = Math.max(8, Math.min(left, screenW - popW - 8));
+
+    const anchorTopY = anchor.touchY != null ? anchor.touchY : anchor.y;
+    const aboveTop = anchorTopY - popH - 12;
+    const belowTop = anchor.y + anchor.height + 12;
+
+    let top: number;
+    if (aboveTop >= 60) {
+      top = aboveTop;
+    } else {
+      top = Math.min(belowTop, screenH - popH - 8);
+    }
+
+    return { left, top };
   };
+
+  const { left, top } = computePosition();
 
   return (
     <Modal
       visible={isVisible}
       transparent
       animationType="fade"
+      statusBarTranslucent
       onRequestClose={onClose}
     >
-      <Pressable style={styles.emojiModalOverlay} onPress={onClose}>
-        {renderContent()}
+      <Pressable style={styles.overlay} onPress={onClose}>
+        {anchor && (
+          <Animated.View
+            style={[
+              styles.popoverWrapper,
+              {
+                left,
+                top,
+                opacity: ready ? 1 : 0,
+                transform: [{ scale: scaleAnim }],
+              },
+            ]}
+            onStartShouldSetResponder={() => true}
+            onLayout={handleLayout}
+          >
+            <View style={styles.pickerRow}>
+              {emojis.map(emoji => {
+                const isSelected = selectedEmoji === emoji;
+                return (
+                  <TouchableOpacity
+                    key={emoji}
+                    activeOpacity={0.7}
+                    style={[
+                      styles.emojiBtn,
+                      isSelected && styles.emojiBtnSelected,
+                    ]}
+                    onPress={() => onSelectEmoji(emoji)}
+                  >
+                    <Text
+                      style={[
+                        styles.emojiText,
+                        isSelected && styles.emojiTextSelected,
+                      ]}
+                    >
+                      {emoji}
+                    </Text>
+                    {isSelected && <View style={styles.selectedDot} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </Animated.View>
+        )}
       </Pressable>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  emojiModalOverlay: {
+  overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
   },
-  emojiPopover: {
+  popoverWrapper: {
     position: 'absolute',
   },
-  emojiPickerContainer: {
-    backgroundColor: '#2c2c2e',
-    borderRadius: ms(30),
-    paddingHorizontal: ms(8),
+  pickerRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#2c2c2e',
+    borderRadius: ms(30),
+    paddingHorizontal: ms(6),
+    paddingVertical: ms(6),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.35,
     shadowRadius: 8,
-    elevation: 8,
+    elevation: 10,
   },
-  emojiItem: {
+  emojiBtn: {
     padding: ms(8),
+    borderRadius: ms(24),
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  emojiItemSelected: {
-    padding: ms(4),
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderRadius: ms(30),
+  emojiBtnSelected: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
   },
   emojiText: {
-    fontSize: ms(24),
+    fontSize: ms(20),
+  },
+  emojiTextSelected: {
+    fontSize: ms(20),
+  },
+  selectedDot: {
+    position: 'absolute',
+    bottom: ms(2),
+    width: ms(5),
+    height: ms(5),
+    borderRadius: ms(3),
+    backgroundColor: COLORS.primary,
   },
 });
 

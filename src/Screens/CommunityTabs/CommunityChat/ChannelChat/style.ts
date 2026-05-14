@@ -101,6 +101,11 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.5)',
     marginBottom: mvs(2),
   },
+  msgRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: ms(8),
+  },
   msgText: {
     ...THEME.fontStyle.h5Regular,
     color: COLORS.white,
@@ -121,7 +126,7 @@ const styles = StyleSheet.create({
   timeTextInline: {
     ...THEME.fontStyle.h6Regular,
     color: 'rgba(255,255,255,0.65)',
-    fontSize: ms(10),
+    top: mvs(1),
   },
   timeText: {
     ...THEME.fontStyle.h6Regular,

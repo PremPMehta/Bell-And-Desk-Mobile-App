@@ -115,6 +115,7 @@ const CommunityChat = ({
   );
 
   const [isFirstLoad, setIsFirstLoad] = React.useState(true);
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
 
   // Reset isFirstLoad when communityId changes to show loader for new community
   useEffect(() => {
@@ -141,12 +142,6 @@ const CommunityChat = ({
     }
   }, [communityId]);
 
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     fetchData();
-  //   }, [fetchData]),
-  // );
-
   useFocusEffect(
     useCallback(() => {
       // VERY IMPORTANT
@@ -160,7 +155,12 @@ const CommunityChat = ({
   );
 
   const onRefresh = async () => {
-    await fetchData();
+    setIsRefreshing(true);
+    try {
+      await fetchData();
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   // Initial full screen loading logic
@@ -401,9 +401,7 @@ const CommunityChat = ({
       scrollEventThrottle={scrollEventThrottle}
       refreshControl={
         <RefreshControl
-          refreshing={
-            apiGetChatChannelsLoading || apiGetChatConversationsLoading
-          }
+          refreshing={isRefreshing}
           onRefresh={onRefresh}
           tintColor={COLORS.primary}
         />

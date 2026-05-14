@@ -56,6 +56,16 @@ const ChannelDetailsModal = ({ isVisible, onClose, channelData, members }: Props
       swipeDirection="down"
       style={styles.modal}
       propagateSwipe
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      animationInTiming={350}
+      animationOutTiming={300}
+      backdropTransitionInTiming={350}
+      backdropTransitionOutTiming={0}
+      hideModalContentWhileAnimating
+      useNativeDriver
+      useNativeDriverForBackdrop
+      statusBarTranslucent
     >
       <View style={styles.container}>
         <View style={styles.handle} />
