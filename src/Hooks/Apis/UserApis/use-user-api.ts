@@ -860,6 +860,33 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiReactToMessage),
   );
 
+  // Get Conversation Details Apis
+  const [apiGetConversationDetailsLoading, setApiGetConversationDetailsLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiGetConversationDetailsLoading),
+    );
+  const [apiGetConversationDetails, setApiGetConversationDetails] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetConversationDetails),
+  );
+
+  // Get Conversation Messages Apis
+  const [apiGetConversationMessagesLoading, setApiGetConversationMessagesLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiGetConversationMessagesLoading),
+    );
+  const [apiGetConversationMessages, setApiGetConversationMessages] = useAtom(
+    objectAtomFamily(AtomKeys.apiGetConversationMessages),
+  );
+
+  // Send Conversation Message Apis
+  const [apiSendConversationMessageLoading, setApiSendConversationMessageLoading] =
+    useAtom(
+      booleanDefaultFalseAtomFamily(AtomKeys.apiSendConversationMessageLoading),
+    );
+  const [apiSendConversationMessage, setApiSendConversationMessage] = useAtom(
+    objectAtomFamily(AtomKeys.apiSendConversationMessage),
+  );
+
   // User Unified Login
   async function getUserUnifiedLogin(body: any) {
     try {
@@ -2480,6 +2507,105 @@ const useUserApi = () => {
     }
   }
 
+  // Mark Conversation Read
+  async function markConversationRead(conversationId: string) {
+    const cid = String(conversationId ?? '').trim();
+    if (!cid) return;
+    try {
+      setApiGetChatConversations((prev: any) => {
+        const rows = getChatListRows(prev);
+        if (!rows) return prev;
+        const key = Array.isArray(prev?.data)
+          ? 'data'
+          : Array.isArray(prev?.channels)
+          ? 'channels'
+          : 'data';
+        const next = rows.map((c: any) => {
+          const id = chatListRowId(c);
+          return id === cid ? { ...c, unreadCount: 0 } : c;
+        });
+        return {
+          ...prev,
+          [key]: next,
+          lastSocketUpdate: Date.now(),
+        };
+      });
+      const url = ApiEndPoints.markConversationRead.replace(
+        ':conversationId',
+        cid,
+      );
+      const res: any = await api.post(url, {});
+      return res;
+    } catch (error: any) {
+      console.error('Error marking conversation as read:', error);
+    }
+  }
+
+  // Get Conversation Details
+  async function getConversationDetails(conversationId: string) {
+    try {
+      setApiGetConversationDetailsLoading(true);
+      const url = ApiEndPoints.chatConversationDetails.replace(
+        ':conversationId',
+        conversationId,
+      );
+      const res: any = await api.get(url);
+      setApiGetConversationDetails(res);
+      setApiGetConversationDetailsLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching conversation details:', error);
+      setApiGetConversationDetailsLoading(false);
+    }
+  }
+
+  // Get Conversation Messages
+  async function getConversationMessages(conversationId: string) {
+    try {
+      setApiGetConversationMessagesLoading(true);
+      const url = ApiEndPoints.chatConversationMessages.replace(
+        ':conversationId',
+        conversationId,
+      );
+      const res: any = await api.get(url);
+      setApiGetConversationMessages(res);
+      setApiGetConversationMessagesLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error fetching conversation messages:', error);
+      setApiGetConversationMessagesLoading(false);
+    }
+  }
+
+  // Send Conversation Message
+  async function sendConversationMessage(
+    conversationId: string,
+    content: string,
+    attachments: any[] = [],
+  ) {
+    try {
+      setApiSendConversationMessageLoading(true);
+      const url = ApiEndPoints.chatConversationMessages.replace(
+        ':conversationId',
+        conversationId,
+      );
+      const payload = {
+        content,
+        attachments: Array.isArray(attachments) ? attachments : [],
+      };
+      const res: any = await api.post(url, payload);
+      setApiSendConversationMessage(res);
+      setApiSendConversationMessageLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error sending conversation message:', error);
+      setApiSendConversationMessageLoading(false);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+    }
+  }
+
   // Get Video Bank
   async function getVideoBank(communityId: string, query: string) {
     try {
@@ -3028,6 +3154,21 @@ const useUserApi = () => {
     reactToMessage,
     apiReactToMessageLoading,
     apiReactToMessage,
+
+    // Direct Messages
+    markConversationRead,
+
+    getConversationDetails,
+    apiGetConversationDetailsLoading,
+    apiGetConversationDetails,
+
+    getConversationMessages,
+    apiGetConversationMessagesLoading,
+    apiGetConversationMessages,
+
+    sendConversationMessage,
+    apiSendConversationMessageLoading,
+    apiSendConversationMessage,
 
     // User
     user,

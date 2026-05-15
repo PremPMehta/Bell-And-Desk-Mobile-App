@@ -27,6 +27,7 @@ import PdfViewer from '@/Screens/Shared/PdfViewer';
 import LiveStream from '@/Screens/LiveStream';
 import HLSPlayerScreen from '@/Screens/HLSPlayerScreen';
 import ChannelChat from '@/Screens/CommunityTabs/CommunityChat/ChannelChat';
+import DirectMessageChat from '@/Screens/CommunityTabs/CommunityChat/DirectMessageChat';
 import { hideSplash } from 'react-native-splash-view';
 
 export type StackNavigationProp<T> = any;
@@ -259,6 +260,11 @@ const AppNavigator = () => {
         <MainStack.Screen
           name="ChannelChat"
           component={ChannelChat}
+          options={{ headerShown: false }}
+        />
+        <MainStack.Screen
+          name="DirectMessageChat"
+          component={DirectMessageChat}
           options={{ headerShown: false }}
         />
       </MainStack.Navigator>

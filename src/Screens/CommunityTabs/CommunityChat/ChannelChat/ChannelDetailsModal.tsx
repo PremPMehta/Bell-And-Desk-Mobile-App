@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   Image,
   FlatList,
-  Platform,
 } from 'react-native';
 import Modal from 'react-native-modal';
 import Icon from '@/Components/Core/Icons';
@@ -21,27 +20,44 @@ interface Props {
   members: any[];
 }
 
-const ChannelDetailsModal = ({ isVisible, onClose, channelData, members }: Props) => {
+const ChannelDetailsModal = ({
+  isVisible,
+  onClose,
+  channelData,
+  members,
+}: Props) => {
   const renderMember = ({ item }: { item: any }) => {
-    const isAdmin = item.role === 'admin' || item.role === 'owner';
+    const isAdmin = item?.isAdmin; // item.role === 'admin' || item.role === 'owner';
     const initials = item.firstName ? item.firstName[0] : 'U';
 
     return (
       <View style={styles.memberRow}>
         <View style={styles.memberAvatar}>
           {item.profilePicture?.url ? (
-            <Image source={{ uri: item.profilePicture.url }} style={styles.avatarImg} />
+            <Image
+              source={{ uri: item.profilePicture.url }}
+              style={styles.avatarImg}
+            />
           ) : (
             <Text style={styles.avatarTxt}>{initials}</Text>
           )}
         </View>
         <View style={styles.memberInfo}>
-          <Text style={styles.memberName}>{item.firstName} {item.lastName}</Text>
+          <Text style={styles.memberName}>
+            {item.firstName} {item.lastName}
+          </Text>
           <Text style={styles.memberEmail}>{item.email}</Text>
         </View>
         {isAdmin && (
-          <View style={[styles.roleBadge, item.role === 'owner' ? styles.ownerBadge : styles.adminBadge]}>
-            <Text style={styles.roleText}>{item.role === 'owner' ? 'OWNER' : 'ADMIN'}</Text>
+          <View
+            style={[
+              styles.roleBadge,
+              item.role === 'owner' ? styles.ownerBadge : styles.adminBadge,
+            ]}
+          >
+            <Text style={styles.roleText}>
+              {item.role === 'owner' ? 'OWNER' : 'ADMIN'}
+            </Text>
           </View>
         )}
       </View>
@@ -69,7 +85,7 @@ const ChannelDetailsModal = ({ isVisible, onClose, channelData, members }: Props
     >
       <View style={styles.container}>
         <View style={styles.handle} />
-        
+
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Channel Details</Text>
           <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
@@ -81,9 +97,12 @@ const ChannelDetailsModal = ({ isVisible, onClose, channelData, members }: Props
           <View style={styles.channelIcon}>
             <Text style={styles.hash}>#</Text>
           </View>
-          <Text style={styles.channelName}>{channelData?.name || 'General'}</Text>
+          <Text style={styles.channelName}>
+            {channelData?.name || 'General'}
+          </Text>
           <Text style={styles.channelDesc}>
-            {channelData?.description || 'No description provided for this channel.'}
+            {channelData?.description ||
+              'No description provided for this channel.'}
           </Text>
         </View>
 
@@ -98,7 +117,7 @@ const ChannelDetailsModal = ({ isVisible, onClose, channelData, members }: Props
           <FlatList
             data={members}
             renderItem={renderMember}
-            keyExtractor={(item) => item._id || item.id}
+            keyExtractor={item => item._id || item.id}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
           />
@@ -135,11 +154,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: ms(20),
     paddingVertical: mvs(15),
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: COLORS.input,
   },
   headerTitle: {
     ...THEME.fontStyle.h4Bold,
-    color: COLORS.white,
   },
   closeBtn: {
     padding: ms(5),
@@ -148,7 +166,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: ms(20),
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: COLORS.input,
   },
   channelIcon: {
     width: ms(60),
@@ -165,7 +183,6 @@ const styles = StyleSheet.create({
   },
   channelName: {
     ...THEME.fontStyle.h3Bold,
-    color: COLORS.white,
     marginBottom: mvs(6),
   },
   channelDesc: {
@@ -186,7 +203,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...THEME.fontStyle.h5Bold,
-    color: COLORS.white,
     letterSpacing: 0.5,
   },
   countBadge: {
@@ -225,14 +241,12 @@ const styles = StyleSheet.create({
   },
   avatarTxt: {
     ...THEME.fontStyle.h4Bold,
-    color: COLORS.white,
   },
   memberInfo: {
     flex: 1,
   },
   memberName: {
     ...THEME.fontStyle.h5SemiBold,
-    color: COLORS.white,
   },
   memberEmail: {
     ...THEME.fontStyle.h6Regular,
@@ -251,9 +265,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(33, 150, 243, 0.2)',
   },
   roleText: {
-    fontSize: ms(10),
-    fontWeight: '700',
-    color: COLORS.white,
+    ...THEME.fontStyle.h6SemiBold,
   },
 });
 

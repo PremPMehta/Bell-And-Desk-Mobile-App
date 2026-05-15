@@ -252,6 +252,14 @@ export const AtomKeys = {
   apiReactToMessageLoading: 'apiReactToMessageLoading',
   apiReactToMessage: 'apiReactToMessage',
 
+  // Direct Messages
+  apiGetConversationDetailsLoading: 'apiGetConversationDetailsLoading',
+  apiGetConversationDetails: 'apiGetConversationDetails',
+  apiGetConversationMessagesLoading: 'apiGetConversationMessagesLoading',
+  apiGetConversationMessages: 'apiGetConversationMessages',
+  apiSendConversationMessageLoading: 'apiSendConversationMessageLoading',
+  apiSendConversationMessage: 'apiSendConversationMessage',
+
   // Real-time Chat (Socket)
   chatMessages: 'chatMessages',
   typingUsers: 'typingUsers',

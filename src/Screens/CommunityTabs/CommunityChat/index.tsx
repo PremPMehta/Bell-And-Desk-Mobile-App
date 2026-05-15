@@ -242,9 +242,10 @@ const CommunityChat = ({
       <TouchableOpacity
         style={styles.itemCard}
         onPress={() =>
-          navigation.navigate('ChannelChat', {
-            channelData: {
+          navigation.navigate('DirectMessageChat', {
+            conversationData: {
               ...item,
+              participant,
               name: `${participant.firstName} ${participant.lastName}`,
             },
             communityId: communityId,
@@ -303,7 +304,7 @@ const CommunityChat = ({
         {/* Channels Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>CHANNELS</Text>
+            <Text style={styles.sectionTitle}>Channels</Text>
             <View
               style={[
                 styles.countBadge,
@@ -351,7 +352,7 @@ const CommunityChat = ({
         {/* Direct Messages Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>DIRECT MESSAGES</Text>
+            <Text style={styles.sectionTitle}>Direct Messages</Text>
             <View
               style={[
                 styles.countBadge,
