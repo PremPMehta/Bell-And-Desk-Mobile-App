@@ -35,6 +35,14 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string/>
+  <key>NSCameraUsageDescription</key>
+  <string>Bell n Desk requires camera access to capture photos and upload images.</string>
+
+  <key>NSPhotoLibraryUsageDescription</key>
+  <string>Bell n Desk requires access to your photo library so you can select and upload images.</string>
+
+  <key>NSPhotoLibraryAddUsageDescription</key>
+  <string>Bell n Desk requires permission to save photos to your photo library.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

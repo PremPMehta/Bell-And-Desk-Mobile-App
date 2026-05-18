@@ -10,6 +10,7 @@ import {
   ImageBackground,
   Platform,
   Pressable,
+  Keyboard,
 } from 'react-native';
 
 import {
@@ -29,6 +30,7 @@ import { COLORS } from '@/Assets/Theme/colors';
 import { AppImages } from '@/Assets/Images';
 import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 import EmojiPickerModal from '../ChannelChat/EmojiPickerModal';
+import AttachmentOptionsModal from '../ChannelChat/AttachmentOptionsModal';
 import ReactionDetailsModal from '../ChannelChat/ReactionDetailsModal';
 import SocketService from '@/Services/SocketService';
 
@@ -74,6 +76,8 @@ const DirectMessageChat = () => {
 
   const [longPressedMessage, setLongPressedMessage] = useState<any>(null);
   const [isEmojiPickerVisible, setIsEmojiPickerVisible] = useState(false);
+  const [isAttachmentOptionsVisible, setIsAttachmentOptionsVisible] =
+    useState(false);
   const [emojiAnchor, setEmojiAnchor] = useState<{
     x: number;
     y: number;
@@ -862,7 +866,9 @@ const DirectMessageChat = () => {
               }}
               keyboardShouldPersistTaps="handled"
               removeClippedSubviews={false}
-              scrollEnabled={!isEmojiPickerVisible}
+              scrollEnabled={
+                !isEmojiPickerVisible && !isAttachmentOptionsVisible
+              }
               onScroll={e => {
                 scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
               }}
@@ -891,7 +897,14 @@ const DirectMessageChat = () => {
               {renderTypingIndicator()}
 
               <View style={styles.inputInnerContainer}>
-                <TouchableOpacity style={styles.fileContainer}>
+                <TouchableOpacity
+                  style={styles.fileContainer}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setIsAttachmentOptionsVisible(true);
+                  }}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
                   <Icon name="Paperclip" size={22} color={COLORS.primary} />
                 </TouchableOpacity>
 
@@ -954,6 +967,14 @@ const DirectMessageChat = () => {
             )) ||
             longPressedMessage,
         )}
+      />
+
+      <AttachmentOptionsModal
+        visible={isAttachmentOptionsVisible}
+        onClose={() => setIsAttachmentOptionsVisible(false)}
+        bottomInset={
+          (Platform.OS === 'ios' ? Math.max(insets.bottom, 10) : 10) + 76
+        }
       />
     </View>
   );
