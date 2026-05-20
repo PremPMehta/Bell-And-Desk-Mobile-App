@@ -19,7 +19,6 @@ import {
   refreshSocialFeedsAtom,
 } from '@/Jotai/Atoms';
 import PostItem from '@/Components/Generic/PostItem';
-import MediaPreviewModal from '@/Components/Generic/Modals/MediaPreviewModal';
 import ManageCategoriesModal, {
   Category,
 } from '@/Components/Generic/Modals/ManageCategoriesModal';
@@ -483,8 +482,6 @@ const CommunityBoard = ({
           </View>
         )}
 
-        {/* Media Preview Modal */}
-        <MediaPreviewModal />
       </View>
 
       {/* ── Manage Categories Modal Component ── */}

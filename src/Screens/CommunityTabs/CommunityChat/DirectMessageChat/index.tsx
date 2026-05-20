@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -30,15 +30,31 @@ import { COLORS } from '@/Assets/Theme/colors';
 import { AppImages } from '@/Assets/Images';
 import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 import EmojiPickerModal from '../ChannelChat/EmojiPickerModal';
-import AttachmentOptionsModal from '../ChannelChat/AttachmentOptionsModal';
+import AttachmentOptionsModal, {
+  type ChatAttachmentPickPayload,
+} from '../ChannelChat/AttachmentOptionsModal';
+import ToastModule from '@/Components/Core/Toast';
 import ReactionDetailsModal from '../ChannelChat/ReactionDetailsModal';
 import SocketService from '@/Services/SocketService';
 
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { chatMessagesAtom, typingUsersAtom } from '@/Jotai/Atoms';
-import { store } from '@/Jotai/Store';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getFullImageUrl } from '@/Utils/ImageUtils';
+import ImageViewing from 'react-native-image-viewing';
+import ChatVideoAttachment from '../ChannelChat/ChatVideoAttachment';
+import ChatFileAttachment from '../ChannelChat/ChatFileAttachment';
+import {
+  getMessageAttachments,
+  getAttachmentKind,
+  resolveAttachmentUrl,
+  buildOptimisticAttachments,
+  createPendingAttachmentFromPick,
+  uploadPendingChatAttachment,
+  formatAttachmentsForChatMessage,
+  type PendingChatAttachment,
+} from '../ChannelChat/chatAttachmentUtils';
 
 const VirtualizedListScrollView = React.memo(
   React.forwardRef<any, any>((props, ref) => {
@@ -78,6 +94,14 @@ const DirectMessageChat = () => {
   const [isEmojiPickerVisible, setIsEmojiPickerVisible] = useState(false);
   const [isAttachmentOptionsVisible, setIsAttachmentOptionsVisible] =
     useState(false);
+  const [isImageViewerVisible, setIsImageViewerVisible] = useState(false);
+  const [imageViewerImages, setImageViewerImages] = useState<{ uri: string }[]>(
+    [],
+  );
+  const [imageViewerIndex, setImageViewerIndex] = useState(0);
+  const [pendingAttachment, setPendingAttachment] =
+    useState<PendingChatAttachment | null>(null);
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
   const [emojiAnchor, setEmojiAnchor] = useState<{
     x: number;
     y: number;
@@ -89,7 +113,8 @@ const DirectMessageChat = () => {
   } | null>(null);
 
   const [, setAllMessages] = useAtom(chatMessagesAtom);
-  useAtom(typingUsersAtom);
+  const allChatMessages = useAtomValue(chatMessagesAtom);
+  const allTypingUsers = useAtomValue(typingUsersAtom);
 
   const conversationIdRaw = conversationData?._id ?? conversationData?.id;
   const conversationId =
@@ -103,15 +128,13 @@ const DirectMessageChat = () => {
     [participant.firstName, participant.lastName].filter(Boolean).join(' ') ||
     conversationData?.name ||
     'User';
-  const participantAvatar = participant.profilePicture?.url;
+  const participantAvatar = participant.profilePicture?.url
+    ? getFullImageUrl(participant.profilePicture.url) ||
+      participant.profilePicture.url
+    : null;
   const participantInitials = participant.firstName
     ? participant.firstName[0].toUpperCase()
     : 'U';
-
-  const [liveMessages, setLiveMessages] = useState<any[]>([]);
-  const [liveTypingUsers, setLiveTypingUsers] = useState<any[]>([]);
-
-  const lastSigRef = useRef<string>('');
 
   const flatListRef = useRef<FlatList>(null);
   const messageBubbleRefs = useRef<Map<string, any>>(new Map());
@@ -136,54 +159,23 @@ const DirectMessageChat = () => {
     return String(value).trim();
   };
 
-  const computeSig = (arr: any[]) => {
-    if (!arr || arr.length === 0) return 'empty';
-    const newest = arr[0];
+  const messages = useMemo(
+    () => allChatMessages?.[conversationId] ?? [],
+    [allChatMessages, conversationId],
+  );
+
+  const messagesExtraData = useMemo(() => {
+    const newest = messages[0];
     const newestId = newest?._id || newest?.id || 'none';
     const newestTime = newest?.updatedAt || newest?.createdAt || 'none';
-
     let reactionSig = 0;
-    arr.forEach(m => {
+    messages.forEach(m => {
       if (m.reactions && Array.isArray(m.reactions)) {
         reactionSig += m.reactions.length;
       }
     });
-
-    return `${arr.length}:${newestId}:${newestTime}:${reactionSig}`;
-  };
-
-  const pullFromStore = useCallback(() => {
-    if (!conversationId) return;
-
-    const msgState = store.get(chatMessagesAtom);
-    const typingState = store.get(typingUsersAtom);
-
-    const nextMsgs = msgState?.[conversationId] ?? [];
-    const nextTyping = typingState?.[conversationId] ?? [];
-
-    const sig = computeSig(nextMsgs);
-
-    if (sig !== lastSigRef.current) {
-      lastSigRef.current = sig;
-      setLiveMessages(nextMsgs);
-    }
-
-    setLiveTypingUsers(nextTyping);
-  }, [conversationId]);
-
-  useEffect(() => {
-    pullFromStore();
-
-    const unsubMsgs = store.sub(chatMessagesAtom, pullFromStore);
-    const unsubTyping = store.sub(typingUsersAtom, pullFromStore);
-
-    return () => {
-      unsubMsgs();
-      unsubTyping();
-    };
-  }, [pullFromStore]);
-
-  const messages = liveMessages || [];
+    return `${messages.length}:${newestId}:${newestTime}:${reactionSig}`;
+  }, [messages]);
 
   const formatDateLabel = (dateString: string) => {
     if (!dateString) return '';
@@ -216,7 +208,10 @@ const DirectMessageChat = () => {
     });
   };
 
-  const typingUsers = liveTypingUsers || [];
+  const typingUsers = useMemo(
+    () => allTypingUsers?.[conversationId] ?? [],
+    [allTypingUsers, conversationId],
+  );
 
   const othersTyping = typingUsers.filter(u => {
     const uId = normalizeId(u.userId || u._id || u.id);
@@ -273,14 +268,14 @@ const DirectMessageChat = () => {
       SocketService.setCommunityId(communityId);
     }
 
-    SocketService.joinChannel(conversationId);
+    SocketService.joinConversation(conversationId);
 
     if (conversationId) {
       getConversationDetails(conversationId);
     }
 
     return () => {
-      SocketService.leaveChannel(conversationId);
+      SocketService.leaveConversation(conversationId);
     };
   }, [conversationId, communityId]);
 
@@ -352,6 +347,38 @@ const DirectMessageChat = () => {
     [],
   );
 
+  const openImageViewer = useCallback(
+    (messageAttachments: any[], tappedUri: string) => {
+      const imageUris = messageAttachments
+        .filter(att => getAttachmentKind(att) === 'image')
+        .map(att => resolveAttachmentUrl(att))
+        .filter((uri): uri is string => !!uri);
+
+      if (!imageUris.length) return;
+
+      const index = imageUris.findIndex(uri => uri === tappedUri);
+
+      setImageViewerImages(imageUris.map(uri => ({ uri })));
+      setImageViewerIndex(index >= 0 ? index : 0);
+      setIsImageViewerVisible(true);
+    },
+    [],
+  );
+
+  const clearPendingAttachment = useCallback(() => {
+    setPendingAttachment(null);
+  }, []);
+
+  const handleAttachmentPick = useCallback(
+    (payload: ChatAttachmentPickPayload) => {
+      const pending = createPendingAttachmentFromPick(payload);
+      if (pending) {
+        setPendingAttachment(pending);
+      }
+    },
+    [],
+  );
+
   if (isInitialLoading && !messages.length) {
     return (
       <View style={styles.loadingContainer}>
@@ -360,24 +387,43 @@ const DirectMessageChat = () => {
     );
   }
 
+  const removeOptimisticMessage = (tempId: string) => {
+    setAllMessages(prev => {
+      const current = prev[conversationId] || [];
+      return {
+        ...prev,
+        [conversationId]: current.filter(
+          m => m?._id !== tempId && m?.id !== tempId,
+        ),
+      };
+    });
+  };
+
   const handleSendMessage = async () => {
     const content = inputText.trim();
+    const pending = pendingAttachment;
 
-    if (!content || !conversationId) return;
+    if ((!content && !pending) || !conversationId || isUploadingAttachment) {
+      return;
+    }
 
     const tempId = `temp-${Date.now()}`;
+    const optimisticAttachments = pending
+      ? buildOptimisticAttachments(pending)
+      : [];
 
     const newMessage = {
       _id: tempId,
       id: tempId,
       content,
       sender: user,
-      senderId: user?._id,
+      senderId: user?._id ?? user?.id,
       channelId: conversationId,
       conversationId,
       createdAt: new Date().toISOString(),
       isOptimistic: true,
-      attachments: [],
+      isUploading: !!pending,
+      attachments: optimisticAttachments,
     };
 
     setAllMessages(prev => ({
@@ -386,38 +432,122 @@ const DirectMessageChat = () => {
     }));
 
     setInputText('');
-
+    const pendingToUpload = pending;
+    setPendingAttachment(null);
     handleTypingStop();
 
-    const res = await sendConversationMessage(conversationId, content, []);
+    if (pendingToUpload) {
+      setIsUploadingAttachment(true);
+    }
 
-    const serverMsg = res?.data?.message ?? res?.data ?? res?.message;
+    try {
+      let serverAttachments: any[] = [];
 
-    if (serverMsg && (serverMsg._id || serverMsg.id)) {
-      setAllMessages(prev => {
-        const current = prev[conversationId] || [];
-        const serverId = normalizeId(serverMsg._id || serverMsg.id);
+      if (pendingToUpload) {
+        serverAttachments = await uploadPendingChatAttachment(pendingToUpload);
 
-        const next = [...current];
-        const tempIdx = next.findIndex(
-          m => m?._id === tempId || m?.id === tempId,
-        );
-
-        if (tempIdx !== -1) {
-          next[tempIdx] = { ...serverMsg, isOptimistic: false };
-        } else {
-          const exists = next.some(
-            m => normalizeId(m?._id || m?.id) === serverId,
-          );
-          if (!exists) {
-            next.unshift(serverMsg);
-          }
+        if (!serverAttachments.length) {
+          removeOptimisticMessage(tempId);
+          ToastModule.errorBottom({ msg: 'Could not upload attachment' });
+          return;
         }
+      }
 
-        return { ...prev, [conversationId]: next };
-      });
+      const res = await sendConversationMessage(
+        conversationId,
+        content,
+        formatAttachmentsForChatMessage(serverAttachments),
+      );
+      const serverMsg = res?.data?.message ?? res?.data ?? res?.message;
+
+      if (serverMsg && (serverMsg._id || serverMsg.id)) {
+        setAllMessages(prev => {
+          const current = prev[conversationId] || [];
+          const serverId = normalizeId(serverMsg._id || serverMsg.id);
+
+          const next = [...current];
+          const tempIdx = next.findIndex(
+            m => m?._id === tempId || m?.id === tempId,
+          );
+
+          if (tempIdx !== -1) {
+            next[tempIdx] = { ...serverMsg, isOptimistic: false };
+          } else {
+            const exists = next.some(
+              m => normalizeId(m?._id || m?.id) === serverId,
+            );
+            if (!exists) {
+              next.unshift(serverMsg);
+            }
+          }
+
+          return { ...prev, [conversationId]: next };
+        });
+      } else {
+        removeOptimisticMessage(tempId);
+      }
+    } catch (err: any) {
+      removeOptimisticMessage(tempId);
+      const msg =
+        err?.message ||
+        (typeof err?.resError === 'object' && err?.resError?.message) ||
+        'Could not send message';
+      ToastModule.errorBottom({ msg: String(msg) });
+    } finally {
+      if (pendingToUpload) {
+        setIsUploadingAttachment(false);
+      }
     }
   };
+
+  const renderPendingAttachmentPreview = () => {
+    if (!pendingAttachment) return null;
+
+    return (
+      <View style={styles.pendingAttachmentRow}>
+        <View style={styles.pendingAttachmentWrap}>
+          <View style={styles.pendingAttachmentPreview}>
+            {pendingAttachment.isImage ? (
+              <Image
+                source={{ uri: pendingAttachment.uri }}
+                style={styles.pendingAttachmentImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.pendingAttachmentFilePreview}>
+                <Icon
+                  name={
+                    pendingAttachment.isAudio ? 'Headphones' : 'FileText'
+                  }
+                  size={28}
+                  color={COLORS.white}
+                />
+                <Text
+                  style={styles.pendingAttachmentFileName}
+                  numberOfLines={2}
+                >
+                  {pendingAttachment.fileName}
+                </Text>
+              </View>
+            )}
+          </View>
+          <TouchableOpacity
+            style={styles.pendingAttachmentRemove}
+            onPress={clearPendingAttachment}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            disabled={isUploadingAttachment}
+          >
+            <Icon name="X" size={14} color={COLORS.white} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
+
+  const canSendMessage =
+    !!conversationId &&
+    (!!inputText.trim() || !!pendingAttachment) &&
+    !isUploadingAttachment;
 
   const handleTypingStart = () => {
     if (!isTypingRef.current && conversationId) {
@@ -665,6 +795,56 @@ const DirectMessageChat = () => {
     await handleEmojiSelect(emoji, reactionDetailMessage);
   };
 
+  const renderMessageAttachments = (attachments: any[]) => {
+    if (!attachments.length) return null;
+
+    return (
+      <View style={styles.attachmentsContainer}>
+        {attachments.map((att, idx) => {
+          const key =
+            att?._id || att?.id || `${att?.url || att?.filename || 'att'}-${idx}`;
+          const kind = getAttachmentKind(att);
+          const uri = resolveAttachmentUrl(att);
+
+          if (kind === 'image' && uri) {
+            return (
+              <TouchableOpacity
+                key={String(key)}
+                activeOpacity={0.9}
+                onPress={() => openImageViewer(attachments, uri)}
+                style={styles.attachmentImageWrap}
+              >
+                <Image
+                  source={{ uri }}
+                  style={styles.attachmentImage}
+                  resizeMode="cover"
+                />
+              </TouchableOpacity>
+            );
+          }
+
+          if (kind === 'video' && uri) {
+            return (
+              <ChatVideoAttachment
+                key={String(key)}
+                uri={uri}
+                attachment={att}
+              />
+            );
+          }
+
+          return (
+            <ChatFileAttachment
+              key={String(key)}
+              attachment={att}
+              navigation={navigation}
+            />
+          );
+        })}
+      </View>
+    );
+  };
+
   const renderReactions = (item: any, isMe: boolean) => {
     const reactions = item?.reactions || [];
     if (!reactions || reactions.length === 0) return null;
@@ -719,6 +899,11 @@ const DirectMessageChat = () => {
     const hasReactions =
       Array.isArray(item?.reactions) && item.reactions.length > 0;
 
+    const attachments = getMessageAttachments(item);
+    const hasAttachments = attachments.length > 0;
+    const messageText = String(item.content || item.text || '').trim();
+    const hasText = messageText.length > 0;
+
     return (
       <View>
         {showDateSeparator && (
@@ -735,7 +920,9 @@ const DirectMessageChat = () => {
               {sender.profilePicture?.url ? (
                 <Image
                   source={{
-                    uri: sender.profilePicture.url,
+                    uri:
+                      getFullImageUrl(sender.profilePicture.url) ||
+                      sender.profilePicture.url,
                   }}
                   style={styles.avatarImage}
                 />
@@ -775,6 +962,7 @@ const DirectMessageChat = () => {
                 styles.bubble,
                 isMe ? styles.bubbleMe : styles.bubbleThem,
                 hasReactions && styles.bubbleWithReaction,
+                hasAttachments && styles.bubbleWithMedia,
               ]}
             >
               {!isMe && (
@@ -787,20 +975,43 @@ const DirectMessageChat = () => {
                 </Text>
               )}
 
-              <Text
-                style={styles.msgText}
-                selectable={false}
-                suppressHighlighting
-              >
-                {item.content || item.text}
+              {hasAttachments && renderMessageAttachments(attachments)}
 
-                <Text style={styles.timeSpacer} selectable={false}>
-                  {'   '}
+              {hasText ? (
+                <Text
+                  style={styles.msgText}
+                  selectable={false}
+                  suppressHighlighting
+                >
+                  {messageText}
+                  <Text style={styles.timeSpacer} selectable={false}>
+                    {'   '}
+                  </Text>
+                  <Text style={styles.timeTextInline} selectable={false}>
+                    {formatTime(item.createdAt)}
+                  </Text>
                 </Text>
-                <Text style={styles.timeTextInline} selectable={false}>
-                  {formatTime(item.createdAt)}
+              ) : hasAttachments ? (
+                <Text
+                  style={[styles.msgText, styles.timeTextBlock]}
+                  selectable={false}
+                  suppressHighlighting
+                >
+                  <Text style={styles.timeTextInline} selectable={false}>
+                    {formatTime(item.createdAt)}
+                  </Text>
                 </Text>
-              </Text>
+              ) : (
+                <Text
+                  style={styles.msgText}
+                  selectable={false}
+                  suppressHighlighting
+                >
+                  <Text style={styles.timeTextInline} selectable={false}>
+                    {formatTime(item.createdAt)}
+                  </Text>
+                </Text>
+              )}
             </Pressable>
 
             {renderReactions(item, isMe)}
@@ -859,6 +1070,7 @@ const DirectMessageChat = () => {
             <FlatList
               ref={flatListRef}
               data={messages}
+              extraData={messagesExtraData}
               renderItem={renderMessage}
               keyExtractor={(item, index) => {
                 const id = normalizeId(item?._id || item?.id);
@@ -867,7 +1079,9 @@ const DirectMessageChat = () => {
               keyboardShouldPersistTaps="handled"
               removeClippedSubviews={false}
               scrollEnabled={
-                !isEmojiPickerVisible && !isAttachmentOptionsVisible
+                !isEmojiPickerVisible &&
+                !isAttachmentOptionsVisible &&
+                !isImageViewerVisible
               }
               onScroll={e => {
                 scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
@@ -895,6 +1109,7 @@ const DirectMessageChat = () => {
               ]}
             >
               {renderTypingIndicator()}
+              {renderPendingAttachmentPreview()}
 
               <View style={styles.inputInnerContainer}>
                 <TouchableOpacity
@@ -904,16 +1119,20 @@ const DirectMessageChat = () => {
                     setIsAttachmentOptionsVisible(true);
                   }}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  disabled={isUploadingAttachment}
                 >
                   <Icon name="Paperclip" size={22} color={COLORS.primary} />
                 </TouchableOpacity>
 
                 <TextInput
                   style={styles.input}
-                  placeholder="Type a message..."
+                  placeholder={
+                    pendingAttachment ? 'Add a caption...' : 'Type a message...'
+                  }
                   placeholderTextColor={COLORS.pageDots}
                   value={inputText}
                   multiline
+                  editable={!isUploadingAttachment}
                   onChangeText={text => {
                     setInputText(text);
                     handleTypingStart();
@@ -923,11 +1142,20 @@ const DirectMessageChat = () => {
                 <TouchableOpacity
                   style={[
                     styles.sendBtn,
-                    !inputText.trim() && styles.sendBtnDisabled,
+                    !canSendMessage && styles.sendBtnDisabled,
                   ]}
                   onPress={handleSendMessage}
+                  disabled={!canSendMessage}
                 >
-                  <Icon name="SendHorizontal" size={20} color={COLORS.white} />
+                  {isUploadingAttachment ? (
+                    <ActivityIndicator size="small" color={COLORS.white} />
+                  ) : (
+                    <Icon
+                      name="SendHorizontal"
+                      size={20}
+                      color={COLORS.white}
+                    />
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -975,6 +1203,16 @@ const DirectMessageChat = () => {
         bottomInset={
           (Platform.OS === 'ios' ? Math.max(insets.bottom, 10) : 10) + 76
         }
+        onPickResult={handleAttachmentPick}
+      />
+
+      <ImageViewing
+        images={imageViewerImages}
+        imageIndex={imageViewerIndex}
+        visible={isImageViewerVisible}
+        onRequestClose={() => setIsImageViewerVisible(false)}
+        swipeToCloseEnabled
+        doubleTapToZoomEnabled
       />
     </View>
   );

@@ -1,7 +1,16 @@
 import { THEME } from '@/Assets/Theme';
 import { COLORS } from '@/Assets/Theme/colors';
 import { ms, mvs, sc, vs } from '@/Assets/Theme/fontStyle';
-import { StyleSheet, Platform } from 'react-native';
+import { Dimensions, StyleSheet, Platform } from 'react-native';
+
+// Keep attachment width inside bubble maxWidth (75%) minus horizontal padding.
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const BUBBLE_MAX_WIDTH = SCREEN_WIDTH * 0.75;
+const BUBBLE_MEDIA_PADDING = ms(8) * 2;
+const ATTACHMENT_WIDTH = Math.min(
+  sc(220),
+  BUBBLE_MAX_WIDTH - BUBBLE_MEDIA_PADDING - ms(4),
+);
 
 const styles = StyleSheet.create({
   container: {
@@ -79,6 +88,7 @@ const styles = StyleSheet.create({
   },
   bubble: {
     maxWidth: '75%',
+    minWidth: 0,
     paddingHorizontal: ms(14),
     paddingTop: mvs(8),
     paddingBottom: mvs(7),
@@ -273,6 +283,158 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: ms(11),
     marginLeft: ms(3),
+  },
+  bubbleWithMedia: {
+    paddingHorizontal: ms(8),
+    paddingTop: mvs(8),
+    paddingBottom: mvs(8),
+    overflow: 'hidden',
+    minWidth: 0,
+  },
+  attachmentsContainer: {
+    gap: mvs(6),
+    marginBottom: mvs(2),
+    width: ATTACHMENT_WIDTH,
+    maxWidth: '100%',
+    alignSelf: 'flex-start',
+  },
+  attachmentImageWrap: {
+    width: ATTACHMENT_WIDTH,
+    maxWidth: '100%',
+    borderRadius: ms(12),
+    overflow: 'hidden',
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
+  attachmentImage: {
+    width: '100%',
+    height: mvs(160),
+    backgroundColor: 'rgba(0,0,0,0.15)',
+  },
+  attachmentVideoPlaceholder: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  attachmentPlayOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
+  attachmentPlayCircle: {
+    width: ms(48),
+    height: ms(48),
+    borderRadius: ms(24),
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  attachmentFileWrap: {
+    width: ATTACHMENT_WIDTH,
+    maxWidth: '100%',
+    overflow: 'hidden',
+  },
+  attachmentFileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: ms(8),
+    width: '100%',
+    paddingVertical: mvs(8),
+    paddingHorizontal: ms(8),
+    borderRadius: ms(10),
+    backgroundColor: 'rgba(0,0,0,0.22)',
+    overflow: 'hidden',
+  },
+  attachmentFileIconBox: {
+    width: ms(40),
+    height: ms(40),
+    borderRadius: ms(8),
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  attachmentFileContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+  attachmentFileType: {
+    ...THEME.fontStyle.h6Bold,
+    color: 'rgba(255,255,255,0.55)',
+    fontSize: ms(10),
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginBottom: mvs(2),
+  },
+  attachmentFileName: {
+    ...THEME.fontStyle.h6Regular,
+    color: COLORS.white,
+    lineHeight: ms(16),
+    fontSize: ms(12),
+  },
+  attachmentFileSize: {
+    ...THEME.fontStyle.h6Regular,
+    color: 'rgba(255,255,255,0.5)',
+    marginTop: mvs(3),
+    fontSize: ms(10),
+  },
+  attachmentFileOpen: {
+    width: ms(24),
+    height: ms(24),
+    borderRadius: ms(12),
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  timeTextBlock: {
+    alignSelf: 'flex-end',
+    marginTop: mvs(2),
+  },
+  pendingAttachmentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: mvs(10),
+    paddingHorizontal: ms(4),
+  },
+  pendingAttachmentPreview: {
+    width: ms(72),
+    height: ms(72),
+    borderRadius: ms(10),
+    overflow: 'hidden',
+    backgroundColor: COLORS.input,
+  },
+  pendingAttachmentImage: {
+    width: '100%',
+    height: '100%',
+  },
+  pendingAttachmentFilePreview: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: ms(8),
+  },
+  pendingAttachmentFileName: {
+    ...THEME.fontStyle.h6Regular,
+    color: COLORS.white,
+    textAlign: 'center',
+    marginTop: mvs(4),
+  },
+  pendingAttachmentRemove: {
+    position: 'absolute',
+    top: mvs(-6),
+    right: ms(-6),
+    width: ms(24),
+    height: ms(24),
+    borderRadius: ms(12),
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  pendingAttachmentWrap: {
+    position: 'relative',
+    marginRight: ms(12),
   },
 });
 

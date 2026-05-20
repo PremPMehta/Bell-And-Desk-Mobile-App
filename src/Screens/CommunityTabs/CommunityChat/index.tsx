@@ -9,6 +9,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import styles from './style';
+import Icon from '@/Components/Core/Icons';
 import { COLORS } from '@/Assets/Theme/colors';
 import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 import CommunityChatSkeleton from '@/Components/Core/Skeleton/CommunityChatSkeleton';
@@ -23,6 +24,102 @@ interface Props {
   onScroll?: (...args: any[]) => void;
   scrollEventThrottle?: number;
 }
+
+type AttachmentPreviewMeta = {
+  label: string;
+  icon: string;
+};
+
+const getMessageAttachments = (message: any): any[] => {
+  const raw = message?.attachments;
+  return Array.isArray(raw) ? raw.filter(Boolean) : [];
+};
+
+const getAttachmentPreviewMeta = (attachments: any[]): AttachmentPreviewMeta => {
+  const first = attachments[0];
+  const mime = String(
+    first?.mimetype || first?.mimeType || '',
+  ).toLowerCase();
+  const name = String(
+    first?.originalName || first?.filename || '',
+  ).toLowerCase();
+
+  if (mime.startsWith('image/') || /\.(jpe?g|png|gif|webp|bmp|heic)$/.test(name)) {
+    return { label: 'Photo', icon: 'Image' };
+  }
+  if (mime.startsWith('video/') || /\.(mp4|mov|webm|mkv|avi)$/.test(name)) {
+    return { label: 'Video', icon: 'Video' };
+  }
+  if (mime.startsWith('audio/') || /\.(mp3|wav|m4a|aac|ogg)$/.test(name)) {
+    return { label: 'Audio', icon: 'Headphones' };
+  }
+  return { label: 'Attachment', icon: 'Paperclip' };
+};
+
+const getLastMessageSenderLabel = (
+  lastMessage: any,
+  currentUserId: string | undefined,
+): string => {
+  const isMe =
+    lastMessage?.sender?._id === currentUserId ||
+    lastMessage?.sender?.id === currentUserId ||
+    lastMessage?.senderId === currentUserId;
+
+  return isMe ? 'You' : lastMessage?.sender?.firstName || 'User';
+};
+
+const LastMessagePreview = ({
+  lastMessage,
+  currentUserId,
+}: {
+  lastMessage: any;
+  currentUserId: string | undefined;
+}) => {
+  const senderLabel = getLastMessageSenderLabel(lastMessage, currentUserId);
+  const text = String(lastMessage?.content || lastMessage?.text || '').trim();
+  const attachments = getMessageAttachments(lastMessage);
+
+  if (text) {
+    return (
+      <Text style={styles.itemLastMessage} numberOfLines={1}>
+        {senderLabel}: {text}
+      </Text>
+    );
+  }
+
+  if (attachments.length > 0) {
+    const { label, icon } = getAttachmentPreviewMeta(attachments);
+    const countSuffix =
+      attachments.length > 1 ? ` (+${attachments.length - 1})` : '';
+
+    return (
+      <View style={styles.lastMessagePreviewRow}>
+        <Text style={styles.itemLastMessage} numberOfLines={1}>
+          {senderLabel}:{' '}
+        </Text>
+        <Icon
+          name={icon}
+          size={14}
+          color={COLORS.subText}
+          style={styles.lastMessagePreviewIcon}
+        />
+        <Text
+          style={[styles.itemLastMessage, { flexShrink: 1 }]}
+          numberOfLines={1}
+        >
+          {label}
+          {countSuffix}
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <Text style={styles.itemLastMessage} numberOfLines={1}>
+      {senderLabel}:
+    </Text>
+  );
+};
 
 const CommunityChat = ({
   communityId,
@@ -169,7 +266,6 @@ const CommunityChat = ({
   }
 
   const renderChannelItem = ({ item }: { item: any }) => {
-    console.log('🚀 ~ renderChannelItem ~ item:', item);
     return (
       <TouchableOpacity
         style={styles.itemCard}
@@ -191,20 +287,16 @@ const CommunityChat = ({
               item.channel?.title ||
               'General Channel'}
           </Text>
-          <Text style={styles.itemLastMessage} numberOfLines={1}>
-            {item.lastMessage ? (
-              <Text>
-                {item.lastMessage.sender?._id === currentUserId ||
-                item.lastMessage.sender?.id === currentUserId ||
-                item.lastMessage.senderId === currentUserId
-                  ? 'You'
-                  : item.lastMessage.sender?.firstName || 'User'}
-                : {item.lastMessage.content || item.lastMessage.text}
-              </Text>
-            ) : (
-              item.description || 'No messages yet'
-            )}
-          </Text>
+          {item.lastMessage ? (
+            <LastMessagePreview
+              lastMessage={item.lastMessage}
+              currentUserId={currentUserId}
+            />
+          ) : (
+            <Text style={styles.itemLastMessage} numberOfLines={1}>
+              {item.description || 'No messages yet'}
+            </Text>
+          )}
         </View>
         <View style={styles.itemMeta}>
           {item.lastMessage?.createdAt && (
@@ -264,20 +356,16 @@ const CommunityChat = ({
           <Text style={styles.itemName} numberOfLines={1}>
             {participant.firstName} {participant.lastName}
           </Text>
-          <Text style={styles.itemLastMessage} numberOfLines={1}>
-            {item.lastMessage ? (
-              <Text>
-                {item.lastMessage.sender?._id === currentUserId ||
-                item.lastMessage.sender?.id === currentUserId ||
-                item.lastMessage.senderId === currentUserId
-                  ? 'You'
-                  : item.lastMessage.sender?.firstName || 'User'}
-                : {item.lastMessage.content || item.lastMessage.text}
-              </Text>
-            ) : (
-              'Tap to start chatting'
-            )}
-          </Text>
+          {item.lastMessage ? (
+            <LastMessagePreview
+              lastMessage={item.lastMessage}
+              currentUserId={currentUserId}
+            />
+          ) : (
+            <Text style={styles.itemLastMessage} numberOfLines={1}>
+              Tap to start chatting
+            </Text>
+          )}
         </View>
         <View style={styles.itemMeta}>
           {item.lastMessage?.createdAt && (

@@ -19,16 +19,24 @@ const PdfViewer = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
-  const { pdfUrl, title = 'Document' } = route.params || {};
-  
+  const { pdfUrl, title = 'Document', mimeType } = route.params || {};
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  // For Android, we need to use Google Docs viewer or similar because WebView 
-  // doesn't support direct PDF rendering on Android.
-  const finalUrl = Platform.OS === 'android' 
+  const isPdf =
+    /\.pdf($|\?)/i.test(String(pdfUrl || '')) ||
+    String(mimeType || '')
+      .toLowerCase()
+      .includes('pdf');
+
+  // Android WebView cannot render PDFs directly; office docs need gview on all platforms.
+  const useGoogleViewer = Platform.OS === 'android' || !isPdf;
+  const finalUrl = useGoogleViewer
     ? `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(pdfUrl)}`
     : pdfUrl;
+
+  const viewerSubtitle = isPdf ? 'Viewing PDF document' : 'Viewing document';
 
   const handleRetry = () => {
     setError(false);
@@ -52,7 +60,7 @@ const PdfViewer = () => {
             {title}
           </Text>
           <Text style={styles.headerSubTitle} numberOfLines={1}>
-            Viewing PDF Document
+            {viewerSubtitle}
           </Text>
         </View>
 

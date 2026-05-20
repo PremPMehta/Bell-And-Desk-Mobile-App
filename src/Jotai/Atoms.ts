@@ -101,11 +101,13 @@ export const postsAtom = atomWithStorage<Post[]>('community_posts', [], storage 
 export const mediaPreviewAtom = atom<{
   visible: boolean;
   uri: string;
-  type: 'image' | 'video';
+  type: 'image' | 'video' | 'audio';
+  title?: string;
 }>({
   visible: false,
   uri: '',
   type: 'image',
+  title: '',
 });
 
 export const refreshSocialFeedsAtom = booleanDefaultFalseAtomFamily(AtomKeys.refreshSocialFeeds);

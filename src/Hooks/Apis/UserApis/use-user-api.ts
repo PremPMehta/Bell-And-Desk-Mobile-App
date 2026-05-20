@@ -861,28 +861,34 @@ const useUserApi = () => {
   );
 
   // Get Conversation Details Apis
-  const [apiGetConversationDetailsLoading, setApiGetConversationDetailsLoading] =
-    useAtom(
-      booleanDefaultFalseAtomFamily(AtomKeys.apiGetConversationDetailsLoading),
-    );
+  const [
+    apiGetConversationDetailsLoading,
+    setApiGetConversationDetailsLoading,
+  ] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetConversationDetailsLoading),
+  );
   const [apiGetConversationDetails, setApiGetConversationDetails] = useAtom(
     objectAtomFamily(AtomKeys.apiGetConversationDetails),
   );
 
   // Get Conversation Messages Apis
-  const [apiGetConversationMessagesLoading, setApiGetConversationMessagesLoading] =
-    useAtom(
-      booleanDefaultFalseAtomFamily(AtomKeys.apiGetConversationMessagesLoading),
-    );
+  const [
+    apiGetConversationMessagesLoading,
+    setApiGetConversationMessagesLoading,
+  ] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiGetConversationMessagesLoading),
+  );
   const [apiGetConversationMessages, setApiGetConversationMessages] = useAtom(
     objectAtomFamily(AtomKeys.apiGetConversationMessages),
   );
 
   // Send Conversation Message Apis
-  const [apiSendConversationMessageLoading, setApiSendConversationMessageLoading] =
-    useAtom(
-      booleanDefaultFalseAtomFamily(AtomKeys.apiSendConversationMessageLoading),
-    );
+  const [
+    apiSendConversationMessageLoading,
+    setApiSendConversationMessageLoading,
+  ] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiSendConversationMessageLoading),
+  );
   const [apiSendConversationMessage, setApiSendConversationMessage] = useAtom(
     objectAtomFamily(AtomKeys.apiSendConversationMessage),
   );
@@ -2460,6 +2466,22 @@ const useUserApi = () => {
     }
   }
 
+  // Upload Chat Files
+  async function uploadChatFiles(body: FormData) {
+    console.log('🚀 ~ uploadChatFiles ~ body:', body);
+    try {
+      const res: any = await api.post(ApiEndPoints.chatUpload, body);
+      console.log('🚀 ~ uploadChatFiles ~ res:', res);
+      return res;
+    } catch (error: any) {
+      console.error('Error uploading chat files:', error);
+      ToastModule.errorBottom({
+        msg: error?.resError?.message || error?.message,
+      });
+      throw error;
+    }
+  }
+
   // Send Chat Message
   async function sendChatMessage(
     channelId: string,
@@ -2475,6 +2497,7 @@ const useUserApi = () => {
         content,
         attachments: Array.isArray(attachments) ? attachments : [],
       };
+      console.log('🚀 ~ sendChatMessage ~ payload:', payload);
       const res: any = await api.post(url, payload);
       setApiSendChatMessage(res);
       setApiSendChatMessageLoading(false);
@@ -2482,9 +2505,12 @@ const useUserApi = () => {
     } catch (error: any) {
       console.error('Error sending chat message:', error);
       setApiSendChatMessageLoading(false);
-      ToastModule.errorBottom({
-        msg: error?.resError?.message || error?.message,
-      });
+      const msg =
+        (typeof error?.resError === 'object' && error.resError?.message) ||
+        error?.resError?.error ||
+        error?.message ||
+        'Failed to send message';
+      throw new Error(String(msg));
     }
   }
 
@@ -2600,9 +2626,12 @@ const useUserApi = () => {
     } catch (error: any) {
       console.error('Error sending conversation message:', error);
       setApiSendConversationMessageLoading(false);
-      ToastModule.errorBottom({
-        msg: error?.resError?.message || error?.message,
-      });
+      const msg =
+        (typeof error?.resError === 'object' && error.resError?.message) ||
+        error?.resError?.error ||
+        error?.message ||
+        'Failed to send message';
+      throw new Error(String(msg));
     }
   }
 
@@ -3146,6 +3175,8 @@ const useUserApi = () => {
 
     markChannelRead,
     apiMarkChannelReadLoading,
+
+    uploadChatFiles,
 
     sendChatMessage,
     apiSendChatMessageLoading,

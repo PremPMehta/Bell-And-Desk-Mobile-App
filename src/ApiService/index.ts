@@ -63,10 +63,14 @@ export const api = {
     const token = await getUserToken(); // await getUserToken();
 
     return new Promise(function (resolve, reject) {
-      const headers: any = {
-        'Content-Type': 'application/json',
-        ...header,
-      };
+      const headers: any = { ...header };
+
+      // Let axios set multipart boundary automatically for file uploads.
+      if (body instanceof FormData) {
+        delete headers['Content-Type'];
+      } else {
+        headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+      }
 
       if (token) {
         headers.Authorization = `Bearer ${token}`;
@@ -125,10 +129,13 @@ export const api = {
   put: async function (url_path, body, header = {}) {
     const token = await getUserToken(); // await getUserToken();
     return new Promise(function (resolve, reject) {
-      const headers: any = {
-        'Content-Type': 'application/json',
-        ...header,
-      };
+      const headers: any = { ...header };
+
+      if (body instanceof FormData) {
+        delete headers['Content-Type'];
+      } else {
+        headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+      }
 
       if (token) {
         headers.Authorization = `Bearer ${token}`;

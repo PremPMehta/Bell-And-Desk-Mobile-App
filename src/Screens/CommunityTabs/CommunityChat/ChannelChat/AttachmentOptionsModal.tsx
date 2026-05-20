@@ -19,6 +19,7 @@ import {
 import {
   pick,
   types,
+  keepLocalCopy,
   isErrorWithCode,
   errorCodes,
   type DocumentPickerResponse,
@@ -47,6 +48,57 @@ const WA_PURPLE = '#AC44CC';
 const WA_CORAL = '#EB5757';
 const WA_INDIGO = '#515BD4';
 const WA_ORANGE = '#FF9F43';
+
+const isAppCachedFileUri = (uri: string): boolean =>
+  /\/Library\/Caches\//i.test(uri) ||
+  /\/Library\/Application Support\//i.test(uri) ||
+  /\/Documents\//i.test(uri) ||
+  uri.includes('chat_upload_');
+
+const shouldCopyPickedFileToCache = (uri: string): boolean => {
+  if (isAppCachedFileUri(uri)) return false;
+  if (uri.startsWith('content://')) return true;
+  // iOS picker URIs are often temporary; copy into app cache before upload.
+  if (Platform.OS === 'ios' && !uri.startsWith('http')) return true;
+  return false;
+};
+
+const copyPickedFileToAppStorage = async (
+  file: DocumentPickerResponse,
+  fallbackName: string,
+): Promise<string | null> => {
+  const fileName = file.name || `${fallbackName}_${Date.now()}`;
+  const destinations: Array<'cachesDirectory' | 'documentDirectory'> = [
+    'cachesDirectory',
+    'documentDirectory',
+  ];
+
+  for (const destination of destinations) {
+    const [copyResult] = await keepLocalCopy({
+      files: [{ uri: file.uri, fileName }],
+      destination,
+    });
+
+    if (copyResult.status === 'success' && copyResult.localUri) {
+      return copyResult.localUri;
+    }
+  }
+
+  return null;
+};
+
+const resolvePickedFileUri = async (
+  file: DocumentPickerResponse,
+  fallbackName: string,
+): Promise<string | null> => {
+  if (!file.uri) return null;
+
+  if (!shouldCopyPickedFileToCache(file.uri)) {
+    return file.uri;
+  }
+
+  return copyPickedFileToAppStorage(file, fallbackName);
+};
 
 const OPTIONS: {
   kind: ChatAttachmentKind;
@@ -151,7 +203,17 @@ const AttachmentOptionsModal: React.FC<AttachmentOptionsModalProps> = ({
         allowMultiSelection: false,
       });
       if (!file) return;
-      const payload: ChatAttachmentPickPayload = { kind: 'document', file };
+
+      const localUri = await resolvePickedFileUri(file, 'document');
+      if (!localUri) {
+        ToastModule.errorBottom({ msg: 'Could not access selected file' });
+        return;
+      }
+
+      const payload: ChatAttachmentPickPayload = {
+        kind: 'document',
+        file: { ...file, uri: localUri },
+      };
       onPickResult?.(payload);
       ToastModule.successTop({
         msg: file.name ? `Document: ${file.name}` : 'Document selected',
@@ -175,7 +237,19 @@ const AttachmentOptionsModal: React.FC<AttachmentOptionsModalProps> = ({
         allowMultiSelection: false,
       });
       if (!file) return;
-      const payload: ChatAttachmentPickPayload = { kind: 'audio', file };
+
+      const localUri = await resolvePickedFileUri(file, 'audio');
+      if (!localUri) {
+        ToastModule.errorBottom({
+          msg: 'Could not access selected audio file',
+        });
+        return;
+      }
+
+      const payload: ChatAttachmentPickPayload = {
+        kind: 'audio',
+        file: { ...file, uri: localUri },
+      };
       onPickResult?.(payload);
       ToastModule.successTop({
         msg: file.name ? `Audio: ${file.name}` : 'Audio file selected',

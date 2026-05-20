@@ -32,7 +32,10 @@ import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 import ChannelDetailsModal from './ChannelDetailsModal';
 import ReactionDetailsModal from './ReactionDetailsModal';
 import EmojiPickerModal from './EmojiPickerModal';
-import AttachmentOptionsModal from './AttachmentOptionsModal';
+import AttachmentOptionsModal, {
+  type ChatAttachmentPickPayload,
+} from './AttachmentOptionsModal';
+import ToastModule from '@/Components/Core/Toast';
 import SocketService from '@/Services/SocketService';
 
 import { useAtom } from 'jotai';
@@ -40,6 +43,20 @@ import { chatMessagesAtom, typingUsersAtom } from '@/Jotai/Atoms';
 import { store } from '@/Jotai/Store';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getFullImageUrl } from '@/Utils/ImageUtils';
+import ImageViewing from 'react-native-image-viewing';
+import ChatVideoAttachment from './ChatVideoAttachment';
+import ChatFileAttachment from './ChatFileAttachment';
+import {
+  getMessageAttachments,
+  getAttachmentKind,
+  resolveAttachmentUrl,
+  buildOptimisticAttachments,
+  createPendingAttachmentFromPick,
+  uploadPendingChatAttachment,
+  formatAttachmentsForChatMessage,
+  type PendingChatAttachment,
+} from './chatAttachmentUtils';
 
 const VirtualizedListScrollView = React.memo(
   React.forwardRef<any, any>((props, ref) => {
@@ -81,6 +98,14 @@ const ChannelChat = () => {
   const [isEmojiPickerVisible, setIsEmojiPickerVisible] = useState(false);
   const [isAttachmentOptionsVisible, setIsAttachmentOptionsVisible] =
     useState(false);
+  const [isImageViewerVisible, setIsImageViewerVisible] = useState(false);
+  const [imageViewerImages, setImageViewerImages] = useState<{ uri: string }[]>(
+    [],
+  );
+  const [imageViewerIndex, setImageViewerIndex] = useState(0);
+  const [pendingAttachment, setPendingAttachment] =
+    useState<PendingChatAttachment | null>(null);
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
   const [emojiAnchor, setEmojiAnchor] = useState<{
     x: number;
     y: number;
@@ -370,6 +395,38 @@ const ChannelChat = () => {
     [],
   );
 
+  const openImageViewer = useCallback(
+    (messageAttachments: any[], tappedUri: string) => {
+      const imageUris = messageAttachments
+        .filter(att => getAttachmentKind(att) === 'image')
+        .map(att => resolveAttachmentUrl(att))
+        .filter((uri): uri is string => !!uri);
+
+      if (!imageUris.length) return;
+
+      const index = imageUris.findIndex(uri => uri === tappedUri);
+
+      setImageViewerImages(imageUris.map(uri => ({ uri })));
+      setImageViewerIndex(index >= 0 ? index : 0);
+      setIsImageViewerVisible(true);
+    },
+    [],
+  );
+
+  const clearPendingAttachment = useCallback(() => {
+    setPendingAttachment(null);
+  }, []);
+
+  const handleAttachmentPick = useCallback(
+    (payload: ChatAttachmentPickPayload) => {
+      const pending = createPendingAttachmentFromPick(payload);
+      if (pending) {
+        setPendingAttachment(pending);
+      }
+    },
+    [],
+  );
+
   if (isInitialLoading && !messages.length) {
     return (
       <View style={styles.loadingContainer}>
@@ -378,24 +435,43 @@ const ChannelChat = () => {
     );
   }
 
+  const removeOptimisticMessage = (tempId: string) => {
+    setAllMessages(prev => {
+      const current = prev[channelId] || [];
+      return {
+        ...prev,
+        [channelId]: current.filter(m => m?._id !== tempId && m?.id !== tempId),
+      };
+    });
+  };
+
   const handleSendMessage = async () => {
     const content = inputText.trim();
+    const pending = pendingAttachment;
+    console.log('🚀 ~ handleSendMessage ~ pending:', pending);
 
-    if (!content || !channelId) return;
+    if ((!content && !pending) || !channelId || isUploadingAttachment) {
+      return;
+    }
 
     const tempId = `temp-${Date.now()}`;
+    const optimisticAttachments = pending
+      ? buildOptimisticAttachments(pending)
+      : [];
 
     const newMessage = {
       _id: tempId,
       id: tempId,
       content,
       sender: user,
-      senderId: user?._id,
+      senderId: user?._id ?? user?.id,
       channelId,
       createdAt: new Date().toISOString(),
       isOptimistic: true,
-      attachments: [],
+      isUploading: !!pending,
+      attachments: optimisticAttachments,
     };
+    console.log('🚀 ~ handleSendMessage ~ newMessage:', newMessage);
 
     setAllMessages(prev => ({
       ...prev,
@@ -403,39 +479,121 @@ const ChannelChat = () => {
     }));
 
     setInputText('');
-
+    const pendingToUpload = pending;
+    setPendingAttachment(null);
     handleTypingStop();
 
-    const res = await sendChatMessage(channelId, content, []);
+    if (pendingToUpload) {
+      setIsUploadingAttachment(true);
+    }
 
-    const serverMsg = res?.data?.message ?? res?.data ?? res?.message;
+    try {
+      let serverAttachments: any[] = [];
 
-    if (serverMsg && (serverMsg._id || serverMsg.id)) {
-      setAllMessages(prev => {
-        const current = prev[channelId] || [];
-        const serverId = normalizeId(serverMsg._id || serverMsg.id);
+      if (pendingToUpload) {
+        serverAttachments = await uploadPendingChatAttachment(pendingToUpload);
 
-        const next = [...current];
-        const tempIdx = next.findIndex(
-          m => m?._id === tempId || m?.id === tempId,
-        );
-
-        if (tempIdx !== -1) {
-          next[tempIdx] = { ...serverMsg, isOptimistic: false };
-        } else {
-          // Check if it already exists by server ID before prepending
-          const exists = next.some(
-            m => normalizeId(m?._id || m?.id) === serverId,
-          );
-          if (!exists) {
-            next.unshift(serverMsg);
-          }
+        if (!serverAttachments.length) {
+          removeOptimisticMessage(tempId);
+          ToastModule.errorBottom({ msg: 'Could not upload attachment' });
+          return;
         }
+      }
 
-        return { ...prev, [channelId]: next };
-      });
+      const res = await sendChatMessage(
+        channelId,
+        content,
+        formatAttachmentsForChatMessage(serverAttachments),
+      );
+      console.log('🚀 ~ handleSendMessage ~ res:', res);
+      const serverMsg = res?.data?.message ?? res?.data ?? res?.message;
+
+      if (serverMsg && (serverMsg._id || serverMsg.id)) {
+        setAllMessages(prev => {
+          const current = prev[channelId] || [];
+          const serverId = normalizeId(serverMsg._id || serverMsg.id);
+
+          const next = [...current];
+          const tempIdx = next.findIndex(
+            m => m?._id === tempId || m?.id === tempId,
+          );
+
+          if (tempIdx !== -1) {
+            next[tempIdx] = { ...serverMsg, isOptimistic: false };
+          } else {
+            const exists = next.some(
+              m => normalizeId(m?._id || m?.id) === serverId,
+            );
+            if (!exists) {
+              next.unshift(serverMsg);
+            }
+          }
+
+          return { ...prev, [channelId]: next };
+        });
+      } else {
+        removeOptimisticMessage(tempId);
+      }
+    } catch (err: any) {
+      removeOptimisticMessage(tempId);
+      const msg =
+        err?.message ||
+        (typeof err?.resError === 'object' && err?.resError?.message) ||
+        'Could not send message';
+      ToastModule.errorBottom({ msg: String(msg) });
+    } finally {
+      if (pendingToUpload) {
+        setIsUploadingAttachment(false);
+      }
     }
   };
+
+  const renderPendingAttachmentPreview = () => {
+    if (!pendingAttachment) return null;
+
+    return (
+      <View style={styles.pendingAttachmentRow}>
+        <View style={styles.pendingAttachmentWrap}>
+          <View style={styles.pendingAttachmentPreview}>
+            {pendingAttachment.isImage ? (
+              <Image
+                source={{ uri: pendingAttachment.uri }}
+                style={styles.pendingAttachmentImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.pendingAttachmentFilePreview}>
+                <Icon
+                  name={pendingAttachment.isAudio ? 'Headphones' : 'FileText'}
+                  size={28}
+                  color={COLORS.white}
+                />
+                <Text
+                  style={styles.pendingAttachmentFileName}
+                  numberOfLines={2}
+                >
+                  {pendingAttachment.fileName}
+                </Text>
+              </View>
+            )}
+          </View>
+          <TouchableOpacity
+            style={styles.pendingAttachmentRemove}
+            onPress={clearPendingAttachment}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            disabled={isUploadingAttachment}
+          >
+            <Icon name="X" size={14} color={COLORS.white} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
+
+  const canSendMessage =
+    !!channelId &&
+    (!!inputText.trim() || !!pendingAttachment) &&
+    !isUploadingAttachment;
 
   const handleTypingStart = () => {
     if (!isTypingRef.current && channelId) {
@@ -711,6 +869,58 @@ const ChannelChat = () => {
     await handleEmojiSelect(emoji, reactionDetailMessage);
   };
 
+  const renderMessageAttachments = (attachments: any[]) => {
+    if (!attachments.length) return null;
+
+    return (
+      <View style={styles.attachmentsContainer}>
+        {attachments.map((att, idx) => {
+          const key =
+            att?._id ||
+            att?.id ||
+            `${att?.url || att?.filename || 'att'}-${idx}`;
+          const kind = getAttachmentKind(att);
+          const uri = resolveAttachmentUrl(att);
+
+          if (kind === 'image' && uri) {
+            return (
+              <TouchableOpacity
+                key={String(key)}
+                activeOpacity={0.9}
+                onPress={() => openImageViewer(attachments, uri)}
+                style={styles.attachmentImageWrap}
+              >
+                <Image
+                  source={{ uri }}
+                  style={styles.attachmentImage}
+                  resizeMode="cover"
+                />
+              </TouchableOpacity>
+            );
+          }
+
+          if (kind === 'video' && uri) {
+            return (
+              <ChatVideoAttachment
+                key={String(key)}
+                uri={uri}
+                attachment={att}
+              />
+            );
+          }
+
+          return (
+            <ChatFileAttachment
+              key={String(key)}
+              attachment={att}
+              navigation={navigation}
+            />
+          );
+        })}
+      </View>
+    );
+  };
+
   const renderReactions = (item: any, isMe: boolean) => {
     const reactions = item?.reactions || [];
     if (!reactions || reactions.length === 0) return null;
@@ -769,6 +979,11 @@ const ChannelChat = () => {
     const hasReactions =
       Array.isArray(item?.reactions) && item.reactions.length > 0;
 
+    const attachments = getMessageAttachments(item);
+    const hasAttachments = attachments.length > 0;
+    const messageText = String(item.content || item.text || '').trim();
+    const hasText = messageText.length > 0;
+
     return (
       <View>
         {showDateSeparator && (
@@ -785,7 +1000,9 @@ const ChannelChat = () => {
               {sender.profilePicture?.url ? (
                 <Image
                   source={{
-                    uri: sender.profilePicture.url,
+                    uri:
+                      getFullImageUrl(sender.profilePicture.url) ||
+                      sender.profilePicture.url,
                   }}
                   style={styles.avatarImage}
                 />
@@ -890,6 +1107,7 @@ const ChannelChat = () => {
                 styles.bubble,
                 isMe ? styles.bubbleMe : styles.bubbleThem,
                 hasReactions && styles.bubbleWithReaction,
+                hasAttachments && styles.bubbleWithMedia,
               ]}
             >
               {!isMe && (
@@ -902,22 +1120,43 @@ const ChannelChat = () => {
                 </Text>
               )}
 
-              {/* <View style={styles.msgRow}> */}
-              <Text
-                style={styles.msgText}
-                selectable={false}
-                suppressHighlighting
-              >
-                {item.content || item.text}
+              {hasAttachments && renderMessageAttachments(attachments)}
 
-                <Text style={styles.timeSpacer} selectable={false}>
-                  {'   '}
+              {hasText ? (
+                <Text
+                  style={styles.msgText}
+                  selectable={false}
+                  suppressHighlighting
+                >
+                  {messageText}
+                  <Text style={styles.timeSpacer} selectable={false}>
+                    {'   '}
+                  </Text>
+                  <Text style={styles.timeTextInline} selectable={false}>
+                    {formatTime(item.createdAt)}
+                  </Text>
                 </Text>
-                <Text style={styles.timeTextInline} selectable={false}>
-                  {formatTime(item.createdAt)}
+              ) : hasAttachments ? (
+                <Text
+                  style={[styles.msgText, styles.timeTextBlock]}
+                  selectable={false}
+                  suppressHighlighting
+                >
+                  <Text style={styles.timeTextInline} selectable={false}>
+                    {formatTime(item.createdAt)}
+                  </Text>
                 </Text>
-              </Text>
-              {/* </View> */}
+              ) : (
+                <Text
+                  style={styles.msgText}
+                  selectable={false}
+                  suppressHighlighting
+                >
+                  <Text style={styles.timeTextInline} selectable={false}>
+                    {formatTime(item.createdAt)}
+                  </Text>
+                </Text>
+              )}
             </Pressable>
 
             {renderReactions(item, isMe)}
@@ -981,7 +1220,9 @@ const ChannelChat = () => {
               keyboardShouldPersistTaps="handled"
               removeClippedSubviews={false}
               scrollEnabled={
-                !isEmojiPickerVisible && !isAttachmentOptionsVisible
+                !isEmojiPickerVisible &&
+                !isAttachmentOptionsVisible &&
+                !isImageViewerVisible
               }
               onScroll={e => {
                 scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
@@ -1009,6 +1250,7 @@ const ChannelChat = () => {
               ]}
             >
               {renderTypingIndicator()}
+              {renderPendingAttachmentPreview()}
 
               <View style={styles.inputInnerContainer}>
                 <TouchableOpacity
@@ -1018,16 +1260,20 @@ const ChannelChat = () => {
                     setIsAttachmentOptionsVisible(true);
                   }}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  disabled={isUploadingAttachment}
                 >
                   <Icon name="Paperclip" size={22} color={COLORS.primary} />
                 </TouchableOpacity>
 
                 <TextInput
                   style={styles.input}
-                  placeholder="Type a message..."
+                  placeholder={
+                    pendingAttachment ? 'Add a caption...' : 'Type a message...'
+                  }
                   placeholderTextColor={COLORS.pageDots}
                   value={inputText}
                   multiline
+                  editable={!isUploadingAttachment}
                   onChangeText={text => {
                     setInputText(text);
                     handleTypingStart();
@@ -1037,11 +1283,20 @@ const ChannelChat = () => {
                 <TouchableOpacity
                   style={[
                     styles.sendBtn,
-                    !inputText.trim() && styles.sendBtnDisabled,
+                    !canSendMessage && styles.sendBtnDisabled,
                   ]}
                   onPress={handleSendMessage}
+                  disabled={!canSendMessage}
                 >
-                  <Icon name="SendHorizontal" size={20} color={COLORS.white} />
+                  {isUploadingAttachment ? (
+                    <ActivityIndicator size="small" color={COLORS.white} />
+                  ) : (
+                    <Icon
+                      name="SendHorizontal"
+                      size={20}
+                      color={COLORS.white}
+                    />
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -1096,6 +1351,16 @@ const ChannelChat = () => {
         bottomInset={
           (Platform.OS === 'ios' ? Math.max(insets.bottom, 10) : 10) + 76
         }
+        onPickResult={handleAttachmentPick}
+      />
+
+      <ImageViewing
+        images={imageViewerImages}
+        imageIndex={imageViewerIndex}
+        visible={isImageViewerVisible}
+        onRequestClose={() => setIsImageViewerVisible(false)}
+        swipeToCloseEnabled
+        doubleTapToZoomEnabled
       />
     </View>
   );

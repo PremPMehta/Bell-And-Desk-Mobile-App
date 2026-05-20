@@ -116,6 +116,7 @@ export const ApiEndPoints = {
   chatConversations: 'chat/conversations/:communityId',
   markChannelRead: 'chat/channels/:channelId/read',
   chatCommunityMembers: 'chat/community/:communityId/members',
+  chatUpload: 'chat/upload',
   chatMessages: 'chat/messages/channel/:channelId',
   chatReactions: 'chat/messages/:messageId/reactions',
 

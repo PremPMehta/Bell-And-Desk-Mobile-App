@@ -17,6 +17,8 @@ class SocketService {
   private communityId: string | null = null;
   /** When join runs before CONNECT, reconnect handler flushes joining the channel */
   private joinChannelPendingFlush: string | null = null;
+  /** Active DM conversation — re-joined on reconnect via join_conversation */
+  private activeConversationId: string | null = null;
 
   private normalizeId(value: unknown): string | undefined {
     if (value == null) return undefined;
@@ -36,6 +38,25 @@ class SocketService {
 
   /** Resolve channel list key consistently with ChannelChat (`_id`, `channel`, refs). */
   private resolveChannelId(payload: any, message: any): string | undefined {
+    const msgType = String(message?.type || payload?.type || '').toLowerCase();
+    const isDm =
+      msgType === 'dm' ||
+      msgType === 'direct' ||
+      message?.conversationId != null ||
+      payload?.conversationId != null;
+
+    if (isDm) {
+      const conversationId = this.normalizeId(
+        payload?.conversationId ??
+          payload?.conversation?._id ??
+          payload?.conversation?.id ??
+          message?.conversationId ??
+          message?.conversation?._id ??
+          message?.conversation?.id,
+      );
+      if (conversationId) return conversationId.trim();
+    }
+
     const fromPayload = this.normalizeId(payload?.channelId);
     if (fromPayload) return fromPayload.trim();
     if (payload?.channel != null) {
@@ -172,6 +193,11 @@ class SocketService {
 
       const activeChannelId =
         store.get(activeChannelIdAtom) ?? this.joinChannelPendingFlush;
+      if (this.activeConversationId) {
+        this.emit(SOCKET_EVENTS.JOIN_CONVERSATION, {
+          conversationId: this.activeConversationId,
+        });
+      }
       if (activeChannelId) {
         this.flushJoinChannel(activeChannelId);
       }
@@ -293,6 +319,7 @@ class SocketService {
 
   joinChannel(channelId: string) {
     console.log('Socket: Joining channel', channelId);
+    this.activeConversationId = null;
     store.set(activeChannelIdAtom, channelId);
     if (this.socket?.connected) {
       this.flushJoinChannel(channelId);
@@ -307,6 +334,31 @@ class SocketService {
     }
     store.set(activeChannelIdAtom, null);
     this.emit(SOCKET_EVENTS.LEAVE_CHANNEL, { channelId });
+  }
+
+  /** DM screens: join conversation room + channel room (backend may use either). */
+  joinConversation(conversationId: string) {
+    console.log('Socket: Joining conversation', conversationId);
+    this.activeConversationId = conversationId;
+    store.set(activeChannelIdAtom, conversationId);
+    this.emit(SOCKET_EVENTS.JOIN_CONVERSATION, { conversationId });
+    if (this.socket?.connected) {
+      this.flushJoinChannel(conversationId);
+    } else {
+      this.joinChannelPendingFlush = conversationId;
+    }
+  }
+
+  leaveConversation(conversationId: string) {
+    if (this.activeConversationId === conversationId) {
+      this.activeConversationId = null;
+    }
+    if (this.joinChannelPendingFlush === conversationId) {
+      this.joinChannelPendingFlush = null;
+    }
+    store.set(activeChannelIdAtom, null);
+    this.emit(SOCKET_EVENTS.LEAVE_CONVERSATION, { conversationId });
+    this.emit(SOCKET_EVENTS.LEAVE_CHANNEL, { channelId: conversationId });
   }
 
   sendMessage(messageData: any) {
@@ -342,6 +394,7 @@ class SocketService {
 
   disconnect() {
     this.joinChannelPendingFlush = null;
+    this.activeConversationId = null;
     this.socket?.disconnect();
     this.socket = null;
   }
@@ -349,7 +402,14 @@ class SocketService {
   // Event Handlers that update Jotai state
   private handleMessageReceived(payload: any) {
     const message = payload?.message ?? payload?.data ?? payload;
-    const channelId = this.resolveChannelId(payload, message);
+    let channelId = this.resolveChannelId(payload, message);
+
+    if (!channelId) {
+      channelId =
+        this.normalizeId(store.get(activeChannelIdAtom)) ||
+        this.activeConversationId ||
+        undefined;
+    }
 
     if (!channelId) {
       console.warn('Socket: Received message without channelId', payload);

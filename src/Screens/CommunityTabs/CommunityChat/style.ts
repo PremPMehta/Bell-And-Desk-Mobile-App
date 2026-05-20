@@ -109,6 +109,16 @@ const styles = StyleSheet.create({
     color: COLORS.subText,
     marginTop: mvs(2),
   },
+  lastMessagePreviewRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: mvs(2),
+    flex: 1,
+    minWidth: 0,
+  },
+  lastMessagePreviewIcon: {
+    marginRight: ms(4),
+  },
   itemMeta: {
     alignItems: 'flex-end',
   },
