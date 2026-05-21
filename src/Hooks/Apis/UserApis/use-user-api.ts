@@ -860,6 +860,14 @@ const useUserApi = () => {
     objectAtomFamily(AtomKeys.apiReactToMessage),
   );
 
+  // Delete Chat Message Apis
+  const [apiDeleteChatMessageLoading, setApiDeleteChatMessageLoading] = useAtom(
+    booleanDefaultFalseAtomFamily(AtomKeys.apiDeleteChatMessageLoading),
+  );
+  const [apiDeleteChatMessage, setApiDeleteChatMessage] = useAtom(
+    objectAtomFamily(AtomKeys.apiDeleteChatMessage),
+  );
+
   // Get Conversation Details Apis
   const [
     apiGetConversationDetailsLoading,
@@ -2533,6 +2541,29 @@ const useUserApi = () => {
     }
   }
 
+  // Delete Chat Message
+  async function deleteChatMessage(messageId: string) {
+    const mid = String(messageId ?? '').trim();
+    if (!mid) return;
+    try {
+      setApiDeleteChatMessageLoading(true);
+      const url = ApiEndPoints.chatMessage.replace(':messageId', mid);
+      const res: any = await api.delete(url);
+      setApiDeleteChatMessage(res);
+      setApiDeleteChatMessageLoading(false);
+      return res;
+    } catch (error: any) {
+      console.error('Error deleting chat message:', error);
+      setApiDeleteChatMessageLoading(false);
+      const msg =
+        error?.resError?.message ||
+        error?.resError?.error ||
+        error?.message ||
+        'Failed to delete message';
+      throw new Error(String(msg));
+    }
+  }
+
   // Mark Conversation Read
   async function markConversationRead(conversationId: string) {
     const cid = String(conversationId ?? '').trim();
@@ -3185,6 +3216,10 @@ const useUserApi = () => {
     reactToMessage,
     apiReactToMessageLoading,
     apiReactToMessage,
+
+    deleteChatMessage,
+    apiDeleteChatMessageLoading,
+    apiDeleteChatMessage,
 
     // Direct Messages
     markConversationRead,

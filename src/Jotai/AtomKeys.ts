@@ -251,6 +251,8 @@ export const AtomKeys = {
   apiSendChatMessage: 'apiSendChatMessage',
   apiReactToMessageLoading: 'apiReactToMessageLoading',
   apiReactToMessage: 'apiReactToMessage',
+  apiDeleteChatMessageLoading: 'apiDeleteChatMessageLoading',
+  apiDeleteChatMessage: 'apiDeleteChatMessage',
 
   // Direct Messages
   apiGetConversationDetailsLoading: 'apiGetConversationDetailsLoading',

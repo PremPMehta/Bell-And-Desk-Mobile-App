@@ -35,6 +35,7 @@ import AttachmentOptionsModal, {
 } from '../ChannelChat/AttachmentOptionsModal';
 import ToastModule from '@/Components/Core/Toast';
 import ReactionDetailsModal from '../ChannelChat/ReactionDetailsModal';
+import DeleteMessageModal from '../ChannelChat/DeleteMessageModal';
 import SocketService from '@/Services/SocketService';
 
 import { useAtom, useAtomValue } from 'jotai';
@@ -87,10 +88,17 @@ const DirectMessageChat = () => {
     getConversationDetails,
     markConversationRead,
     reactToMessage,
+    deleteChatMessage,
+    apiDeleteChatMessageLoading,
     user,
   } = useUserApi();
 
   const [longPressedMessage, setLongPressedMessage] = useState<any>(null);
+  const [messageToDelete, setMessageToDelete] = useState<any>(null);
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
+    null,
+  );
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [isEmojiPickerVisible, setIsEmojiPickerVisible] = useState(false);
   const [isAttachmentOptionsVisible, setIsAttachmentOptionsVisible] =
     useState(false);
@@ -379,6 +387,60 @@ const DirectMessageChat = () => {
     [],
   );
 
+  const getMessageId = useCallback(
+    (msg: any) => normalizeId(msg?._id ?? msg?.id ?? msg?.messageId),
+    [],
+  );
+
+  const clearMessageDeleteSelection = useCallback(() => {
+    setMessageToDelete(null);
+    setSelectedMessageId(null);
+  }, []);
+
+  const selectMessageForDelete = useCallback(
+    (item: any) => {
+      const id = getMessageId(item);
+      if (!id || item?.isOptimistic) return;
+      setMessageToDelete(item);
+      setSelectedMessageId(id);
+    },
+    [getMessageId],
+  );
+
+  const toggleMessageDeleteSelection = useCallback(
+    (item: any) => {
+      const id = getMessageId(item);
+      if (!id || item?.isOptimistic) return;
+      if (selectedMessageId === id) {
+        clearMessageDeleteSelection();
+      } else {
+        selectMessageForDelete(item);
+      }
+    },
+    [
+      selectedMessageId,
+      getMessageId,
+      clearMessageDeleteSelection,
+      selectMessageForDelete,
+    ],
+  );
+
+  const removeMessageFromChat = useCallback(
+    (messageId: string) => {
+      if (!conversationId || !messageId) return;
+      setAllMessages(prev => {
+        const current = prev[conversationId] || [];
+        return {
+          ...prev,
+          [conversationId]: current.filter(
+            m => normalizeId(m?._id || m?.id) !== messageId,
+          ),
+        };
+      });
+    },
+    [conversationId, setAllMessages],
+  );
+
   if (isInitialLoading && !messages.length) {
     return (
       <View style={styles.loadingContainer}>
@@ -611,7 +673,7 @@ const DirectMessageChat = () => {
   };
 
   const openEmojiPickerForMessage = (item: any, nativeEvent?: any) => {
-    const messageId = normalizeId(item?._id || item?.id);
+    const messageId = getMessageId(item);
     if (!messageId || isEmojiPickerVisible) return;
 
     setLongPressedMessage(item);
@@ -795,6 +857,57 @@ const DirectMessageChat = () => {
     await handleEmojiSelect(emoji, reactionDetailMessage);
   };
 
+  const handleBackPress = () => {
+    if (selectedMessageId) {
+      clearMessageDeleteSelection();
+      return;
+    }
+    navigation.goBack();
+  };
+
+  const handleDeleteIconPress = () => {
+    if (!selectedMessageId || !messageToDelete) return;
+    setIsDeleteModalVisible(true);
+  };
+
+  const handleConfirmDeleteMessage = async () => {
+    const messageId = normalizeId(
+      messageToDelete?._id || messageToDelete?.id,
+    );
+    if (!messageId || messageToDelete?.isOptimistic) return;
+
+    const deletedSnapshot = messageToDelete;
+    setIsDeleteModalVisible(false);
+    clearMessageDeleteSelection();
+    removeMessageFromChat(messageId);
+
+    try {
+      await deleteChatMessage(messageId);
+    } catch (err: any) {
+      const msg =
+        err?.message ||
+        (typeof err?.resError === 'object' && err?.resError?.message) ||
+        'Could not delete message';
+      ToastModule.errorBottom({ msg: String(msg) });
+
+      if (deletedSnapshot && conversationId) {
+        setAllMessages(prev => {
+          const current = prev[conversationId] || [];
+          const exists = current.some(
+            m => normalizeId(m?._id || m?.id) === messageId,
+          );
+          if (exists) return prev;
+          const next = [...current, deletedSnapshot].sort((a: any, b: any) => {
+            const ta = new Date(b?.createdAt ?? 0).getTime();
+            const tb = new Date(a?.createdAt ?? 0).getTime();
+            return ta - tb;
+          });
+          return { ...prev, [conversationId]: next };
+        });
+      }
+    }
+  };
+
   const renderMessageAttachments = (attachments: any[]) => {
     if (!attachments.length) return null;
 
@@ -904,6 +1017,103 @@ const DirectMessageChat = () => {
     const messageText = String(item.content || item.text || '').trim();
     const hasText = messageText.length > 0;
 
+    const itemId = getMessageId(item);
+    const isSelectedForDelete =
+      !!isMe && !!selectedMessageId && !!itemId && selectedMessageId === itemId;
+
+    const messageBubble = (
+      <Pressable
+        ref={(r: any) => {
+          const mid = getMessageId(item);
+
+          if (!mid) return;
+
+          if (r) {
+            messageBubbleRefs.current.set(mid, r);
+          } else {
+            messageBubbleRefs.current.delete(mid);
+          }
+        }}
+        collapsable={false}
+        android_disableSound={true}
+        delayLongPress={450}
+        hitSlop={12}
+        pressRetentionOffset={{
+          top: 40,
+          left: 40,
+          right: 40,
+          bottom: 40,
+        }}
+        onPress={() => {
+          if (isMe && !item?.isOptimistic && selectedMessageId) {
+            toggleMessageDeleteSelection(item);
+          }
+        }}
+        onLongPress={e => {
+          if (item?.isOptimistic) return;
+          if (isMe) {
+            toggleMessageDeleteSelection(item);
+          }
+          openEmojiPickerForMessage(item, e.nativeEvent);
+        }}
+        style={({ pressed }) => [
+          styles.bubble,
+          isMe ? styles.bubbleMe : styles.bubbleThem,
+          hasReactions && styles.bubbleWithReaction,
+          hasAttachments && styles.bubbleWithMedia,
+          pressed && isMe && !isSelectedForDelete && { opacity: 0.92 },
+        ]}
+      >
+        {!isMe && (
+          <Text
+            style={styles.senderName}
+            selectable={false}
+            suppressHighlighting
+          >
+            {sender.firstName} {sender.lastName}
+          </Text>
+        )}
+
+        {hasAttachments && renderMessageAttachments(attachments)}
+
+        {hasText ? (
+          <Text
+            style={styles.msgText}
+            selectable={false}
+            suppressHighlighting
+          >
+            {messageText}
+            <Text style={styles.timeSpacer} selectable={false}>
+              {'   '}
+            </Text>
+            <Text style={styles.timeTextInline} selectable={false}>
+              {formatTime(item.createdAt)}
+            </Text>
+          </Text>
+        ) : hasAttachments ? (
+          <Text
+            style={[styles.msgText, styles.timeTextBlock]}
+            selectable={false}
+            suppressHighlighting
+          >
+            <Text style={styles.timeTextInline} selectable={false}>
+              {formatTime(item.createdAt)}
+            </Text>
+          </Text>
+        ) : (
+          <Text
+            style={styles.msgText}
+            selectable={false}
+            suppressHighlighting
+          >
+            <Text style={styles.timeTextInline} selectable={false}>
+              {formatTime(item.createdAt)}
+            </Text>
+          </Text>
+        )}
+      </Pressable>
+    );
+
     return (
       <View>
         {showDateSeparator && (
@@ -935,84 +1145,21 @@ const DirectMessageChat = () => {
           <View
             style={isMe ? styles.bubbleWrapperMe : styles.bubbleWrapperThem}
           >
-            <Pressable
-              ref={(r: any) => {
-                const mid = normalizeId(item?._id || item?.id);
-                if (!mid) return;
-                if (r) {
-                  messageBubbleRefs.current.set(mid, r);
-                } else {
-                  messageBubbleRefs.current.delete(mid);
-                }
-              }}
-              collapsable={false}
-              android_disableSound={true}
-              delayLongPress={450}
-              hitSlop={12}
-              pressRetentionOffset={{
-                top: 40,
-                left: 40,
-                right: 40,
-                bottom: 40,
-              }}
-              onLongPress={e => {
-                openEmojiPickerForMessage(item, e.nativeEvent);
-              }}
-              style={[
-                styles.bubble,
-                isMe ? styles.bubbleMe : styles.bubbleThem,
-                hasReactions && styles.bubbleWithReaction,
-                hasAttachments && styles.bubbleWithMedia,
-              ]}
-            >
-              {!isMe && (
-                <Text
-                  style={styles.senderName}
-                  selectable={false}
-                  suppressHighlighting
-                >
-                  {sender.firstName} {sender.lastName}
-                </Text>
-              )}
-
-              {hasAttachments && renderMessageAttachments(attachments)}
-
-              {hasText ? (
-                <Text
-                  style={styles.msgText}
-                  selectable={false}
-                  suppressHighlighting
-                >
-                  {messageText}
-                  <Text style={styles.timeSpacer} selectable={false}>
-                    {'   '}
-                  </Text>
-                  <Text style={styles.timeTextInline} selectable={false}>
-                    {formatTime(item.createdAt)}
-                  </Text>
-                </Text>
-              ) : hasAttachments ? (
-                <Text
-                  style={[styles.msgText, styles.timeTextBlock]}
-                  selectable={false}
-                  suppressHighlighting
-                >
-                  <Text style={styles.timeTextInline} selectable={false}>
-                    {formatTime(item.createdAt)}
-                  </Text>
-                </Text>
-              ) : (
-                <Text
-                  style={styles.msgText}
-                  selectable={false}
-                  suppressHighlighting
-                >
-                  <Text style={styles.timeTextInline} selectable={false}>
-                    {formatTime(item.createdAt)}
-                  </Text>
-                </Text>
-              )}
-            </Pressable>
+            {isSelectedForDelete ? (
+              <View
+                key={`${itemId}-selected`}
+                style={styles.bubbleSelectedWrap}
+              >
+                {messageBubble}
+                <View style={styles.selectionBadge} pointerEvents="none">
+                  <Icon name="Check" size={14} color={COLORS.primary} />
+                </View>
+              </View>
+            ) : (
+              <React.Fragment key={`${itemId}-normal`}>
+                {messageBubble}
+              </React.Fragment>
+            )}
 
             {renderReactions(item, isMe)}
           </View>
@@ -1031,10 +1178,7 @@ const DirectMessageChat = () => {
     >
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}
-        >
+        <TouchableOpacity onPress={handleBackPress} style={styles.backBtn}>
           <Icon
             name={Platform.OS === 'ios' ? 'ChevronLeft' : 'ArrowLeft'}
             size={24}
@@ -1057,6 +1201,16 @@ const DirectMessageChat = () => {
           <Text style={styles.headerTitle}>{participantName}</Text>
           {/* <Text style={styles.headerSubTitle}>Direct Message</Text> */}
         </View>
+
+        {selectedMessageId ? (
+          <TouchableOpacity
+            onPress={handleDeleteIconPress}
+            style={styles.headerDeleteBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Icon name="Trash2" size={22} color={COLORS.red} />
+          </TouchableOpacity>
+        ) : null}
       </View>
 
       <View style={{ flex: 1 }}>
@@ -1070,7 +1224,7 @@ const DirectMessageChat = () => {
             <FlatList
               ref={flatListRef}
               data={messages}
-              extraData={messagesExtraData}
+              extraData={`${messagesExtraData}:${selectedMessageId ?? ''}`}
               renderItem={renderMessage}
               keyExtractor={(item, index) => {
                 const id = normalizeId(item?._id || item?.id);
@@ -1081,7 +1235,8 @@ const DirectMessageChat = () => {
               scrollEnabled={
                 !isEmojiPickerVisible &&
                 !isAttachmentOptionsVisible &&
-                !isImageViewerVisible
+                !isImageViewerVisible &&
+                !isDeleteModalVisible
               }
               onScroll={e => {
                 scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
@@ -1213,6 +1368,13 @@ const DirectMessageChat = () => {
         onRequestClose={() => setIsImageViewerVisible(false)}
         swipeToCloseEnabled
         doubleTapToZoomEnabled
+      />
+
+      <DeleteMessageModal
+        isVisible={isDeleteModalVisible}
+        onClose={() => setIsDeleteModalVisible(false)}
+        onConfirmDelete={handleConfirmDeleteMessage}
+        isDeleting={apiDeleteChatMessageLoading}
       />
     </View>
   );

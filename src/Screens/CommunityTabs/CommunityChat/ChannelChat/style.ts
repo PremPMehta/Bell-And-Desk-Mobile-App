@@ -33,6 +33,37 @@ const styles = StyleSheet.create({
   headerContent: {
     flex: 1,
   },
+  headerDeleteBtn: {
+    padding: ms(8),
+    marginLeft: ms(4),
+  },
+  bubbleSelectedWrap: {
+    position: 'relative',
+    borderWidth: 2,
+    borderColor: COLORS.white,
+    borderRadius: ms(20),
+    borderBottomRightRadius: ms(6),
+    padding: ms(2),
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  bubbleSelected: {
+    borderWidth: 2,
+    borderColor: COLORS.white,
+  },
+  selectionBadge: {
+    position: 'absolute',
+    top: mvs(-8),
+    right: ms(-8),
+    width: ms(22),
+    height: ms(22),
+    borderRadius: ms(11),
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    zIndex: 2,
+  },
   headerTitle: {
     ...THEME.fontStyle.h4Bold,
     color: COLORS.white,

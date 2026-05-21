@@ -74,7 +74,9 @@ const CategoryDetails = () => {
 
   // WebView height — start at 1 (invisible) until content reports its actual height
   const [webHeight, setWebHeight] = useState(1);
-  const [localRequestStatus, setLocalJoinStatus] = useState<string | null>(null);
+  const [localRequestStatus, setLocalJoinStatus] = useState<string | null>(
+    null,
+  );
 
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -505,10 +507,7 @@ const CategoryDetails = () => {
           </TouchableOpacity>
         </Animated.View>
         <Animated.View
-          style={[
-            styles.headerTitleWrap,
-            { top: headerMetrics.paddingTop },
-          ]}
+          style={[styles.headerTitleWrap, { top: headerMetrics.paddingTop }]}
         >
           <Animated.Text
             numberOfLines={1}
@@ -665,11 +664,11 @@ const CategoryDetails = () => {
                   {communityData?.isMember
                     ? 'Joined'
                     : communityData?.isRequested ||
-                        communityData?.requestStatus === 'pending' ||
-                        userRequestStatus === 'pending' ||
-                        localRequestStatus === 'pending'
-                      ? 'Pending'
-                      : 'Join Now'}
+                      communityData?.requestStatus === 'pending' ||
+                      userRequestStatus === 'pending' ||
+                      localRequestStatus === 'pending'
+                    ? 'Pending'
+                    : 'Join Now'}
                 </Text>
               )}
             </TouchableOpacity>

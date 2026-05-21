@@ -30,21 +30,63 @@ type AttachmentPreviewMeta = {
   icon: string;
 };
 
+const formatMessageTime = dateString => {
+  const messageDate = new Date(dateString);
+  const today = new Date();
+
+  // Reset time for accurate day comparison
+  const todayDate: any = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
+
+  const messageOnlyDate: any = new Date(
+    messageDate.getFullYear(),
+    messageDate.getMonth(),
+    messageDate.getDate(),
+  );
+
+  const diffTime = todayDate - messageOnlyDate;
+  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+  // Today -> show time
+  if (diffDays === 0) {
+    return messageDate.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
+  // Yesterday
+  if (diffDays === 1) {
+    return 'Yesterday';
+  }
+
+  // Older dates
+  return `${messageDate.getDate()}/${
+    messageDate.getMonth() + 1
+  }/${messageDate.getFullYear()}`;
+};
+
 const getMessageAttachments = (message: any): any[] => {
   const raw = message?.attachments;
   return Array.isArray(raw) ? raw.filter(Boolean) : [];
 };
 
-const getAttachmentPreviewMeta = (attachments: any[]): AttachmentPreviewMeta => {
+const getAttachmentPreviewMeta = (
+  attachments: any[],
+): AttachmentPreviewMeta => {
   const first = attachments[0];
-  const mime = String(
-    first?.mimetype || first?.mimeType || '',
-  ).toLowerCase();
+  const mime = String(first?.mimetype || first?.mimeType || '').toLowerCase();
   const name = String(
     first?.originalName || first?.filename || '',
   ).toLowerCase();
 
-  if (mime.startsWith('image/') || /\.(jpe?g|png|gif|webp|bmp|heic)$/.test(name)) {
+  if (
+    mime.startsWith('image/') ||
+    /\.(jpe?g|png|gif|webp|bmp|heic)$/.test(name)
+  ) {
     return { label: 'Photo', icon: 'Image' };
   }
   if (mime.startsWith('video/') || /\.(mp4|mov|webm|mkv|avi)$/.test(name)) {
@@ -309,10 +351,11 @@ const CommunityChat = ({
                 },
               ]}
             >
-              {new Date(item.lastMessage.createdAt).toLocaleTimeString([], {
+              {formatMessageTime(item.lastMessage.createdAt)}
+              {/* {new Date(item.lastMessage.createdAt).toLocaleTimeString([], {
                 hour: '2-digit',
                 minute: '2-digit',
-              })}
+              })} */}
             </Text>
           )}
           {Number(item.unreadCount) > 0 && (
@@ -370,10 +413,11 @@ const CommunityChat = ({
         <View style={styles.itemMeta}>
           {item.lastMessage?.createdAt && (
             <Text style={styles.itemTime}>
-              {new Date(item.lastMessage.createdAt).toLocaleTimeString([], {
+              {formatMessageTime(item.lastMessage.createdAt)}
+              {/* {new Date(item.lastMessage.createdAt).toLocaleTimeString([], {
                 hour: '2-digit',
                 minute: '2-digit',
-              })}
+              })} */}
             </Text>
           )}
           {Number(item.unreadCount) > 0 && (
