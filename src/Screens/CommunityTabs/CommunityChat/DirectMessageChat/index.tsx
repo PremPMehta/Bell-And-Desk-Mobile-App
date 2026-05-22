@@ -40,12 +40,14 @@ import SocketService from '@/Services/SocketService';
 
 import { useAtom, useAtomValue } from 'jotai';
 import { chatMessagesAtom, typingUsersAtom } from '@/Jotai/Atoms';
+import { store } from '@/Jotai/Store';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getFullImageUrl } from '@/Utils/ImageUtils';
 import ImageViewing from 'react-native-image-viewing';
 import ChatVideoAttachment from '../ChannelChat/ChatVideoAttachment';
 import ChatFileAttachment from '../ChannelChat/ChatFileAttachment';
+import { ChatMessagesAreaSkeleton } from '@/Components/Core/Skeleton/ChatConversationSkeleton';
 import {
   getMessageAttachments,
   getAttachmentKind,
@@ -152,7 +154,7 @@ const DirectMessageChat = () => {
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTypingRef = useRef(false);
 
-  const [isInitialLoading, setIsInitialLoading] = useState(false);
+  const [isMessagesLoading, setIsMessagesLoading] = useState(true);
   const hasFetchedInitialRef = useRef<string | null>(null);
 
   const normalizeId = (value: any): string => {
@@ -268,33 +270,85 @@ const DirectMessageChat = () => {
   };
 
   useEffect(() => {
-    if (!conversationId) return;
-
-    markConversationRead(conversationId);
-
-    if (communityId) {
-      SocketService.setCommunityId(communityId);
+    if (!conversationId) {
+      setIsMessagesLoading(false);
+      return;
     }
 
-    SocketService.joinConversation(conversationId);
-
-    if (conversationId) {
-      getConversationDetails(conversationId);
+    const cached = store.get(chatMessagesAtom)?.[conversationId] ?? [];
+    if (cached.length > 0) {
+      setIsMessagesLoading(false);
+      hasFetchedInitialRef.current = conversationId;
+      return;
     }
 
-    return () => {
-      SocketService.leaveConversation(conversationId);
-    };
-  }, [conversationId, communityId]);
+    setIsMessagesLoading(true);
+    hasFetchedInitialRef.current = null;
+  }, [conversationId]);
+
+  const lastReadMarkRef = useRef<string>('');
+  const markConversationReadRef = useRef(markConversationRead);
+  const getConversationDetailsRef = useRef(getConversationDetails);
+  markConversationReadRef.current = markConversationRead;
+  getConversationDetailsRef.current = getConversationDetails;
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!conversationId) return;
+
+      markConversationReadRef.current(conversationId);
+
+      if (communityId) {
+        SocketService.setCommunityId(communityId);
+      }
+
+      SocketService.joinConversation(conversationId);
+      getConversationDetailsRef.current(conversationId);
+
+      return () => {
+        markConversationReadRef.current(conversationId);
+        SocketService.leaveConversation(conversationId);
+      };
+      // API fns from useUserApi are recreated each render — keep deps stable.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [conversationId, communityId]),
+  );
+
+  const newestIncomingMessageId = useMemo(() => {
+    const myId = normalizeId(user?._id || user?.id);
+    const newest = messages.find((m: any) => !m?.isOptimistic);
+    if (!newest) return '';
+    const senderId = normalizeId(
+      newest?.sender?._id || newest?.sender?.id || newest?.senderId,
+    );
+    if (!senderId || senderId === myId) return '';
+    return normalizeId(newest._id || newest.id);
+  }, [messages, user?._id, user?.id]);
+
+  // Mark read when a new message arrives while this screen is open (not only on enter).
+  useEffect(() => {
+    if (!conversationId || isMessagesLoading || !newestIncomingMessageId) {
+      return;
+    }
+    if (lastReadMarkRef.current === newestIncomingMessageId) return;
+
+    lastReadMarkRef.current = newestIncomingMessageId;
+    markConversationReadRef.current(conversationId);
+  }, [conversationId, isMessagesLoading, newestIncomingMessageId]);
 
   const fetchInitialMessagesOnce = useCallback(async () => {
-    if (!conversationId) return;
+    if (!conversationId) {
+      setIsMessagesLoading(false);
+      return;
+    }
 
-    if (hasFetchedInitialRef.current === conversationId) return;
+    if (hasFetchedInitialRef.current === conversationId) {
+      setIsMessagesLoading(false);
+      return;
+    }
 
     hasFetchedInitialRef.current = conversationId;
-
-    setIsInitialLoading(true);
+    setIsMessagesLoading(true);
 
     try {
       const res = await getConversationMessages(conversationId);
@@ -334,7 +388,7 @@ const DirectMessageChat = () => {
     } catch (e) {
       console.log('DirectMessageChat fetch error', e);
     } finally {
-      setIsInitialLoading(false);
+      setIsMessagesLoading(false);
     }
   }, [conversationId, setAllMessages, getConversationMessages]);
 
@@ -440,14 +494,6 @@ const DirectMessageChat = () => {
     },
     [conversationId, setAllMessages],
   );
-
-  if (isInitialLoading && !messages.length) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
-  }
 
   const removeOptimisticMessage = (tempId: string) => {
     setAllMessages(prev => {
@@ -1221,35 +1267,39 @@ const DirectMessageChat = () => {
             resizeMode="cover"
             style={{ flex: 1 }}
           >
-            <FlatList
-              ref={flatListRef}
-              data={messages}
-              extraData={`${messagesExtraData}:${selectedMessageId ?? ''}`}
-              renderItem={renderMessage}
-              keyExtractor={(item, index) => {
-                const id = normalizeId(item?._id || item?.id);
-                return id || `index-${index}`;
-              }}
-              keyboardShouldPersistTaps="handled"
-              removeClippedSubviews={false}
-              scrollEnabled={
-                !isEmojiPickerVisible &&
-                !isAttachmentOptionsVisible &&
-                !isImageViewerVisible &&
-                !isDeleteModalVisible
-              }
-              onScroll={e => {
-                scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
-              }}
-              scrollEventThrottle={16}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{
-                flexGrow: 1,
-                padding: 10,
-              }}
-              renderScrollComponent={renderChatScrollComponent}
-              inverted={true}
-            />
+            {isMessagesLoading ? (
+              <ChatMessagesAreaSkeleton />
+            ) : (
+              <FlatList
+                ref={flatListRef}
+                data={messages}
+                extraData={`${messagesExtraData}:${selectedMessageId ?? ''}`}
+                renderItem={renderMessage}
+                keyExtractor={(item, index) => {
+                  const id = normalizeId(item?._id || item?.id);
+                  return id || `index-${index}`;
+                }}
+                keyboardShouldPersistTaps="handled"
+                removeClippedSubviews={false}
+                scrollEnabled={
+                  !isEmojiPickerVisible &&
+                  !isAttachmentOptionsVisible &&
+                  !isImageViewerVisible &&
+                  !isDeleteModalVisible
+                }
+                onScroll={e => {
+                  scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
+                }}
+                scrollEventThrottle={16}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{
+                  flexGrow: 1,
+                  padding: 10,
+                }}
+                renderScrollComponent={renderChatScrollComponent}
+                inverted={true}
+              />
+            )}
           </ImageBackground>
 
           {/* INPUT BAR */}

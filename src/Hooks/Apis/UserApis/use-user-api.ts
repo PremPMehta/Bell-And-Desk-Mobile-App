@@ -124,6 +124,14 @@ function mergeChatListResponsePreservingNewerActivity(
     }
     // Same message id (or missing ids): list GET often returns unreadCount 0 while the
     // client already incremented from the socket — take the max so we don't show N-1.
+    // If the user already read this preview locally (pu === 0), do not restore stale server unread.
+    if (pu === 0 && pMid && rMid && pMid === rMid) {
+      return {
+        ...row,
+        lastMessage: p.lastMessage ?? row.lastMessage,
+        unreadCount: 0,
+      };
+    }
     return {
       ...row,
       lastMessage: p.lastMessage ?? row.lastMessage,

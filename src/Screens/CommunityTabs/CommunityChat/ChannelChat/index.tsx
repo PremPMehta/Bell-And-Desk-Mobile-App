@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -38,6 +38,7 @@ import AttachmentOptionsModal, {
 import ToastModule from '@/Components/Core/Toast';
 import SocketService from '@/Services/SocketService';
 import DeleteMessageModal from './DeleteMessageModal';
+import { ChatMessagesAreaSkeleton } from '@/Components/Core/Skeleton/ChatConversationSkeleton';
 
 import { useAtom } from 'jotai';
 import { chatMessagesAtom, typingUsersAtom } from '@/Jotai/Atoms';
@@ -71,6 +72,35 @@ const VirtualizedListScrollView = React.memo(
     );
   }),
 );
+
+/** Merge API transcript, Jotai cache, and list-row lastMessage preview (newest first). */
+function mergeChannelMessageLists(
+  apiMessages: any[],
+  cachedMessages: any[],
+  listPreviewMessage?: any,
+): any[] {
+  const map = new Map<string, any>();
+  const add = (m: any) => {
+    const id = m?._id ?? m?.id;
+    if (id != null) map.set(String(id), m);
+  };
+  apiMessages.forEach(add);
+  cachedMessages.forEach(m => {
+    const id = m?._id ?? m?.id;
+    if (id != null && !map.has(String(id))) map.set(String(id), m);
+  });
+  if (listPreviewMessage) {
+    const pid = listPreviewMessage._id ?? listPreviewMessage.id;
+    if (pid != null && !map.has(String(pid))) {
+      map.set(String(pid), listPreviewMessage);
+    }
+  }
+  return Array.from(map.values()).sort((a: any, b: any) => {
+    const ta = new Date(a?.createdAt ?? 0).getTime();
+    const tb = new Date(b?.createdAt ?? 0).getTime();
+    return tb - ta;
+  });
+}
 
 const ChannelChat = () => {
   const route = useRoute<any>();
@@ -149,9 +179,9 @@ const ChannelChat = () => {
 
   const isTypingRef = useRef(false);
 
-  const [isInitialLoading, setIsInitialLoading] = useState(false);
+  const [isMessagesLoading, setIsMessagesLoading] = useState(true);
 
-  const hasFetchedInitialRef = useRef<string | null>(null);
+  const isRefreshingMessagesRef = useRef(false);
 
   const [composerHeight, setComposerHeight] = useState(75);
 
@@ -185,15 +215,10 @@ const ChannelChat = () => {
     return `${arr.length}:${newestId}:${newestTime}:${reactionSig}`;
   };
 
-  const pullFromStore = useCallback(() => {
-    if (!channelId) return;
+  const syncLiveMessagesFromStore = useCallback(() => {
+    if (!channelId) return [];
 
-    const msgState = store.get(chatMessagesAtom);
-    const typingState = store.get(typingUsersAtom);
-
-    const nextMsgs = msgState?.[channelId] ?? [];
-    const nextTyping = typingState?.[channelId] ?? [];
-
+    const nextMsgs = store.get(chatMessagesAtom)?.[channelId] ?? [];
     const sig = computeSig(nextMsgs);
 
     if (sig !== lastSigRef.current) {
@@ -201,8 +226,18 @@ const ChannelChat = () => {
       setLiveMessages(nextMsgs);
     }
 
-    setLiveTypingUsers(nextTyping);
+    return nextMsgs;
   }, [channelId]);
+
+  const pullFromStore = useCallback(() => {
+    if (!channelId) return;
+
+    syncLiveMessagesFromStore();
+
+    const typingState = store.get(typingUsersAtom);
+    const nextTyping = typingState?.[channelId] ?? [];
+    setLiveTypingUsers(nextTyping);
+  }, [channelId, syncLiveMessagesFromStore]);
 
   useEffect(() => {
     pullFromStore();
@@ -316,79 +351,145 @@ const ChannelChat = () => {
   const members = apiGetChatCommunityMembers?.data || [];
 
   useEffect(() => {
-    if (!channelId) return;
-
-    markChannelRead(channelId);
-
-    if (communityId) {
-      SocketService.setCommunityId(communityId);
-      getChatCommunityMembers(communityId);
+    if (!channelId) {
+      setIsMessagesLoading(false);
+      return;
     }
 
-    SocketService.joinChannel(channelId);
-
-    return () => {
-      SocketService.leaveChannel(channelId);
-    };
-  }, [channelId, communityId]);
-
-  const fetchInitialMessagesOnce = useCallback(async () => {
-    if (!channelId) return;
-
-    if (hasFetchedInitialRef.current === channelId) return;
-
-    hasFetchedInitialRef.current = channelId;
-
-    setIsInitialLoading(true);
-
-    try {
-      const res = await getChatMessages(channelId);
-
-      const apiMessages = res?.data || [];
-
-      if (Array.isArray(apiMessages) && apiMessages.length > 0) {
-        setAllMessages(prev => {
-          const current = prev[channelId] || [];
-
-          const map = new Map<string, any>();
-
-          apiMessages.forEach((m: any) => {
-            const id = m?._id || m?.id;
-
-            if (id) map.set(String(id), m);
-          });
-
-          current.forEach((m: any) => {
-            const id = m?._id || m?.id;
-
-            if (id && !map.has(String(id))) {
-              map.set(String(id), m);
-            }
-          });
-
-          const merged = Array.from(map.values()).sort((a: any, b: any) => {
-            const ta = new Date(b?.createdAt ?? 0).getTime();
-            const tb = new Date(a?.createdAt ?? 0).getTime();
-            return ta - tb;
-          });
-
-          return {
-            ...prev,
-            [channelId]: merged,
-          };
-        });
-      }
-    } catch (e) {
-      console.log('ChannelChat fetch error', e);
-    } finally {
-      setIsInitialLoading(false);
+    const cached = store.get(chatMessagesAtom)?.[channelId] ?? [];
+    if (cached.length > 0) {
+      syncLiveMessagesFromStore();
+      setIsMessagesLoading(false);
+      return;
     }
-  }, [channelId, setAllMessages, getChatMessages]);
+
+    setIsMessagesLoading(true);
+    lastSigRef.current = 'empty';
+    setLiveMessages([]);
+  }, [channelId, syncLiveMessagesFromStore]);
+
+  const lastReadMarkRef = useRef<string>('');
+  const markChannelReadRef = useRef(markChannelRead);
+  const getChatCommunityMembersRef = useRef(getChatCommunityMembers);
+  const getChatMessagesRef = useRef(getChatMessages);
+  markChannelReadRef.current = markChannelRead;
+  getChatCommunityMembersRef.current = getChatCommunityMembers;
+  getChatMessagesRef.current = getChatMessages;
+
+  const listPreviewMessage = channelData?.lastMessage;
+  const listPreviewMessageId = useMemo(
+    () =>
+      normalizeId(listPreviewMessage?._id || listPreviewMessage?.id),
+    [listPreviewMessage?._id, listPreviewMessage?.id],
+  );
 
   useFocusEffect(
     useCallback(() => {
-      fetchInitialMessagesOnce();
-    }, [fetchInitialMessagesOnce]),
+      if (!channelId) return;
+
+      markChannelReadRef.current(channelId);
+
+      if (communityId) {
+        SocketService.setCommunityId(communityId);
+        getChatCommunityMembersRef.current(communityId);
+      }
+
+      SocketService.joinChannel(channelId);
+
+      return () => {
+        markChannelReadRef.current(channelId);
+        SocketService.leaveChannel(channelId);
+      };
+      // API fns from useUserApi are recreated each render — keep deps stable.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [channelId, communityId]),
+  );
+
+  const newestIncomingMessageId = useMemo(() => {
+    const myId = normalizeId(user?._id || user?.id);
+    const newest = messages.find((m: any) => !m?.isOptimistic);
+    if (!newest) return '';
+    const senderId = normalizeId(
+      newest?.sender?._id || newest?.sender?.id || newest?.senderId,
+    );
+    if (!senderId || senderId === myId) return '';
+    return normalizeId(newest._id || newest.id);
+  }, [messages, user?._id, user?.id]);
+
+  // Mark read when a new message arrives while this screen is open (not only on enter).
+  useEffect(() => {
+    if (!channelId || isMessagesLoading || !newestIncomingMessageId) return;
+    if (lastReadMarkRef.current === newestIncomingMessageId) return;
+
+    lastReadMarkRef.current = newestIncomingMessageId;
+    markChannelReadRef.current(channelId);
+  }, [channelId, isMessagesLoading, newestIncomingMessageId]);
+
+  const applyMergedMessages = useCallback(
+    (apiMessages: any[]) => {
+      if (!channelId) return;
+      setAllMessages(prev => {
+        const current = prev[channelId] || [];
+        const merged = mergeChannelMessageLists(
+          apiMessages,
+          current,
+          listPreviewMessage,
+        );
+        return { ...prev, [channelId]: merged };
+      });
+      lastSigRef.current = '';
+      syncLiveMessagesFromStore();
+    },
+    [channelId, listPreviewMessage, setAllMessages, syncLiveMessagesFromStore],
+  );
+
+  const refreshChannelMessages = useCallback(async () => {
+    if (!channelId || isRefreshingMessagesRef.current) return;
+
+    const cached = store.get(chatMessagesAtom)?.[channelId] ?? [];
+    if (cached.length === 0) {
+      setIsMessagesLoading(true);
+    }
+
+    isRefreshingMessagesRef.current = true;
+    try {
+      const res = await getChatMessagesRef.current(channelId);
+      const apiMessages = Array.isArray(res?.data) ? res.data : [];
+      applyMergedMessages(apiMessages);
+    } catch (e) {
+      console.log('ChannelChat fetch error', e);
+      if (listPreviewMessage) {
+        applyMergedMessages([]);
+      } else {
+        syncLiveMessagesFromStore();
+      }
+    } finally {
+      setIsMessagesLoading(false);
+      isRefreshingMessagesRef.current = false;
+    }
+  }, [channelId, listPreviewMessage, applyMergedMessages, syncLiveMessagesFromStore]);
+
+  // Show list-row preview immediately when cache is behind (e.g. after DM or list socket update).
+  useEffect(() => {
+    if (!channelId || !listPreviewMessage || !listPreviewMessageId) return;
+    const cached = store.get(chatMessagesAtom)?.[channelId] ?? [];
+    const cachedNewestId = normalizeId(cached[0]?._id || cached[0]?.id);
+    if (listPreviewMessageId !== cachedNewestId) {
+      applyMergedMessages([]);
+    }
+  }, [
+    channelId,
+    listPreviewMessage,
+    listPreviewMessageId,
+    applyMergedMessages,
+  ]);
+
+  useFocusEffect(
+    useCallback(() => {
+      lastReadMarkRef.current = '';
+      refreshChannelMessages();
+      return () => {};
+    }, [refreshChannelMessages]),
   );
 
   // Must run on every render — do not place after an early return (Rules of Hooks).
@@ -465,7 +566,12 @@ const ChannelChat = () => {
         selectMessageForDelete(item);
       }
     },
-    [selectedMessageId, getMessageId, clearMessageDeleteSelection, selectMessageForDelete],
+    [
+      selectedMessageId,
+      getMessageId,
+      clearMessageDeleteSelection,
+      selectMessageForDelete,
+    ],
   );
 
   const removeMessageFromChat = useCallback(
@@ -483,14 +589,6 @@ const ChannelChat = () => {
     },
     [channelId, setAllMessages],
   );
-
-  if (isInitialLoading && !messages.length) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
-  }
 
   const removeOptimisticMessage = (tempId: string) => {
     setAllMessages(prev => {
@@ -703,9 +801,7 @@ const ChannelChat = () => {
   };
 
   const handleConfirmDeleteMessage = async () => {
-    const messageId = normalizeId(
-      messageToDelete?._id || messageToDelete?.id,
-    );
+    const messageId = normalizeId(messageToDelete?._id || messageToDelete?.id);
     if (!messageId || messageToDelete?.isOptimistic) return;
 
     const deletedSnapshot = messageToDelete;
@@ -1153,11 +1249,7 @@ const ChannelChat = () => {
         {hasAttachments && renderMessageAttachments(attachments)}
 
         {hasText ? (
-          <Text
-            style={styles.msgText}
-            selectable={false}
-            suppressHighlighting
-          >
+          <Text style={styles.msgText} selectable={false} suppressHighlighting>
             {messageText}
             <Text style={styles.timeSpacer} selectable={false}>
               {'   '}
@@ -1177,11 +1269,7 @@ const ChannelChat = () => {
             </Text>
           </Text>
         ) : (
-          <Text
-            style={styles.msgText}
-            selectable={false}
-            suppressHighlighting
-          >
+          <Text style={styles.msgText} selectable={false} suppressHighlighting>
             <Text style={styles.timeTextInline} selectable={false}>
               {formatTime(item.createdAt)}
             </Text>
@@ -1358,35 +1446,39 @@ const ChannelChat = () => {
             resizeMode="cover"
             style={{ flex: 1 }}
           >
-            <FlatList
-              ref={flatListRef}
-              data={messages}
-              extraData={selectedMessageId}
-              renderItem={renderMessage}
-              keyExtractor={(item, index) => {
-                const id = normalizeId(item?._id || item?.id);
-                return id || `index-${index}`;
-              }}
-              keyboardShouldPersistTaps="handled"
-              removeClippedSubviews={false}
-              scrollEnabled={
-                !isEmojiPickerVisible &&
-                !isAttachmentOptionsVisible &&
-                !isImageViewerVisible &&
-                !isDeleteModalVisible
-              }
-              onScroll={e => {
-                scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
-              }}
-              scrollEventThrottle={16}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{
-                flexGrow: 1,
-                padding: 10,
-              }}
-              renderScrollComponent={renderChatScrollComponent}
-              inverted={true}
-            />
+            {isMessagesLoading ? (
+              <ChatMessagesAreaSkeleton />
+            ) : (
+              <FlatList
+                ref={flatListRef}
+                data={messages}
+                extraData={selectedMessageId}
+                renderItem={renderMessage}
+                keyExtractor={(item, index) => {
+                  const id = normalizeId(item?._id || item?.id);
+                  return id || `index-${index}`;
+                }}
+                keyboardShouldPersistTaps="handled"
+                removeClippedSubviews={false}
+                scrollEnabled={
+                  !isEmojiPickerVisible &&
+                  !isAttachmentOptionsVisible &&
+                  !isImageViewerVisible &&
+                  !isDeleteModalVisible
+                }
+                onScroll={e => {
+                  scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
+                }}
+                scrollEventThrottle={16}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{
+                  flexGrow: 1,
+                  padding: 10,
+                }}
+                renderScrollComponent={renderChatScrollComponent}
+                inverted={true}
+              />
+            )}
           </ImageBackground>
 
           {/* INPUT BAR */}

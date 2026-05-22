@@ -756,15 +756,20 @@ class SocketService {
     const isFromMe = !!myId && !!senderId && myId === senderId;
 
     const activeChannelId = this.normalizeId(store.get(activeChannelIdAtom));
+    const activeConversationId = this.normalizeId(this.activeConversationId);
     const viewingThisChannel =
-      !!targetId && !!activeChannelId && targetId === activeChannelId;
+      !!targetId &&
+      ((!!activeChannelId && targetId === activeChannelId) ||
+        (!!activeConversationId && targetId === activeConversationId));
+
+    // User is inside this channel/DM — never show unread locally (server may still send unreadCount: 1).
+    if (viewingThisChannel) {
+      return 0;
+    }
 
     const hasNewMessage = !!newMid && (!cMid || newMid !== cMid);
     const shouldIncrementUnread =
-      hasNewMessage &&
-      !viewingThisChannel &&
-      !isFromMe &&
-      !alreadyAppliedToRow;
+      hasNewMessage && !isFromMe && !alreadyAppliedToRow;
 
     const currentCount = Number(row.unreadCount || 0);
     const patchUnread =
