@@ -1,21 +1,21 @@
-import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  useMemo,
+} from 'react';
 import {
   View,
   Text,
   FlatList,
-  TextInput,
   TouchableOpacity,
   Image,
-  ActivityIndicator,
-  ImageBackground,
   Platform,
-  Pressable,
-  Keyboard,
 } from 'react-native';
 
 import {
   KeyboardChatScrollView,
-  KeyboardStickyView,
 } from 'react-native-keyboard-controller';
 
 import {
@@ -27,7 +27,6 @@ import {
 import styles from './style';
 import Icon from '@/Components/Core/Icons';
 import { COLORS } from '@/Assets/Theme/colors';
-import { AppImages } from '@/Assets/Images';
 import useUserApi from '@/Hooks/Apis/UserApis/use-user-api';
 import EmojiPickerModal from '../ChannelChat/EmojiPickerModal';
 import AttachmentOptionsModal, {
@@ -45,11 +44,11 @@ import { store } from '@/Jotai/Store';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getFullImageUrl } from '@/Utils/ImageUtils';
 import ImageViewing from 'react-native-image-viewing';
-import ChatVideoAttachment from '../ChannelChat/ChatVideoAttachment';
-import ChatFileAttachment from '../ChannelChat/ChatFileAttachment';
-import { ChatMessagesAreaSkeleton } from '@/Components/Core/Skeleton/ChatConversationSkeleton';
+import DirectMessageChatHeader from './DirectMessageChatHeader';
+import DirectMessageChatMessageItem from './DirectMessageChatMessageItem';
+import DirectMessageChatMessagesArea from './DirectMessageChatMessagesArea';
+import DirectMessageChatInputBar from './DirectMessageChatInputBar';
 import {
-  getMessageAttachments,
   getAttachmentKind,
   resolveAttachmentUrl,
   buildOptimisticAttachments,
@@ -656,6 +655,8 @@ const DirectMessageChat = () => {
     !!conversationId &&
     (!!inputText.trim() || !!pendingAttachment) &&
     !isUploadingAttachment;
+  const inputBottomInset =
+    Platform.OS === 'ios' ? Math.max(insets.bottom, 10) : 10;
 
   const handleTypingStart = () => {
     if (!isTypingRef.current && conversationId) {
@@ -954,265 +955,29 @@ const DirectMessageChat = () => {
     }
   };
 
-  const renderMessageAttachments = (attachments: any[]) => {
-    if (!attachments.length) return null;
+  const handleReactionPress = useCallback((item: any) => {
+    setReactionDetailMessage(item);
+    setIsReactionDetailsVisible(true);
+  }, []);
 
-    return (
-      <View style={styles.attachmentsContainer}>
-        {attachments.map((att, idx) => {
-          const key =
-            att?._id || att?.id || `${att?.url || att?.filename || 'att'}-${idx}`;
-          const kind = getAttachmentKind(att);
-          const uri = resolveAttachmentUrl(att);
-
-          if (kind === 'image' && uri) {
-            return (
-              <TouchableOpacity
-                key={String(key)}
-                activeOpacity={0.9}
-                onPress={() => openImageViewer(attachments, uri)}
-                style={styles.attachmentImageWrap}
-              >
-                <Image
-                  source={{ uri }}
-                  style={styles.attachmentImage}
-                  resizeMode="cover"
-                />
-              </TouchableOpacity>
-            );
-          }
-
-          if (kind === 'video' && uri) {
-            return (
-              <ChatVideoAttachment
-                key={String(key)}
-                uri={uri}
-                attachment={att}
-              />
-            );
-          }
-
-          return (
-            <ChatFileAttachment
-              key={String(key)}
-              attachment={att}
-              navigation={navigation}
-            />
-          );
-        })}
-      </View>
-    );
-  };
-
-  const renderReactions = (item: any, isMe: boolean) => {
-    const reactions = item?.reactions || [];
-    if (!reactions || reactions.length === 0) return null;
-
-    const totalCount = reactions.reduce(
-      (acc: number, r: any) => acc + (r.count || r.users?.length || 0),
-      0,
-    );
-    const uniqueEmojis = reactions.map((r: any) => r.emoji).slice(0, 3);
-
-    return (
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={() => {
-          setReactionDetailMessage(item);
-          setIsReactionDetailsVisible(true);
-        }}
-        style={[
-          styles.reactionContainer,
-          isMe ? styles.reactionContainerMe : styles.reactionContainerThem,
-        ]}
-      >
-        <View style={styles.reactionItem}>
-          {uniqueEmojis.map((emoji: string, idx: number) => (
-            <Text key={idx} style={styles.reactionEmoji}>
-              {emoji}
-            </Text>
-          ))}
-          {totalCount > 1 && (
-            <Text style={styles.reactionCount}>{totalCount}</Text>
-          )}
-        </View>
-      </TouchableOpacity>
-    );
-  };
-
-  const renderMessage = ({ item, index }: { item: any; index: number }) => {
-    const myId = user?._id || user?.id;
-    const senderId = item.sender?._id || item.sender?.id || item.senderId;
-    const isMe = !!myId && !!senderId && myId === senderId;
-
-    const sender = item.sender || {};
-    const initials = sender.firstName ? sender.firstName[0] : 'U';
-
-    const currentMsgDate = new Date(item.createdAt).toDateString();
-    const nextMsgDate = messages[index + 1]
-      ? new Date(messages[index + 1].createdAt).toDateString()
-      : null;
-
-    const showDateSeparator = currentMsgDate !== nextMsgDate;
-
-    const hasReactions =
-      Array.isArray(item?.reactions) && item.reactions.length > 0;
-
-    const attachments = getMessageAttachments(item);
-    const hasAttachments = attachments.length > 0;
-    const messageText = String(item.content || item.text || '').trim();
-    const hasText = messageText.length > 0;
-
-    const itemId = getMessageId(item);
-    const isSelectedForDelete =
-      !!isMe && !!selectedMessageId && !!itemId && selectedMessageId === itemId;
-
-    const messageBubble = (
-      <Pressable
-        ref={(r: any) => {
-          const mid = getMessageId(item);
-
-          if (!mid) return;
-
-          if (r) {
-            messageBubbleRefs.current.set(mid, r);
-          } else {
-            messageBubbleRefs.current.delete(mid);
-          }
-        }}
-        collapsable={false}
-        android_disableSound={true}
-        delayLongPress={450}
-        hitSlop={12}
-        pressRetentionOffset={{
-          top: 40,
-          left: 40,
-          right: 40,
-          bottom: 40,
-        }}
-        onPress={() => {
-          if (isMe && !item?.isOptimistic && selectedMessageId) {
-            toggleMessageDeleteSelection(item);
-          }
-        }}
-        onLongPress={e => {
-          if (item?.isOptimistic) return;
-          if (isMe) {
-            toggleMessageDeleteSelection(item);
-          }
-          openEmojiPickerForMessage(item, e.nativeEvent);
-        }}
-        style={({ pressed }) => [
-          styles.bubble,
-          isMe ? styles.bubbleMe : styles.bubbleThem,
-          hasReactions && styles.bubbleWithReaction,
-          hasAttachments && styles.bubbleWithMedia,
-          pressed && isMe && !isSelectedForDelete && { opacity: 0.92 },
-        ]}
-      >
-        {!isMe && (
-          <Text
-            style={styles.senderName}
-            selectable={false}
-            suppressHighlighting
-          >
-            {sender.firstName} {sender.lastName}
-          </Text>
-        )}
-
-        {hasAttachments && renderMessageAttachments(attachments)}
-
-        {hasText ? (
-          <Text
-            style={styles.msgText}
-            selectable={false}
-            suppressHighlighting
-          >
-            {messageText}
-            <Text style={styles.timeSpacer} selectable={false}>
-              {'   '}
-            </Text>
-            <Text style={styles.timeTextInline} selectable={false}>
-              {formatTime(item.createdAt)}
-            </Text>
-          </Text>
-        ) : hasAttachments ? (
-          <Text
-            style={[styles.msgText, styles.timeTextBlock]}
-            selectable={false}
-            suppressHighlighting
-          >
-            <Text style={styles.timeTextInline} selectable={false}>
-              {formatTime(item.createdAt)}
-            </Text>
-          </Text>
-        ) : (
-          <Text
-            style={styles.msgText}
-            selectable={false}
-            suppressHighlighting
-          >
-            <Text style={styles.timeTextInline} selectable={false}>
-              {formatTime(item.createdAt)}
-            </Text>
-          </Text>
-        )}
-      </Pressable>
-    );
-
-    return (
-      <View>
-        {showDateSeparator && (
-          <View style={styles.dateSeparator}>
-            <Text style={styles.dateSeparatorText}>
-              {formatDateLabel(item.createdAt)}
-            </Text>
-          </View>
-        )}
-
-        <View style={[styles.messageRow, isMe && styles.messageRowMe]}>
-          {!isMe && (
-            <View style={styles.avatar}>
-              {sender.profilePicture?.url ? (
-                <Image
-                  source={{
-                    uri:
-                      getFullImageUrl(sender.profilePicture.url) ||
-                      sender.profilePicture.url,
-                  }}
-                  style={styles.avatarImage}
-                />
-              ) : (
-                <Text style={styles.avatarText}>{initials}</Text>
-              )}
-            </View>
-          )}
-
-          <View
-            style={isMe ? styles.bubbleWrapperMe : styles.bubbleWrapperThem}
-          >
-            {isSelectedForDelete ? (
-              <View
-                key={`${itemId}-selected`}
-                style={styles.bubbleSelectedWrap}
-              >
-                {messageBubble}
-                <View style={styles.selectionBadge} pointerEvents="none">
-                  <Icon name="Check" size={14} color={COLORS.primary} />
-                </View>
-              </View>
-            ) : (
-              <React.Fragment key={`${itemId}-normal`}>
-                {messageBubble}
-              </React.Fragment>
-            )}
-
-            {renderReactions(item, isMe)}
-          </View>
-        </View>
-      </View>
-    );
-  };
+  const renderMessage = ({ item, index }: { item: any; index: number }) => (
+    <DirectMessageChatMessageItem
+      item={item}
+      nextMessage={messages[index + 1]}
+      currentUser={user}
+      selectedMessageId={selectedMessageId}
+      navigation={navigation}
+      messageBubbleRefs={messageBubbleRefs}
+      getMessageId={getMessageId}
+      normalizeId={normalizeId}
+      formatDateLabel={formatDateLabel}
+      formatTime={formatTime}
+      toggleMessageDeleteSelection={toggleMessageDeleteSelection}
+      openEmojiPickerForMessage={openEmojiPickerForMessage}
+      onPressReactions={handleReactionPress}
+      openImageViewer={openImageViewer}
+    />
+  );
 
   return (
     <View
@@ -1222,150 +987,48 @@ const DirectMessageChat = () => {
         paddingTop: insets.top,
       }}
     >
-      {/* HEADER */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleBackPress} style={styles.backBtn}>
-          <Icon
-            name={Platform.OS === 'ios' ? 'ChevronLeft' : 'ArrowLeft'}
-            size={24}
-            color={COLORS.white}
-          />
-        </TouchableOpacity>
-
-        <View style={styles.headerAvatar}>
-          {participantAvatar ? (
-            <Image
-              source={{ uri: participantAvatar }}
-              style={styles.headerAvatarImage}
-            />
-          ) : (
-            <Text style={styles.headerAvatarText}>{participantInitials}</Text>
-          )}
-        </View>
-
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>{participantName}</Text>
-          {/* <Text style={styles.headerSubTitle}>Direct Message</Text> */}
-        </View>
-
-        {selectedMessageId ? (
-          <TouchableOpacity
-            onPress={handleDeleteIconPress}
-            style={styles.headerDeleteBtn}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Icon name="Trash2" size={22} color={COLORS.red} />
-          </TouchableOpacity>
-        ) : null}
-      </View>
+      <DirectMessageChatHeader
+        participantName={participantName}
+        participantAvatar={participantAvatar}
+        participantInitials={participantInitials}
+        selectedMessageId={selectedMessageId}
+        onBackPress={handleBackPress}
+        onDeletePress={handleDeleteIconPress}
+      />
 
       <View style={{ flex: 1 }}>
-        <View style={{ flex: 1 }}>
-          {/* CHAT AREA */}
-          <ImageBackground
-            source={AppImages.chatBg}
-            resizeMode="cover"
-            style={{ flex: 1 }}
-          >
-            {isMessagesLoading ? (
-              <ChatMessagesAreaSkeleton />
-            ) : (
-              <FlatList
-                ref={flatListRef}
-                data={messages}
-                extraData={`${messagesExtraData}:${selectedMessageId ?? ''}`}
-                renderItem={renderMessage}
-                keyExtractor={(item, index) => {
-                  const id = normalizeId(item?._id || item?.id);
-                  return id || `index-${index}`;
-                }}
-                keyboardShouldPersistTaps="handled"
-                removeClippedSubviews={false}
-                scrollEnabled={
-                  !isEmojiPickerVisible &&
-                  !isAttachmentOptionsVisible &&
-                  !isImageViewerVisible &&
-                  !isDeleteModalVisible
-                }
-                onScroll={e => {
-                  scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
-                }}
-                scrollEventThrottle={16}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{
-                  flexGrow: 1,
-                  padding: 10,
-                }}
-                renderScrollComponent={renderChatScrollComponent}
-                inverted={true}
-              />
-            )}
-          </ImageBackground>
+        <DirectMessageChatMessagesArea
+          flatListRef={flatListRef}
+          messages={messages}
+          extraData={`${messagesExtraData}:${selectedMessageId ?? ''}`}
+          isMessagesLoading={isMessagesLoading}
+          isEmojiPickerVisible={isEmojiPickerVisible}
+          isAttachmentOptionsVisible={isAttachmentOptionsVisible}
+          isImageViewerVisible={isImageViewerVisible}
+          isDeleteModalVisible={isDeleteModalVisible}
+          normalizeId={normalizeId}
+          renderMessage={renderMessage}
+          renderChatScrollComponent={renderChatScrollComponent}
+          onScrollOffsetChange={offset => {
+            scrollOffsetRef.current = offset;
+          }}
+        />
 
-          {/* INPUT BAR */}
-          <KeyboardStickyView>
-            <View
-              style={[
-                styles.inputMainContainer,
-                {
-                  paddingBottom:
-                    Platform.OS === 'ios' ? Math.max(insets.bottom, 10) : 10,
-                },
-              ]}
-            >
-              {renderTypingIndicator()}
-              {renderPendingAttachmentPreview()}
-
-              <View style={styles.inputInnerContainer}>
-                <TouchableOpacity
-                  style={styles.fileContainer}
-                  onPress={() => {
-                    Keyboard.dismiss();
-                    setIsAttachmentOptionsVisible(true);
-                  }}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  disabled={isUploadingAttachment}
-                >
-                  <Icon name="Paperclip" size={22} color={COLORS.primary} />
-                </TouchableOpacity>
-
-                <TextInput
-                  style={styles.input}
-                  placeholder={
-                    pendingAttachment ? 'Add a caption...' : 'Type a message...'
-                  }
-                  placeholderTextColor={COLORS.pageDots}
-                  value={inputText}
-                  multiline
-                  editable={!isUploadingAttachment}
-                  onChangeText={text => {
-                    setInputText(text);
-                    handleTypingStart();
-                  }}
-                />
-
-                <TouchableOpacity
-                  style={[
-                    styles.sendBtn,
-                    !canSendMessage && styles.sendBtnDisabled,
-                  ]}
-                  onPress={handleSendMessage}
-                  disabled={!canSendMessage}
-                >
-                  {isUploadingAttachment ? (
-                    <ActivityIndicator size="small" color={COLORS.white} />
-                  ) : (
-                    <Icon
-                      name="SendHorizontal"
-                      size={20}
-                      color={COLORS.white}
-                    />
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-          </KeyboardStickyView>
-        </View>
+        <DirectMessageChatInputBar
+          bottomInset={inputBottomInset}
+          pendingAttachment={pendingAttachment}
+          inputText={inputText}
+          canSendMessage={canSendMessage}
+          isUploadingAttachment={isUploadingAttachment}
+          typingIndicator={renderTypingIndicator()}
+          pendingAttachmentPreview={renderPendingAttachmentPreview()}
+          onChangeText={text => {
+            setInputText(text);
+            handleTypingStart();
+          }}
+          onOpenAttachmentOptions={() => setIsAttachmentOptionsVisible(true)}
+          onSendMessage={handleSendMessage}
+        />
       </View>
 
       <ReactionDetailsModal
@@ -1405,9 +1068,7 @@ const DirectMessageChat = () => {
       <AttachmentOptionsModal
         visible={isAttachmentOptionsVisible}
         onClose={() => setIsAttachmentOptionsVisible(false)}
-        bottomInset={
-          (Platform.OS === 'ios' ? Math.max(insets.bottom, 10) : 10) + 76
-        }
+        bottomInset={inputBottomInset + 76}
         onPickResult={handleAttachmentPick}
       />
 
