@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -44,29 +44,27 @@ const MyCommunities = () => {
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
 
   // Filter communities by search query (name or description)
-  const filteredCommunities = communities.filter(c => {
+  const filteredCommunities = useMemo(() => communities.filter(c => {
     const matchesSearch = searchQuery.trim()
       ? c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.description?.toLowerCase().includes(searchQuery.toLowerCase())
       : true;
 
-    // Show communities only if 'All' is selected.
-    // If other categories are selected, show empty list as per user request.
     const matchesCategory = selectedCategory === 'All';
 
     return matchesSearch && matchesCategory;
-  });
+  }), [communities, searchQuery, selectedCategory]);
 
   const scrollY = useSharedValue(0);
   const lastScrollY = useSharedValue(0);
-  const categoryVisible = useSharedValue(1); // 1 = visible, 0 = hidden
+  const categoryVisible = useSharedValue(1);
 
   // Fixed height of the category tab row
   const TAB_HEIGHT = ms(36);
   const MARGIN_GAP = ms(12);
   const TOTAL_HEIGHT = TAB_HEIGHT + MARGIN_GAP;
 
-  const SCROLL_THRESHOLD = ms(10); // how many px before toggling
+  const SCROLL_THRESHOLD = ms(10);
 
   // Fetch user data on mount and focus
   useEffect(() => {
@@ -79,7 +77,7 @@ const MyCommunities = () => {
   }, [isFocused]);
 
 
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     try {
       const response = await getUserData();
       if (response?.data?.allCommunities) {
@@ -107,17 +105,15 @@ const MyCommunities = () => {
     } finally {
       setScreenLoading(false);
     }
-  };
+  }, [getUserData]);
 
-  const handleOpenCommunity = async (
+  const handleOpenCommunity = useCallback(async (
     item: any,
     options?: { initialTab?: string },
   ) => {
     const communityId = item?._id || item?.id;
     const slug = item?.subdomain;
 
-    // Default behavior: navigate as before. We only block if we can confidently
-    // detect that the CURRENT user is a moderator with status "inactive".
     try {
       if (communityId) {
         const res: any = await getCommunityModerators(communityId);
@@ -143,7 +139,7 @@ const MyCommunities = () => {
         }
       }
     } catch (e) {
-      // Fail-open to avoid breaking navigation if API is down.
+      // Fail-open
     }
 
     navigation.navigate('CommunityLayout', {
@@ -152,7 +148,7 @@ const MyCommunities = () => {
       slug,
       ...(options?.initialTab ? { initialTab: options.initialTab } : {}),
     });
-  };
+  }, [navigation, getCommunityModerators, user]);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: event => {
@@ -160,7 +156,6 @@ const MyCommunities = () => {
       const diff = currentY - lastScrollY.value;
 
       if (currentY <= 0) {
-        // At the very top — always show the category
         if (categoryVisible.value !== 1) {
           categoryVisible.value = withTiming(1, {
             duration: 250,
@@ -168,13 +163,11 @@ const MyCommunities = () => {
           });
         }
       } else if (diff > SCROLL_THRESHOLD && categoryVisible.value !== 0) {
-        // Scrolling DOWN — hide category
         categoryVisible.value = withTiming(0, {
           duration: 250,
           easing: Easing.out(Easing.cubic),
         });
       } else if (diff < -SCROLL_THRESHOLD && categoryVisible.value !== 1) {
-        // Scrolling UP — show category
         categoryVisible.value = withTiming(1, {
           duration: 250,
           easing: Easing.out(Easing.cubic),
@@ -189,7 +182,6 @@ const MyCommunities = () => {
     },
   });
 
-  // Animated style for the outer clipping wrapper (fixed height, clips overflow)
   const animatedContainerStyle = useAnimatedStyle(() => {
     return {
       height: interpolate(categoryVisible.value, [0, 1], [0, TOTAL_HEIGHT]),
@@ -197,7 +189,7 @@ const MyCommunities = () => {
     };
   });
 
-  const renderItem = ({ item }: { item: any }) => (
+  const renderItem = useCallback(({ item }: { item: any }) => (
     <MyCommunityCard
       name={item.name}
       description={item.description}
@@ -206,36 +198,9 @@ const MyCommunities = () => {
       onViewPress={() => handleOpenCommunity(item)}
       onSettingsPress={() => handleOpenCommunity(item, { initialTab: 'settings' })}
     />
-  );
+  ), [handleOpenCommunity]);
 
-  const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <View style={styles.emptyIconCircle}>
-        <Icon name="Users" size={40} color={COLORS.primary} />
-      </View>
-      <Text style={styles.emptyTitle}>No Communities Yet</Text>
-      <Text style={styles.emptySubtitle}>
-        You haven't created or joined any communities yet. Start your journey by
-        creating your own community or exploring existing ones.
-      </Text>
-      <View style={styles.emptyButtonRow}>
-        <TouchableOpacity
-          style={styles.createBtn}
-          onPress={handleCreateCommunityPress}
-        >
-          <Text style={styles.createBtnText}>Create Community</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.discoverBtn}
-          onPress={handleDiscoverPress}
-        >
-          <Text style={styles.discoverBtnText}>Discover Communities</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  const handleCreateCommunityPress = () => {
+  const handleCreateCommunityPress = useCallback(() => {
     if (remainingSlots > 0) {
       navigation.navigate('CreateCommunity', {
         isEditMode: false,
@@ -244,20 +209,20 @@ const MyCommunities = () => {
     } else {
       navigation.navigate('ChoosePlan');
     }
-  };
+  }, [navigation, remainingSlots, activeEntitlement]);
 
-  const handleDiscoverPress = () => {
+  const handleDiscoverPress = useCallback(() => {
     navigation.goBack();
-  };
+  }, [navigation]);
 
   // Pick the active entitlement based on activePlanId, or fallback to the first one
-  const activeEntitlement = activePlanId
+  const activeEntitlement = useMemo(() => activePlanId
     ? planEntitlements?.find(plan => plan?.planId === activePlanId || plan?._id === activePlanId) ?? planEntitlements?.[0] ?? null
-    : planEntitlements?.[0] ?? null;
+    : planEntitlements?.[0] ?? null, [activePlanId, planEntitlements]);
   const remainingSlots = activeEntitlement?.remaining ?? 0;
   const planName = activeEntitlement?.planName ?? activeEntitlement?.name ?? '';
 
-  const renderCreateCommunityBanner = () => {
+  const renderCreateCommunityBanner = useMemo(() => {
     if (
       !activeEntitlement ||
       remainingSlots <= 0 ||
@@ -287,9 +252,9 @@ const MyCommunities = () => {
         </TouchableOpacity>
       </View>
     );
-  };
+  }, [activeEntitlement, remainingSlots, searchQuery, selectedCategory, navigation, planName]);
 
-  const renderPaymentPendingBanner = () => {
+  const renderPaymentPendingBanner = useMemo(() => {
     if (
       reservations.length === 0 ||
       searchQuery.trim().length > 0 ||
@@ -329,14 +294,41 @@ const MyCommunities = () => {
         ))}
       </>
     );
-  };
+  }, [reservations, searchQuery, selectedCategory]);
 
-  const ListHeader = () => (
+  const ListHeader = useMemo(() => (
     <View>
-      {renderPaymentPendingBanner()}
-      {renderCreateCommunityBanner()}
+      {renderPaymentPendingBanner}
+      {renderCreateCommunityBanner}
     </View>
-  );
+  ), [renderPaymentPendingBanner, renderCreateCommunityBanner]);
+
+  const renderEmptyState = useCallback(() => (
+    <View style={styles.emptyContainer}>
+      <View style={styles.emptyIconCircle}>
+        <Icon name="Users" size={40} color={COLORS.primary} />
+      </View>
+      <Text style={styles.emptyTitle}>No Communities Yet</Text>
+      <Text style={styles.emptySubtitle}>
+        You haven't created or joined any communities yet. Start your journey by
+        creating your own community or exploring existing ones.
+      </Text>
+      <View style={styles.emptyButtonRow}>
+        <TouchableOpacity
+          style={styles.createBtn}
+          onPress={handleCreateCommunityPress}
+        >
+          <Text style={styles.createBtnText}>Create Community</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.discoverBtn}
+          onPress={handleDiscoverPress}
+        >
+          <Text style={styles.discoverBtnText}>Discover Communities</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  ), [handleCreateCommunityPress, handleDiscoverPress]);
 
   return (
     <View style={styles.mainContainer}>
@@ -393,11 +385,10 @@ const MyCommunities = () => {
       {apiGetUserDataLoading || screenLoading ? (
         <MyCommunitiesSkeleton />
       ) : (
-        /* COMMUNITIES LIST */
         <Animated.FlatList
           data={filteredCommunities}
           renderItem={renderItem}
-          keyExtractor={item => item.id}
+          keyExtractor={(item: any) => item._id || item.id}
           ListHeaderComponent={ListHeader}
           contentContainerStyle={[
             styles.contentContainer,
@@ -407,6 +398,10 @@ const MyCommunities = () => {
           onScroll={scrollHandler}
           scrollEventThrottle={16}
           ListEmptyComponent={renderEmptyState}
+          removeClippedSubviews={true}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
         />
       )}
     </View>

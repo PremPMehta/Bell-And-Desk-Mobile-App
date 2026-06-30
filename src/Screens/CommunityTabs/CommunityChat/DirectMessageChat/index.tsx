@@ -655,8 +655,7 @@ const DirectMessageChat = () => {
     !!conversationId &&
     (!!inputText.trim() || !!pendingAttachment) &&
     !isUploadingAttachment;
-  const inputBottomInset =
-    Platform.OS === 'ios' ? Math.max(insets.bottom, 10) : 10;
+  const inputBottomInset = Math.max(insets.bottom, 10);
 
   const handleTypingStart = () => {
     if (!isTypingRef.current && conversationId) {

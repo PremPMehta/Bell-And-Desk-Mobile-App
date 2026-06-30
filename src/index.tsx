@@ -66,9 +66,28 @@ const AppWrapper = () => {
 const App = () => {
   return (
     <SafeAreaProvider>
+      {/*
+        StatusBar must be rendered here (JS layer) in addition to the native
+        theme settings. On Android, React Native's StatusBar component sends
+        a bridge command that overrides native theme values at runtime.
+
+        - translucent={true}   → makes the status bar area part of the layout
+                                  (edge-to-edge), so content draws behind it.
+        - backgroundColor="transparent" → removes any white/coloured background
+                                          the system might have applied.
+        - barStyle="light-content" → white icons / text on the dark app.
+      */}
+      <StatusBar
+        translucent={true}
+        backgroundColor="transparent"
+        barStyle="light-content"
+      />
       <Provider store={store}>
         <GestureHandlerRootView style={{ flex: 1 }}>
-          <KeyboardProvider>
+          <KeyboardProvider
+            statusBarTranslucent={true}
+            navigationBarTranslucent={true}
+          >
             <AppWrapper />
             <Toast />
           </KeyboardProvider>

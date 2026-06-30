@@ -5,7 +5,6 @@ import {
   Animated,
   TouchableOpacity,
   Image,
-  FlatList,
   RefreshControl,
 } from 'react-native';
 import styles from './style';
@@ -64,9 +63,8 @@ const formatMessageTime = dateString => {
   }
 
   // Older dates
-  return `${messageDate.getDate()}/${
-    messageDate.getMonth() + 1
-  }/${messageDate.getFullYear()}`;
+  return `${messageDate.getDate()}/${messageDate.getMonth() + 1
+    }/${messageDate.getFullYear()}`;
 };
 
 const getMessageAttachments = (message: any): any[] => {
@@ -289,7 +287,7 @@ const CommunityChat = ({
 
       fetchData();
 
-      return () => {};
+      return () => { };
     }, [fetchData, setActiveChannelId]),
   );
 
@@ -453,32 +451,27 @@ const CommunityChat = ({
               </Text>
             </View>
           </View>
-          <FlatList
-            data={channels}
-            renderItem={renderChannelItem}
-            // REALTIME FIX (2/3): enriched extraData includes lastSocketUpdate
-            // so FlatList cells re-render on every socket event even when
-            // individual item references haven't changed.
-            extraData={channelsExtraData}
-            keyExtractor={(item, index) =>
-              // REALTIME FIX (3/3): also check nested channel._id so the key
-              // is stable and matches what SocketService uses for ID matching.
-              (
-                item._id ||
-                item.id ||
-                item.channelId ||
-                item.channel?._id ||
-                index
-              ).toString()
-            }
-            scrollEnabled={false}
-            contentContainerStyle={styles.listContainer}
-            ListEmptyComponent={
+          <View style={styles.listContainer}>
+            {channels.length > 0 ? (
+              channels.map((item, index) => (
+                <React.Fragment
+                  key={(
+                    item._id ||
+                    item.id ||
+                    item.channelId ||
+                    item.channel?._id ||
+                    index
+                  ).toString()}
+                >
+                  {renderChannelItem({ item })}
+                </React.Fragment>
+              ))
+            ) : (
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>No channels yet</Text>
               </View>
-            }
-          />
+            )}
+          </View>
         </View>
 
         {/* Direct Messages Section */}
@@ -501,27 +494,27 @@ const CommunityChat = ({
               </Text>
             </View>
           </View>
-          <FlatList
-            data={conversations}
-            renderItem={renderDMItem}
-            extraData={conversationsExtraData}
-            keyExtractor={(item, index) =>
-              (
-                item._id ||
-                item.id ||
-                item.channelId ||
-                item.channel?._id ||
-                index
-              ).toString()
-            }
-            scrollEnabled={false}
-            contentContainerStyle={styles.listContainer}
-            ListEmptyComponent={
+          <View style={styles.listContainer}>
+            {conversations.length > 0 ? (
+              conversations.map((item, index) => (
+                <React.Fragment
+                  key={(
+                    item._id ||
+                    item.id ||
+                    item.channelId ||
+                    item.channel?._id ||
+                    index
+                  ).toString()}
+                >
+                  {renderDMItem({ item })}
+                </React.Fragment>
+              ))
+            ) : (
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>No direct messages yet</Text>
               </View>
-            }
-          />
+            )}
+          </View>
         </View>
       </View>
     );
@@ -532,6 +525,7 @@ const CommunityChat = ({
       style={styles.container}
       onScroll={onScroll}
       scrollEventThrottle={scrollEventThrottle}
+      showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl
           refreshing={isRefreshing}

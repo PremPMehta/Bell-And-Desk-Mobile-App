@@ -1,22 +1,28 @@
 <resources>
 
-    <!-- Base application theme. -->
+    <!-- Android 15+ (API 35+) enforces mandatory edge-to-edge and adds a white
+         contrast scrim over the status bar and navigation bar by default.
+         This override disables that forced scrim so bars stay fully transparent,
+         and sets the window background to black to prevent any white flash. -->
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
 
-        <!-- Make the window background black to prevent white flash on launch
-             and behind system bars on Android 12–14 -->
+        <!-- Black window background to prevent white flash -->
         <item name="android:windowBackground">#000000</item>
 
-        <!-- Draw app content behind the system bars (status bar + nav bar) -->
+        <!-- Draw behind system bars -->
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
 
-        <!-- Set status bar and navigation bar to transparent so no white bar appears.
-             On Android 12–14 these are respected directly.
-             On Android 15+ these are overridden by values-v35/styles.xml -->
+        <!-- Transparent bars -->
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
+
+        <!-- Android 15+: Disable the forced white contrast scrim that Android 15
+             applies to status bar and navigation bar for "accessibility".
+             Without these, Android 15 overrides transparent bars with a white overlay. -->
+        <item name="android:enforceStatusBarContrast">false</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
 
         <!-- Explicitly specify that the system bars are dark (app theme is dark), 
              so the system draws light/white icons and does not enforce a light contrast background -->

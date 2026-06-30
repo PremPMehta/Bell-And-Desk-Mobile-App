@@ -16,6 +16,23 @@ class MainActivity : ReactActivity() {
    override fun onCreate(savedInstanceState: Bundle?) {
     SplashView.showSplashView(this)  // add this
     super.onCreate(null)
+    
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+        window.setDecorFitsSystemWindows(false)
+    } else {
+        @Suppress("DEPRECATION")
+        window.decorView.systemUiVisibility = (
+            android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            or android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            or android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        )
+    }
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+        window.isNavigationBarContrastEnforced = false
+        window.isStatusBarContrastEnforced = false
+    }
+    window.navigationBarColor = android.graphics.Color.TRANSPARENT
+    window.statusBarColor = android.graphics.Color.TRANSPARENT
   }
   
   override fun getMainComponentName(): String = "BellnDesk"

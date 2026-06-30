@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -30,12 +30,17 @@ const MyCommunityCard: React.FC<CommunityCardProps> = ({
   const [imageError, setImageError] = useState(false);
   const isOwner = tags === 'owner';
 
-  const getSource = () => {
+  const getSource = useCallback(() => {
     if (imageError || !bannerImage) {
       return AppImages.homeBanner;
     }
     return { uri: getFullImageUrl(bannerImage as string) };
-  };
+  }, [imageError, bannerImage]);
+
+  const handleImageError = useCallback(() => {
+    setImageError(true);
+  }, []);
+
   return (
     <TouchableOpacity
       style={styles.cardContainer}
@@ -46,12 +51,11 @@ const MyCommunityCard: React.FC<CommunityCardProps> = ({
       <Image
         source={getSource()}
         style={styles.bannerImage}
-        onError={() => setImageError(true)}
+        onError={handleImageError}
       />
 
       {/* Tags (positioned absolutely to match design) */}
       <View style={styles.tagsContainer}>
-        {/* {tags.map((tag, index) => ( */}
         <View style={styles.tag}>
           <Text style={styles.tagText}>General</Text>
         </View>
@@ -60,7 +64,6 @@ const MyCommunityCard: React.FC<CommunityCardProps> = ({
             {tags}
           </Text>
         </View>
-        {/* ))} */}
       </View>
 
       {/* Content */}
@@ -91,4 +94,4 @@ const MyCommunityCard: React.FC<CommunityCardProps> = ({
   );
 };
 
-export default MyCommunityCard;
+export default React.memo(MyCommunityCard);
